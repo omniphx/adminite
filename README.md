@@ -1,1 +1,1 @@
-# adminite-distributions
+# Adminite

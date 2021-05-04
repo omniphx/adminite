@@ -1,0 +1,241 @@
+@import '~antd/dist/antd.less';
+@import (css) url('https://fonts.googleapis.com/css?family=Lalezar|Roboto|Roboto+Mono&display=swap');
+
+@brand-primary: #61bfa2;
+@brand-secondary: #617fbf;
+@brand-tertiary: #6fbf61;
+@lightGray: #e8e8e8;
+@gray-2: #fafafa;
+
+// Variables at https://github.com/ant-design/ant-design/blob/master/components/style/themes/default.less
+
+// @primary-color: @brand-primary;
+// @link-color: #1890ff;
+// @success-color: #52c41a;
+// @warning-color: #faad14;
+// @error-color: #f5222d;
+// @font-size-base: 14px;
+// @heading-color: rgba(0, 0, 0, .85);
+// @text-color: rgba(0, 0, 0, .65);
+// @text-color-secondary : rgba(0, 0, 0, .45);
+// @disabled-color : rgba(0, 0, 0, .25);
+// @border-radius-base: 4px;
+// @border-color-base: #d9d9d9;
+// @box-shadow-base: 0 2px 8px rgba(0, 0, 0, .15);
+
+// Menu
+// ---
+// @menu-inline-toplevel-item-height: 40px;
+// @menu-item-height: 40px;
+// @menu-collapsed-width: 80px;
+// @menu-bg: @component-background;
+// @menu-popup-bg: @component-background;
+// @menu-item-color: @text-color;
+@menu-highlight-color: @brand-primary;
+// @menu-item-active-bg: @item-active-bg;
+// @menu-item-active-border-width: 3px;
+// @menu-item-group-title-color: @text-color-secondary;
+// dark theme
+// @menu-dark-color: @text-color-secondary-dark;
+// @menu-dark-bg: @layout-header-background;
+// @menu-dark-arrow-color: #fff;
+// @menu-dark-submenu-bg: #000c17;
+// @menu-dark-highlight-color: #fff;
+@menu-dark-item-active-bg: #fff;
+
+.titlebar {
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+  height: 2em;
+  position: sticky;
+  top: 0;
+  z-index: 10000;
+  background: white;
+}
+
+.bump-left {
+  margin-left: auto;
+}
+
+.bump-right {
+  margin-right: auto;
+}
+
+div.ant-col {
+  margin: 0.25em 0;
+}
+
+.row-style + .row-style {
+  margin-top: 0.5em;
+}
+
+.button-style {
+  display: inline-block;
+}
+
+.button-style + .button-style {
+  margin-left: 0.25em;
+}
+
+// Learned this trick: https://stackblitz.com/edit/react-eydnk3
+.table_hide-expandable-icon {
+  .ant-table-row-expand-icon-cell {
+    .ant-table-row-expand-icon {
+      display: none;
+    }
+  }
+}
+
+.query-editor_text-area {
+  .mono;
+  width: 100%;
+}
+
+.code {
+  .mono;
+  display: block;
+  padding: 2px 4px;
+  // color: #c7254e;
+  background-color: @gray-2;
+  border-radius: 4px;
+}
+
+.mono {
+  font-family: 'Roboto Mono', monospace;
+}
+
+.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+  background-color: @brand-primary;
+  color: #fff;
+}
+
+.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected:hover {
+  background-color: @lightGray;
+  color: inherit;
+}
+
+//Rotate table styles
+// th.rotate {
+//     /* Something you can count on */
+//     height: 140px;
+//     white-space: nowrap;
+// }
+
+// th.rotate > span > div > span > div {
+//     transform:
+//         /* Magic Numbers */
+//         translate(74px, 62px)
+//         /* 45 is really 360 - 45 */
+//         rotate(315deg);
+//     width: 17px;
+// }
+// th.rotate > span > div > span > div > span {
+//     border-bottom: 1px solid @lightGray;
+//     padding: 37px 0;
+// }
+
+td.rotate {
+  border-left: 1px solid @lightGray;
+}
+
+.no-wrap {
+  white-space: nowrap;
+}
+
+// .fls-table .ant-table-thead > tr > th {
+//     height: 200px;
+// }
+
+// .fls-table tbody tr:first-child {
+//     background: rgb(250, 250, 250);
+// }
+
+// .ant-table-thead > tr > th {
+//     background: #ffffff;
+// }
+
+.header {
+  // width: 125px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.first-column {
+  width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hover:hover {
+  background-color: @lightGray;
+  color: inherit;
+}
+
+.ant-menu-item:hover {
+  background-color: @lightGray;
+}
+
+
+.logo {
+  font-size: 3.5em;
+  color: #61bfa2;
+  font-family: 'Lalezar', cursive;
+}
+
+.login-form {
+  max-width: 300px;
+}
+.login-form-forgot {
+  float: right;
+}
+.login-form-button {
+  width: 100%;
+}
+
+.org-drop-down > .ant-dropdown-menu-item + .ant-dropdown-menu-item {
+  border-top: .2px #e8e8e8 solid;
+}
+
+.org-drop-down .ant-card-body {
+  padding: 10px 0;
+}
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-cell, .ant-card-body {
+  .edit-icon {
+    visibility: hidden;
+  }
+}
+
+.table-cell:hover, .ant-card-body:hover {
+  .edit-icon {
+    visibility: visible;
+  }
+}
+
+.icon-error {
+  color: @red-5;
+}
+
+.hotkeys {
+  display: inline-block;
+  color: #fff;
+  background-color: #333;
+  border: 1px solid #333;
+  border-radius: 5px;
+  text-align: center;
+  box-shadow: inset 0 1px 0 #666, 0 1px 0 #bbb;
+  padding: 5px 9px;
+  font-size: .75em;
+}
+
+.ant-notification {
+  z-index: 10000;
+}

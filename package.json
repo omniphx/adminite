@@ -1,0 +1,167 @@
+{
+    "name": "adminite",
+    "version": "0.3.0",
+    "description": "## Dev, Build and Test",
+    "private": true,
+    "scripts": {
+        "dev": "electron-webpack dev",
+        "test": "jest",
+        "test:single": "jest -t 'queryResultsHandler'",
+        "snapshot:update": "npm test -- -u",
+        "compile": "rm -rf ./dist && electron-webpack",
+        "dist:windows": "npm run compile && electron-builder -w",
+        "dist:mac": "npm run compile && electron-builder -m",
+        "dist:dir": "npm run dist --dir -c.compression=store -c.mac.identity=null",
+        "release:windows": "npm run env:production && npm run compile && electron-builder -w -p always",
+        "release:mac": "npm run env:production && npm run compile && electron-builder -m -p always",
+        "release": "npm run env:production && npm run compile && electron-builder -mw -p always",
+        "release:nocompile": "npm run env:production && electron-builder -mw -p always",
+        "help": "electron-builder --help",
+        "gh": "echo $GH_TOKEN",
+        "prettify": "npm run prettier --write .\\src\\**",
+        "finders:list": "xattr -cr dist/mac/Adminite.app",
+        "finders:clear": "xattr -cr dist/mac/Adminite.app"
+    },
+    "electronWebpack": {
+        "renderer": {
+            "webpackConfig": "webpack.render.config.js",
+            "sourceDirectory": "src/renderer"
+        },
+        "whiteListedModules": [
+            "react-redux"
+        ]
+    },
+    "build": {
+        "appId": "adminite",
+        "productName": "Adminite",
+        "copyright": "Copyright © 2021 ${author}",
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "omniphx",
+                "repo": "adminite"
+            }
+        ],
+        "mac": {
+            "hardenedRuntime": true,
+            "gatekeeperAssess": false,
+            "artifactName": "${productName}.${ext}",
+            "entitlements": "build/entitlements.mac.plist",
+            "entitlementsInherit": "build/entitlements.mac.plist"
+        },
+        "dmg": {
+            "sign": false
+        },
+        "win": {
+            "artifactName": "${productName}.${ext}"
+        },
+        "files": [
+            "build/*"
+        ],
+        "afterSign": "notarize.js"
+    },
+    "jest": {
+        "moduleFileExtensions": [
+            "ts",
+            "tsx",
+            "js"
+        ],
+        "preset": "ts-jest/presets/js-with-ts",
+        "transform": {
+            "^.+\\.(ts|tsx)$": "ts-jest"
+        },
+        "setupFilesAfterEnv": [
+            "<rootDir>/src/setupTests.ts"
+        ],
+        "moduleDirectories": [
+            "node_modules",
+            "src"
+        ],
+        "testMatch": [
+            "**/src/**/*.(test|spec).(ts|tsx|js)"
+        ],
+        "snapshotSerializers": [
+            "enzyme-to-json/serializer"
+        ],
+        "collectCoverage": false
+    },
+    "author": "Matthew Mitchener",
+    "license": "ISC",
+    "devDependencies": {
+        "@babel/preset-react": "^7.7.4",
+        "@types/enzyme": "^3.10.4",
+        "@types/enzyme-adapter-react-16": "^1.0.5",
+        "@types/file-saver": "^2.0.1",
+        "@types/jest": "^24.0.24",
+        "@types/jsforce": "^1.9.12",
+        "@types/lodash": "^4.14.149",
+        "@types/node": "^15.0.1",
+        "@types/react": "^17.0.4",
+        "@types/react-dom": "^17.0.3",
+        "@types/react-redux": "^7.1.5",
+        "@types/redux": "^3.6.0",
+        "@types/redux-devtools-extension": "^2.13.2",
+        "@types/redux-mock-store": "^1.0.1",
+        "@types/textarea-caret": "^3.0.0",
+        "clean-webpack-plugin": "^1.0.1",
+        "css-loader": "^2.1.1",
+        "electron-builder": "^22.10.5",
+        "electron-devtools-installer": "^3.2.0",
+        "electron-notarize": "^0.2.1",
+        "electron-webpack-ts": "^4.0.1",
+        "enzyme": "^3.11.0",
+        "enzyme-adapter-react-16": "^1.15.2",
+        "enzyme-to-json": "^3.4.3",
+        "file-loader": "^3.0.1",
+        "html-webpack-plugin": "^3.2.0",
+        "ini": "^1.3.5",
+        "inquirer": "^6.5.1",
+        "jest": "^24.9.0",
+        "less": "^3.9.0",
+        "less-loader": "^5.0.0",
+        "prettier": "1.18.2",
+        "redux-devtools-extension": "^2.13.9",
+        "redux-mock-store": "^1.5.4",
+        "source-map-loader": "^0.2.4",
+        "style-loader": "^0.23.1",
+        "terser-webpack-plugin": "^1.3.0",
+        "ts-jest": "^26.5.5",
+        "typescript": "^4.2.4",
+        "webpack": "4"
+    },
+    "dependencies": {
+        "@ant-design/icons": "^4.6.2",
+        "@sentry/electron": "^2.4.1",
+        "@sentry/react": "^6.3.5",
+        "@sentry/tracing": "^6.3.5",
+        "antd": "^4.15.4",
+        "dnd-core-cjs": "^9.5.1",
+        "electron": "^12.0.6",
+        "electron-json-storage": "^4.1.7",
+        "electron-log": "^3.0.9",
+        "electron-updater": "^4.2.0",
+        "electron-webpack": "^2.8.2",
+        "file-saver": "^2.0.2",
+        "hotkeys-js": "^3.7.6",
+        "jsforce": "^1.9.3",
+        "lodash": "^4.17.15",
+        "moment": "^2.24.0",
+        "react": "^17.0.2",
+        "react-dnd": "^9.5.1",
+        "react-dnd-cjs": "^9.5.1",
+        "react-dnd-html5-backend": "^9.5.1",
+        "react-dnd-html5-backend-cjs": "^9.5.1",
+        "react-dom": "^17.0.2",
+        "react-icons": "^3.8.0",
+        "react-keyboard-event-handler": "^1.5.2",
+        "react-redux": "^7.1.3",
+        "redux": "^4.0.4",
+        "redux-saga": "^1.1.3",
+        "soql-parser-js": "^2.2.1",
+        "source-map-support": "^0.5.19",
+        "tcp-port-used": "^1.0.1",
+        "ts-sinon": "^1.0.25",
+        "uuid": "^8.3.2",
+        "xlsx": "^0.15.3"
+    }
+}

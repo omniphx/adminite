@@ -1,0 +1,21 @@
+{
+    "extends": "./node_modules/electron-webpack/tsconfig-base.json",
+    "compilerOptions": {
+        "noImplicitAny": false,
+        "jsx": "react",
+        "resolveJsonModule":true,
+
+        //Overrides from electron react
+        "strict": false,
+        "noUnusedLocals": false
+    },
+    "awesomeTypescriptLoaderOptions": {
+        "useWebpackText": true,
+        "useTranspileModule": true,
+        "doTypeCheck": true,
+        "forkChecker": true
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}

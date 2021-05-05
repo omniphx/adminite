@@ -9,8 +9,8 @@
 ### Setting up a Connected App
 
 1. Log into to your Salesforce org
-2. Click on Setup in the upper right-hand menu
-3. Classic: Build > Create > App
+2. Click on Setup in the upper right-hand menu (Classic)
+3. Build > Create > App
 4. Under Connected Apps, click "New"
 5. Create an app with the following settings:
   * Connected App Name

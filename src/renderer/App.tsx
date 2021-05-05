@@ -23,6 +23,7 @@ import { Connection } from 'jsforce'
 import IconWrapper from './applications/ui/IconWrapper'
 import { FaDatabase, FaUnlockAlt } from 'react-icons/fa'
 import UpdateNotification from './applications/UpdateNotification'
+import * as os from 'os'
 
 const App: React.FC = (props: any) => {
   const dispatch: any = useDispatch()
@@ -120,7 +121,7 @@ const App: React.FC = (props: any) => {
 
     return (
       <div>
-        <div className='titlebar' />
+        {os.type() === 'Darwin' && <div className='titlebar' />}
         <Layout>
           <Sider
             className='background'
@@ -129,7 +130,7 @@ const App: React.FC = (props: any) => {
               overflow: 'auto',
               height: '100vh',
               position: 'fixed',
-              paddingTop: '2em',
+              paddingTop: '.5em',
               left: 0
             }}
           >
@@ -164,7 +165,7 @@ const App: React.FC = (props: any) => {
             </Menu>
           </Sider>
           <Layout style={{ marginLeft: 200 }}>
-            <Content style={{ padding: '1em 2em', background: '#fff' }}>
+            <Content style={{ padding: '.5em 2em', background: '#fff' }}>
               <React.Suspense
                 fallback={
                   <div

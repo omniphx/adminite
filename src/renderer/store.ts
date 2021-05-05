@@ -1,12 +1,12 @@
 import { createStore, applyMiddleware, Store } from 'redux'
 import { rootReducer, rootSaga } from './store/index'
-import { composeWithDevTools } from 'redux-devtools-extension'
+// import { composeWithDevTools } from 'redux-devtools-extension'
 import createSagaMiddleware from 'redux-saga'
 import throttle from 'lodash/throttle'
 import { saveState, loadState } from './utils/localStorage'
 import * as Sentry from '@sentry/electron'
 
-const composeEnhancers = composeWithDevTools({})
+// const composeEnhancers = composeWithDevTools({})
 const sagaMiddleware = createSagaMiddleware({
   onError: (error: any) => {
     Sentry.withScope(scope => {
@@ -22,7 +22,8 @@ const persistedStore = loadState()
 const store: Store = createStore(
   rootReducer,
   persistedStore,
-  composeEnhancers(applyMiddleware(...[sagaMiddleware]))
+  // composeEnhancers(applyMiddleware(...[sagaMiddleware]))
+  applyMiddleware(...[sagaMiddleware])
 )
 
 store.subscribe(

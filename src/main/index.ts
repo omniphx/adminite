@@ -9,7 +9,7 @@ import * as express from 'express'
 import { autoUpdater } from 'electron-updater'
 import * as log from 'electron-log'
 import * as tcpPortUsed from 'tcp-port-used'
-import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
+// import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
 import * as Sentry from '@sentry/electron'
 
 Sentry.init({
@@ -53,17 +53,16 @@ async function createWindow(): Promise<any> {
 
     if (isDevelopment) {
       mainWindow.webContents.openDevTools()
+      // mainWindow.webContents.on("devtools-opened", () => {
+      //     mainWindow.webContents.closeDevTools();
+      // });
       mainWindow.loadURL(
         `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`
       )
     } else {
-      mainWindow.loadURL(
-        url.format({
-          pathname: path.join(__dirname, 'index.html'),
-          protocol: 'file',
-          slashes: true
-        })
-      )
+      // Useful to debug compile issues
+      // mainWindow.webContents.openDevTools()
+      mainWindow.loadURL(`file://${__dirname}/../renderer/index.html`)
     }
 
     // Emitted when the window is closed.
@@ -284,8 +283,8 @@ function sendStatusToWindow(text) {
   mainWindow.webContents.send('message', text)
 }
 
-app.whenReady().then(() => {
-  installExtension(REDUX_DEVTOOLS)
-    .then(name => console.log(`Added Extension:  ${name}`))
-    .catch(err => console.log('An error occurred: ', err))
-})
+// app.whenReady().then(() => {
+//   installExtension(REDUX_DEVTOOLS)
+//     .then(name => console.log(`Added Extension:  ${name}`))
+//     .catch(err => console.log('An error occurred: ', err))
+// })

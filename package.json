@@ -1,6 +1,6 @@
 {
     "name": "adminite",
-    "version": "0.3.4",
+    "version": "0.3.5",
     "description": "## Dev, Build and Test",
     "private": true,
     "main": "dist/main/main.js",
@@ -20,7 +20,9 @@
         "help": "electron-builder --help",
         "prettify": "npm run prettier --write .\\src\\**",
         "finders:list": "xattr -cr dist/mac/Adminite.app",
-        "finders:clear": "xattr -cr dist/mac/Adminite.app"
+        "finders:clear": "xattr -cr dist/mac/Adminite.app",
+        "pack": "electron-builder --dir",
+        "dist": "electron-builder -p never"
     },
     "electronWebpack": {
         "renderer": {
@@ -58,7 +60,6 @@
         "files": [
             "build/**/*",
             "dist/**/*",
-            "certs/**/*",
             "package.json"
         ],
         "extends": null,

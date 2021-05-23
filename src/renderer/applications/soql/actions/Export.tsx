@@ -27,10 +27,10 @@ const Export = React.memo((props: IExportProps) => {
   const [formattedData, setFormattedData] = React.useState([])
 
   React.useEffect(() => {
-    ipcRenderer.on('download-complete', handleNewConnection)
+    ipcRenderer.on('download-complete', handleDownloadComplete)
 
     return () => {
-      ipcRenderer.removeListener('download-complete', handleNewConnection)
+      ipcRenderer.removeListener('download-complete', handleDownloadComplete)
     }
   }, [])
 
@@ -43,7 +43,7 @@ const Export = React.memo((props: IExportProps) => {
     setFormattedData(formatData(Object.values(data)))
   }, [data])
 
-  function handleNewConnection(event, downloadPath: any) {
+  function handleDownloadComplete(event, downloadPath: any) {
     shell.showItemInFolder(downloadPath)
   }
 
@@ -55,51 +55,56 @@ const Export = React.memo((props: IExportProps) => {
     setFileExtension(value)
   }
 
-  const handleExport = async () => {
-    let fileType, worksheet, blobData
+  const handleExport = async event => {
+    if (event) event.preventDefault()
     switch (fileExtension) {
-      case '.csv':
-        fileType = 'text/csvcharset=utf-8'
-        worksheet = XLSX.utils.json_to_sheet(formattedData)
+      case '.csv': {
+        const fileType = 'text/csvcharset=utf-8'
+        const worksheet = XLSX.utils.json_to_sheet(formattedData)
         const csv = XLSX.utils.sheet_to_csv(worksheet)
-        blobData = new Blob([csv], { type: fileType })
+        const blobData = new Blob([csv], { type: fileType })
         FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
         break
-      case '.xlsx':
-        fileType =
+      }
+      case '.xlsx': {
+        const fileType =
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheetcharset=UTF-8'
-        worksheet = XLSX.utils.json_to_sheet(formattedData)
+        const worksheet = XLSX.utils.json_to_sheet(formattedData)
         const workbook = {
           Sheets: { [fileName]: worksheet },
           SheetNames: [fileName]
         }
         const xlsx = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-        blobData = new Blob([xlsx], { type: fileType })
+        const blobData = new Blob([xlsx], { type: fileType })
         FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
         break
-      case '.txt':
-        fileType = 'text/plain;charset=utf-8'
-        worksheet = XLSX.utils.json_to_sheet(formattedData)
+      }
+      case '.txt': {
+        const fileType = 'text/plain;charset=utf-8'
+        const worksheet = XLSX.utils.json_to_sheet(formattedData)
         const textFile = XLSX.utils.sheet_to_txt(worksheet)
-        blobData = new Blob([textFile], { type: fileType })
+        const blobData = new Blob([textFile], { type: fileType })
         FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
         break
-      case '.html':
-        fileType = 'text/html;charset=utf-8'
-        worksheet = XLSX.utils.json_to_sheet(formattedData)
+      }
+      case '.html': {
+        const fileType = 'text/html;charset=utf-8'
+        const worksheet = XLSX.utils.json_to_sheet(formattedData)
         const htmlFile = XLSX.utils.sheet_to_html(worksheet)
-        blobData = new Blob([htmlFile], { type: fileType })
+        const blobData = new Blob([htmlFile], { type: fileType })
         FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
         break
-      case '.json':
-        fileType = 'application/json;charset=utf-8'
-        blobData = new File(
+      }
+      case '.json': {
+        const fileType = 'application/json;charset=utf-8'
+        const blobData = new File(
           [JSON.stringify(data)],
           `${fileName}${fileExtension}`,
           { type: fileType }
         )
         FileSaver.saveAs(blobData)
         break
+      }
     }
 
     setShowModal(false)
@@ -142,11 +147,13 @@ const Export = React.memo((props: IExportProps) => {
       >
         <Row gutter={2}>
           <Col span={20}>
-            <Input
-              placeholder='File name'
-              value={fileName}
-              onChange={handleFileNameChange}
-            />
+            <form onSubmit={handleExport}>
+              <Input
+                placeholder='File name'
+                value={fileName}
+                onChange={handleFileNameChange}
+              />
+            </form>
           </Col>
           <Col span={4}>
             <Select

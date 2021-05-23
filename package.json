@@ -1,7 +1,7 @@
 {
     "name": "adminite",
-    "version": "0.3.5",
-    "description": "## Dev, Build and Test",
+    "version": "0.3.6",
+    "description": "Adminite is a new SOQL, SOSL query editor application providing Salesforce developers and administrators with context-aware auto completions and more.",
     "private": true,
     "main": "dist/main/main.js",
     "scripts": {
@@ -20,9 +20,7 @@
         "help": "electron-builder --help",
         "prettify": "npm run prettier --write .\\src\\**",
         "finders:list": "xattr -cr dist/mac/Adminite.app",
-        "finders:clear": "xattr -cr dist/mac/Adminite.app",
-        "pack": "electron-builder --dir",
-        "dist": "electron-builder -w -p never"
+        "finders:clear": "xattr -cr dist/mac/Adminite.app"
     },
     "electronWebpack": {
         "renderer": {
@@ -61,8 +59,7 @@
             "build/**/*",
             "dist/main/**/*",
             "dist/renderer/**/*",
-            "dist/.renderer-index-template.html",
-            "package.json"
+            "dist/.renderer-index-template.html"
         ],
         "extends": null,
         "afterSign": "notarize.js"

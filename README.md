@@ -1,8 +1,6 @@
 # Adminite
 
-<kbd>
-  <img src="https://adminite.app/static/query.png" alt="Adminite is a desktop app providing Salesforce developers and admins with SOQL auto-completions, inline data editing and more." title="Adminite - A Salesforce query editor">
-</kbd>
+![Screen Shot 2021-05-23 at 6 00 16 PM](https://user-images.githubusercontent.com/3722405/119278031-d54bec80-bbf0-11eb-99f3-cb824c282e77.png)
 
 ## Development
 

@@ -1,6 +1,6 @@
 {
     "name": "adminite",
-    "version": "0.3.6",
+    "version": "0.4.0",
     "description": "Adminite is a new SOQL, SOSL query editor application providing Salesforce developers and administrators with context-aware auto completions and more.",
     "private": true,
     "main": "dist/main/main.js",

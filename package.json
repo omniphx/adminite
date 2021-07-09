@@ -163,5 +163,8 @@
         "tcp-port-used": "^1.0.1",
         "uuid": "^8.3.2",
         "xlsx": "^0.15.3"
+    },
+    "resolutions": {
+        "glob-parent": ">=5.1.2"
     }
 }

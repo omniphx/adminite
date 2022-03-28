@@ -84,7 +84,7 @@
         "@types/textarea-caret": "^3.0.0",
         "clean-webpack-plugin": "^1.0.1",
         "css-loader": "^2.1.1",
-        "electron": "^12.0.6",
+        "electron": "^13.6.6",
         "electron-builder": "^22.10.5",
         "electron-notarize": "^1.0.0",
         "electron-webpack": "^2.8.2",

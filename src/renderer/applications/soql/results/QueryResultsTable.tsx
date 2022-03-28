@@ -1,117 +1,117 @@
-import * as React from 'react'
-import { LinkOutlined } from '@ant-design/icons'
-import { Table as AntTable, TablePaginationConfig } from 'antd'
-import { ApplicationState } from '../../../store/index'
+import * as React from 'react';
+import { LinkOutlined } from '@ant-design/icons';
+import { Table as AntTable, TablePaginationConfig } from 'antd';
+import { ApplicationState } from '../../../store/index';
 import {
   isSalesforceId,
   isDate,
   isDatetime,
   getRecordId
-} from '../../../../helpers/utils'
-import { shell } from 'electron'
-import moment from 'moment'
-import { useSelector, useDispatch } from 'react-redux'
-import TextCell from './TextCell'
-import NumberCell from './NumberCell'
-import PicklistCell from './PicklistCell'
-import DateCell from './DateCell'
-import DateTimeCell from './DateTimeCell'
-import MultiPicklistCell from './MultiPicklistCell'
-import BooleanCell from './BooleanCell'
-import { onQueryChange } from '../../../store/queries/actions'
-import { onQueryResultChange } from '../../../store/queryResults/actions'
-import { flattenData } from '../../../utils/queryResultsHandler'
+} from '../../../../helpers/utils';
+import { shell } from 'electron';
+import moment from 'moment';
+import { useSelector, useDispatch } from 'react-redux';
+import TextCell from './TextCell';
+import NumberCell from './NumberCell';
+import PicklistCell from './PicklistCell';
+import DateCell from './DateCell';
+import DateTimeCell from './DateTimeCell';
+import MultiPicklistCell from './MultiPicklistCell';
+import BooleanCell from './BooleanCell';
+import { onQueryChange } from '../../../store/queries/actions';
+import { onQueryResultChange } from '../../../store/queryResults/actions';
+import { flattenData } from '../../../utils/queryResultsHandler';
 
 interface IQueryResultsTableProps {
-  tabId: string
+  tabId: string;
 }
 
 const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
   (props: IQueryResultsTableProps) => {
-    const dispatch = useDispatch()
-    const { tabId } = props
+    const dispatch = useDispatch();
+    const { tabId } = props;
 
     //Global state
     const connection: any = useSelector(
       (state: ApplicationState) => state.connectionState.connection
-    )
+    );
     const data: any = useSelector(
       (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
-    )
+    );
     const filteredIds: any = useSelector(
       (state: ApplicationState) =>
         state.queryResultsState.byTabId[tabId].filteredIds
-    )
+    );
     const selectedIds: any = useSelector(
       (state: ApplicationState) =>
         state.queryResultsState.byTabId[tabId].selectedIds
-    )
+    );
     const queryResultsData: any = useSelector(
       (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
-    )
+    );
     const paginationConfig: TablePaginationConfig = useSelector(
       (state: ApplicationState) =>
         state.queriesState.byTabId[tabId].paginationConfig
-    )
+    );
     const parsedQuery: any = useSelector(
       (state: ApplicationState) => state.queriesState.byTabId[tabId].parsedQuery
-    )
+    );
     const fieldSchema: any = useSelector(
       (state: ApplicationState) =>
         state.resultSobjectsState.byTabId[tabId].fieldSchema
-    )
+    );
 
-    const instanceUrl: string = connection ? connection.instanceUrl : ''
+    const instanceUrl: string = connection ? connection.instanceUrl : '';
     const dataSource: any[] = filteredIds
       .filter(id => data.hasOwnProperty(id))
-      .map(id => flattenData(data[id]))
+      .map(id => flattenData(data[id]));
 
     //Hooks
     const [sortedInfo, setSortedInfo] = React.useState({
       columnKey: null,
       order: null
-    })
-    const [selectedRowKeys, setSelectedRowKeys] = React.useState<any[]>([])
+    });
+    const [selectedRowKeys, setSelectedRowKeys] = React.useState<any[]>([]);
 
     //Reset selection after a query
     React.useEffect(() => {
-      setSelectedRowKeys([])
-    }, [queryResultsData])
+      setSelectedRowKeys([]);
+    }, [queryResultsData]);
 
     const handleChange = (
       pagination: TablePaginationConfig,
       filters: any,
       sorter: any
     ) => {
-      dispatch(onQueryChange({ tabId, paginationConfig: pagination }))
-      setSortedInfo(sorter)
-    }
+      dispatch(onQueryChange({ tabId, paginationConfig: pagination }));
+      setSortedInfo(sorter);
+    };
 
     const expandedRowRender = (record: any) => {
-      const tables: any[] = []
+      const tables: any[] = [];
 
       for (const key in record) {
         if (record.hasOwnProperty(key)) {
-          if (typeof record[key] !== 'object') continue
-          const recordObject = record[key]
-          if (!recordObject) continue
+          if (typeof record[key] !== 'object') continue;
+          const recordObject = record[key];
+          if (!recordObject) continue;
           if (
             !Array.isArray(recordObject.records) ||
             !recordObject.records.length
           )
-            continue
+            continue;
 
           const table = {
             key,
             data: getData(recordObject.records),
             columns: getColumns(recordObject.records, true).map(column => {
               //Diable sorting in child tables
-              delete column.sorter
-              return column
+              delete column.sorter;
+              return column;
             })
-          }
+          };
 
-          tables.push(table)
+          tables.push(table);
         }
       }
 
@@ -128,55 +128,55 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
               size='small'
             />
           </div>
-        )
-      })
-    }
+        );
+      });
+    };
 
     const onIdClick = recordId => {
-      shell.openExternal(`${instanceUrl}/${recordId}`)
-    }
+      shell.openExternal(`${instanceUrl}/${recordId}`);
+    };
 
     const getRecordKeys = record => {
-      let recordKeys = []
+      let recordKeys = [];
 
       for (const key in record) {
-        if (key === 'attributes') continue
-        if (key === 'key') continue
-        if (key === 'editFields') continue
-        if (key === 'errorMessage') continue
+        if (key === 'attributes') continue;
+        if (key === 'key') continue;
+        if (key === 'editFields') continue;
+        if (key === 'errorMessage') continue;
         //Null is fine, but records are bad... very weird/hacky guard clause
         if (record[key]) {
-          if (record[key].records) continue
+          if (record[key].records) continue;
         }
 
         //Nulls are also objects
-        if (record[key] !== null && typeof record[key] === 'object') continue
+        if (record[key] !== null && typeof record[key] === 'object') continue;
 
-        recordKeys.push(key)
+        recordKeys.push(key);
       }
 
-      return recordKeys
-    }
+      return recordKeys;
+    };
 
     const getProperty = (propertyName, property) => {
-      if (!property) return property
+      if (!property) return property;
 
-      let propertyNames = propertyName.split('.')
-      let firstProperty = propertyNames.splice(0, 1)
+      let propertyNames = propertyName.split('.');
+      let firstProperty = propertyNames.splice(0, 1);
 
       if (propertyNames.length > 0) {
-        return getProperty(propertyNames.join('.'), property[firstProperty])
+        return getProperty(propertyNames.join('.'), property[firstProperty]);
       } else {
-        return property[firstProperty]
+        return property[firstProperty];
       }
-    }
+    };
 
     const tableProps = hasChildRecords()
       ? {
           expandedRowRender: expandedRowRender,
           rowClassName: rowClassName
         }
-      : {}
+      : {};
 
     const onSelect = (selectedRow: any, selected: boolean) => {
       dispatch(
@@ -186,8 +186,8 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
             ? [...selectedIds, selectedRow.Id]
             : selectedIds.filter(id => id !== selectedRow.Id)
         })
-      )
-    }
+      );
+    };
 
     const onSelectAll = (selected: boolean) => {
       dispatch(
@@ -197,8 +197,8 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
             ? filteredIds
             : selectedIds.filter(id => !filteredIds.includes(id))
         })
-      )
-    }
+      );
+    };
 
     return (
       <AntTable
@@ -216,24 +216,24 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
         pagination={paginationConfig}
         size='middle'
       />
-    )
+    );
 
     function rowClassName(record: any) {
       for (const key in record) {
-        if (typeof record[key] !== 'object') continue
-        if (!record[key]) continue
-        if (!record[key].records) continue
+        if (typeof record[key] !== 'object') continue;
+        if (!record[key]) continue;
+        if (!record[key].records) continue;
 
-        return ''
+        return '';
       }
 
-      return 'table_hide-expandable-icon'
+      return 'table_hide-expandable-icon';
     }
 
     function hasChildRecords() {
-      if (!parsedQuery) return false
-      if (!parsedQuery.fields) return false
-      return parsedQuery.fields.some(field => field.type === 'FieldSubquery')
+      if (!parsedQuery) return false;
+      if (!parsedQuery.fields) return false;
+      return parsedQuery.fields.some(field => field.type === 'FieldSubquery');
     }
 
     function getData(data) {
@@ -241,42 +241,43 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
         record.key =
           record.attributes.type === 'AggregateResult'
             ? index
-            : getRecordId(record)
+            : getRecordId(record);
 
-        return record
-      })
+        return record;
+      });
     }
 
     function getColumns(records, isChild) {
-      let columns = []
-      if (!records) return columns
+      let columns = [];
+      if (!records) return columns;
 
-      let record = records[0]
+      let record = records[0];
       return getRecordKeys(record).map(field => {
         const fieldDescription =
-          isChild || !fieldSchema ? null : fieldSchema[field]
+          isChild || !fieldSchema ? null : fieldSchema[field];
         return {
           title: field,
           dataIndex: field,
           key: field,
           sorter: (a, b) => {
-            let propA = getProperty(field, a)
-            let propB = getProperty(field, b)
-            if (!propA) return -1
-            if (!propB) return 1
+            let propA = getProperty(field, a);
+            let propB = getProperty(field, b);
+            if (!propA) return -1;
+            if (!propB) return 1;
 
-            if (typeof propA === 'string') propA = propA.toLowerCase()
-            if (typeof propB === 'string') propB = propB.toLowerCase()
+            if (typeof propA === 'string') propA = propA.toLowerCase();
+            if (typeof propB === 'string') propB = propB.toLowerCase();
 
-            if (propA < propB) return -1
-            if (propA > propB) return 1
-            return 0
+            if (propA < propB) return -1;
+            if (propA > propB) return 1;
+            return 0;
           },
           sortOrder: sortedInfo.columnKey === field && sortedInfo.order,
+          //TODO replace render with onCell
           render: (value, record) => {
             const childProps = {
               ...{ tabId, value, record, fieldSchema: fieldDescription }
-            }
+            };
             return {
               props: {
                 className: 'table-cell',
@@ -291,44 +292,44 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
                 record.attributes.type === 'AggregateResult'
                   ? formatValue(value)
                   : renderCell(childProps)
-            }
+            };
           }
-        }
-      })
+        };
+      });
     }
 
     function renderCell(childProps) {
-      const { fieldSchema, value } = childProps
-      const type = fieldSchema ? fieldSchema.type : ''
+      const { fieldSchema, value } = childProps;
+      const type = fieldSchema ? fieldSchema.type : '';
       switch (type) {
         case 'string':
-          return <TextCell {...childProps} />
+          return <TextCell {...childProps} />;
         case 'textarea':
-          return <TextCell {...childProps} />
+          return <TextCell {...childProps} />;
         case 'url':
-          return <TextCell {...childProps} />
+          return <TextCell {...childProps} />;
         case 'double':
-          return <NumberCell {...childProps} />
+          return <NumberCell {...childProps} />;
         case 'currency':
-          return <NumberCell {...childProps} />
+          return <NumberCell {...childProps} />;
         case 'int':
-          return <NumberCell {...childProps} />
+          return <NumberCell {...childProps} />;
         case 'percent':
-          return <NumberCell {...childProps} />
+          return <NumberCell {...childProps} />;
         case 'date':
-          return <DateCell {...childProps} />
+          return <DateCell {...childProps} />;
         case 'datetime':
-          return <DateTimeCell {...childProps} />
+          return <DateTimeCell {...childProps} />;
         case 'picklist':
-          return <PicklistCell {...childProps} />
+          return <PicklistCell {...childProps} />;
         case 'multipicklist':
-          return <MultiPicklistCell {...childProps} />
+          return <MultiPicklistCell {...childProps} />;
         case 'phone':
-          return <TextCell {...childProps} />
+          return <TextCell {...childProps} />;
         case 'boolean':
-          return <BooleanCell {...childProps} />
+          return <BooleanCell {...childProps} />;
         default:
-          return formatValue(value)
+          return formatValue(value);
       }
     }
 
@@ -341,20 +342,20 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
             </a>{' '}
             {value}
           </span>
-        )
+        );
       } else if (isDate(value)) {
-        return moment(value).format('MM/DD/YYYY')
+        return moment(value).format('MM/DD/YYYY');
       } else if (isDatetime(value)) {
-        return moment(value).format('MM/DD/YYYY h:mma')
+        return moment(value).format('MM/DD/YYYY h:mma');
       } else if (typeof value === 'boolean') {
-        return `${value}`
+        return `${value}`;
       } else if (!value) {
-        return ''
+        return '';
       } else {
-        return `${value}`
+        return `${value}`;
       }
     }
   }
-)
+);
 
-export default QueryResultsTable
+export default QueryResultsTable;

@@ -1,36 +1,42 @@
-import * as React from 'react'
-import FieldLevelSecurity from './FieldLevelSecurity'
-import { shallow, mount } from 'enzyme'
+import * as React from 'react';
+import FieldLevelSecurity from './FieldLevelSecurity';
 
-import { Provider } from 'react-redux'
-import configureMockStore from 'redux-mock-store'
-import { stubInterface } from 'ts-sinon'
+import { Provider } from 'react-redux';
+import configureMockStore from 'redux-mock-store';
+import { stubInterface } from 'ts-sinon';
 import { ApplicationState } from '../../store/index';
 import { FieldPermissionState } from '../../store/fieldPermission/types';
 import { PermissionState } from '../../store/permission/types';
-const mockStore: any = configureMockStore()
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-const stubbedState: ApplicationState = stubInterface<ApplicationState>()
-const stubbedFieldPermissionState: FieldPermissionState = stubInterface<FieldPermissionState>()
-const stubbedPermissionState: PermissionState = stubInterface<PermissionState>()
+const mockStore: any = configureMockStore();
+
+const stubbedState: ApplicationState = stubInterface<ApplicationState>();
+const stubbedFieldPermissionState: FieldPermissionState = stubInterface<
+  FieldPermissionState
+>();
+const stubbedPermissionState: PermissionState = stubInterface<
+  PermissionState
+>();
 
 const state: ApplicationState = {
   ...stubbedState,
   fieldPermissionState: stubbedFieldPermissionState,
   permissionState: stubbedPermissionState
-}
+};
 
 describe('<FieldLevelSecurity/>', () => {
-  test('it should render', () => {
+  it('should render', () => {
     const store = mockStore(state);
-    shallow(
+    render(
       <Provider store={store}>
         <FieldLevelSecurity />
       </Provider>
-    )
-  })
+    );
+  });
 
-  test('it should select all', () => {
+  it('should select all', () => {
     const newState = {
       ...state,
       permissionState: {
@@ -42,7 +48,7 @@ describe('<FieldLevelSecurity/>', () => {
             Id: '123',
             Profile: {
               Id: '234',
-              Name: 'Standard Profile',
+              Name: 'Standard Profile'
             },
             name: 'Standard Profile',
             key: '123',
@@ -85,22 +91,22 @@ describe('<FieldLevelSecurity/>', () => {
           }
         ]
       }
-    }
+    };
 
-    const store = mockStore(newState)
-    const component = mount(
+    const store = mockStore(newState);
+    render(
       <Provider store={store}>
         <FieldLevelSecurity />
       </Provider>
-    )
+    );
 
-    const checkbox = component.find('#edit_123_all input')
-    checkbox.simulate('change', { target: { value: true } })
+    const checkbox = document.querySelector('input#edit_123_all');
+    userEvent.click(checkbox);
 
-    expect(store.getActions()).toHaveLength(3)
-  })
+    expect(store.getActions()).toHaveLength(3);
+  });
 
-  test('it should ignore IsUpdate checkbox for edit all rendering', () => {
+  it.only('should ignore IsUpdate checkbox for edit all rendering', () => {
     const newState = {
       ...state,
       permissionState: {
@@ -112,7 +118,7 @@ describe('<FieldLevelSecurity/>', () => {
             Id: '123',
             Profile: {
               Id: '234',
-              Name: 'Standard Profile',
+              Name: 'Standard Profile'
             },
             name: 'Standard Profile',
             key: '123',
@@ -161,27 +167,24 @@ describe('<FieldLevelSecurity/>', () => {
             ParentId: '123',
             PermissionsEdit: false,
             PermissionsRead: true
-          },
+          }
         }
       }
-    }
+    };
 
-    const store = mockStore(newState)
-    const component = mount(
+    const store = mockStore(newState);
+    render(
       <Provider store={store}>
         <FieldLevelSecurity />
       </Provider>
-    )
+    );
 
-    const checkbox = component.find('#edit_123_all').first()
-    expect(checkbox.props().checked).toBe(true)
-    // console.log(checkbox.html())
+    let checkbox: HTMLInputElement = document.querySelector(
+      'input#edit_123_all'
+    );
+    userEvent.click(checkbox);
 
-    // component.find('#edit_123_all').forEach(checkbox => {
-    //   console.log(checkbox.props())
-    //   console.log(checkbox.html())
-    // })
-
-    // expect(store.getActions()).toHaveLength(3)
-  })
-})
+    checkbox = document.querySelector('input#edit_123_all');
+    expect(checkbox.checked).toBe(true);
+  });
+});

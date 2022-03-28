@@ -1,8 +1,3 @@
-import { configure } from 'enzyme'
-//Have to use require for some reason here
-const Adapter = require('enzyme-adapter-react-16')
-configure({ adapter: new Adapter() })
-
 // Workaround for: https://github.com/ant-design/ant-design/issues/21096
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -14,6 +9,6 @@ Object.defineProperty(window, 'matchMedia', {
     removeListener: jest.fn(), // deprecated
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-})
+    dispatchEvent: jest.fn()
+  }))
+});

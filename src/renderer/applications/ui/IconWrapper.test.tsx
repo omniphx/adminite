@@ -1,14 +1,14 @@
-import * as React from 'react'
-import IconWrapper from './IconWrapper'
-import { shallow } from 'enzyme'
+import { screen, render } from '@testing-library/react';
+import * as React from 'react';
+import IconWrapper from './IconWrapper';
 
 describe('<IconWrapper/>', () => {
   test('it should render', () => {
-    shallow(<IconWrapper/>)
-  })
+    render(<IconWrapper />);
+  });
 
   test('it should wrap an icon', () => {
-    const wrapper = shallow(<IconWrapper>Icon</IconWrapper>)
-    expect(wrapper.contains('Icon')).toEqual(true)
-  })
-})
+    const wrapper = render(<IconWrapper>Icon</IconWrapper>);
+    screen.getByText('Icon');
+  });
+});

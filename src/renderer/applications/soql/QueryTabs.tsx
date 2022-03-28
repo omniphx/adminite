@@ -3,20 +3,34 @@ import * as React from 'react'
 //Components
 import { Tabs } from 'antd'
 import { useDispatch, useSelector } from 'react-redux'
-import { onQueryTabsChange, onQueryTabCreate, onQueryTabDelete } from '../../store/queryTabs/actions'
+import {
+  onQueryTabsChange,
+  onQueryTabCreate,
+  onQueryTabDelete
+} from '../../store/queryTabs/actions'
 import { ApplicationState } from '../../store/index'
 import QueryTab from './QueryTab'
 import { QueryTabsState } from '../../store/queryTabs/types'
 import { onQueryCreate, onQueryDelete } from '../../store/queries/actions'
 import { hash } from '../../../helpers/utils'
-import { onQueryResultCreate, onQueryResultDelete } from '../../store/queryResults/actions'
-import { onQuerySObjectCreate, onResultSObjectCreate, onQuerySObjectDelete, onResultObjectDelete } from '../../store/sobject/actions'
+import {
+  onQueryResultCreate,
+  onQueryResultDelete
+} from '../../store/queryResults/actions'
+import {
+  onQuerySObjectCreate,
+  onResultSObjectCreate,
+  onQuerySObjectDelete,
+  onResultObjectDelete
+} from '../../store/sobject/actions'
 import QueryTabDragDrop from './QueryTabDragDrop'
 
-const QueryTabs: React.FC = (props: any) => {
+const QueryTabs: React.FC = () => {
   const dispatch = useDispatch()
   //Safe to use QueryTabsState becuase I need all properties
-  const queryTabs: QueryTabsState = useSelector((state: ApplicationState) => state.queryTabsState)
+  const queryTabs: QueryTabsState = useSelector(
+    (state: ApplicationState) => state.queryTabsState
+  )
   const { allIds, byId, activeId } = queryTabs
 
   const onChange = (activeKey: string) => {
@@ -56,11 +70,15 @@ const QueryTabs: React.FC = (props: any) => {
       <Tabs
         onChange={onChange}
         activeKey={activeId}
-        renderTabBar={(props, DefaultTabBar) =>
+        renderTabBar={(props, DefaultTabBar) => (
           <DefaultTabBar {...props}>
-            {node => <QueryTabDragDrop key={node.key} tabId={node.key}>{node}</QueryTabDragDrop>}
+            {node => (
+              <QueryTabDragDrop key={node.key} tabId={node.key.toString()}>
+                {node}
+              </QueryTabDragDrop>
+            )}
           </DefaultTabBar>
-        }
+        )}
         type='editable-card'
         onEdit={onEdit}
       >

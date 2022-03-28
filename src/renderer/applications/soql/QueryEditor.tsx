@@ -355,7 +355,6 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   }
 
   const onItemSelect = value => {
-    debugger
     const queryString = query.body
     const queryAfterWordStart = queryString.slice(startIndex)
     const beforeMatch = queryString.slice(0, startIndex)

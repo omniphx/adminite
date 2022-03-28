@@ -5,7 +5,6 @@ export enum FeatureActionTypes {
 }
 
 export interface FeatureState {
-  readonly feature?: string
+  readonly feature?: 'soql' | 'permissions' | 'schema'
   readonly errors?: any
 }
-  

@@ -21,13 +21,13 @@ import { onFeatureChange } from './store/feature/actions'
 import { useDispatch, useSelector } from 'react-redux'
 import { Connection } from 'jsforce'
 import IconWrapper from './applications/ui/IconWrapper'
-import { FaDatabase, FaUnlockAlt } from 'react-icons/fa'
+import { FaDatabase, FaTools, FaUnlockAlt } from 'react-icons/fa'
 import UpdateNotification from './applications/UpdateNotification'
 import * as os from 'os'
 
 const App: React.FC = (props: any) => {
   const dispatch: any = useDispatch()
-  const feature: string = useSelector(
+  const feature = useSelector(
     (state: ApplicationState) => state.featureState.feature
   )
   const connection: Connection = useSelector(
@@ -98,6 +98,8 @@ const App: React.FC = (props: any) => {
         return <QueryTabs />
       case 'permissions':
         return <Permissions />
+      case 'schema':
+        return <Permissions />
       default:
         return <QueryTabs />
     }
@@ -154,11 +156,13 @@ const App: React.FC = (props: any) => {
                 </IconWrapper>
                 <span>Field Level Security</span>
               </Menu.Item>
-              {/* <Menu.Item key='schemaBuilder' className='hover' disabled>
-                <Icon type='tool' theme='filled' />
-                <span>Schema Builder</span>
+              <Menu.Item key='schema' className='hover'>
+                <IconWrapper>
+                  <FaTools />
+                </IconWrapper>
+                <span>Schema</span>
               </Menu.Item>
-              <Menu.Item key='debugLogs' className='hover' disabled>
+              {/* <Menu.Item key='debugLogs' className='hover' disabled>
                 <Icon type='file-text' theme='filled' />
                 <span>Debug Logs</span>
               </Menu.Item> */}

@@ -1,30 +1,33 @@
 /**
  * Entry point of the Election app.
  */
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
-import * as path from 'path'
-import * as url from 'url'
-import * as jsforce from 'jsforce'
-import * as express from 'express'
-import { autoUpdater } from 'electron-updater'
-import * as log from 'electron-log'
-import * as tcpPortUsed from 'tcp-port-used'
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import * as path from 'path';
+import * as url from 'url';
+import * as jsforce from 'jsforce';
+import * as express from 'express';
+import { autoUpdater } from 'electron-updater';
+import * as log from 'electron-log';
+import * as tcpPortUsed from 'tcp-port-used';
 // import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
-import * as Sentry from '@sentry/electron'
+// import * as Sentry from '@sentry/electron';
 
-Sentry.init({
-  dsn:
-    'https://3bbc61260e4c425c8c3515afcc62d67f@o398570.ingest.sentry.io/5254517'
-})
+// Sentry.init({
+//   dsn:
+//     'https://3bbc61260e4c425c8c3515afcc62d67f@o398570.ingest.sentry.io/5254517'
+// })
 
-autoUpdater.logger = log
-log.info('App starting')
+autoUpdater.logger = log;
+log.info('App starting');
 
-declare const __static: string
+autoUpdater.logger = log;
+log.info('App starting');
 
-let mainWindow: any
+declare const __static: string;
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
+let mainWindow: any;
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 async function createWindow(): Promise<any> {
   try {
@@ -33,7 +36,7 @@ async function createWindow(): Promise<any> {
       pathname: path.join(__static, 'AppIcon.icns'),
       protocol: 'file:',
       slashes: true
-    })
+    });
 
     // Create the browser window.
     mainWindow = new BrowserWindow({
@@ -43,26 +46,25 @@ async function createWindow(): Promise<any> {
       webPreferences: {
         // devTools: isDevelopment,
         nodeIntegration: true,
-        contextIsolation: false,
-        enableRemoteModule: true
+        contextIsolation: false
       },
       icon: iconUrl,
       title: 'Adminite',
       titleBarStyle: 'hidden'
-    })
+    });
 
     if (isDevelopment) {
-      mainWindow.webContents.openDevTools()
+      mainWindow.webContents.openDevTools();
       // mainWindow.webContents.on("devtools-opened", () => {
       //     mainWindow.webContents.closeDevTools();
       // });
       mainWindow.loadURL(
         `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`
-      )
+      );
     } else {
       // Useful to debug compile issues
       // mainWindow.webContents.openDevTools()
-      mainWindow.loadURL(`file://${__dirname}/../renderer/index.html`)
+      mainWindow.loadURL(`file://${__dirname}/../renderer/index.html`);
     }
 
     // Emitted when the window is closed.
@@ -70,54 +72,59 @@ async function createWindow(): Promise<any> {
       // Dereference the window object, usually you would store windows
       // in an array if your app supports multi windows, this is the time
       // when you should delete the corresponding element.
-      mainWindow = null
-    })
+      mainWindow = null;
+    });
 
     mainWindow.webContents.session.on(
       'will-download',
       (event, item, webContents) => {
         item.once('done', (event, state) => {
           if (state === 'completed') {
-            mainWindow.webContents.send('download-complete', item.getSavePath())
+            mainWindow.webContents.send(
+              'download-complete',
+              item.getSavePath()
+            );
           } else {
-            console.log(`Download failed: ${state}`)
+            console.log(`Download failed: ${state}`);
           }
-        })
+        });
       }
-    )
+    );
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 }
 
 async function createServer(): Promise<any> {
   try {
-    const app = express()
+    const app = express();
 
-    let listener
-    let oauth2
-    let connectionName
+    let listener;
+    let oauth2;
+    let connectionName;
 
     ipcMain.on('create-new-connection', (event, arg) => {
-      connectionName = arg.name
+      connectionName = arg.name;
       oauth2 = new jsforce.OAuth2({
         loginUrl: arg.url,
         clientId: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID,
         clientSecret: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET,
         redirectUri: `https://localhost:${listener.address().port}/callback`
-      })
-      createAuthenticationWindow(oauth2.getAuthorizationUrl({ connectionName }))
-    })
+      });
+      createAuthenticationWindow(
+        oauth2.getAuthorizationUrl({ connectionName })
+      );
+    });
 
     app.get('/callback', async (request, response) => {
       try {
-        const connection: any = new jsforce.Connection({ oauth2: oauth2 })
-        const code = request.param('code')
-        await connection.authorize(code)
-        const { accessToken, instanceUrl, refreshToken } = connection
+        const connection = new jsforce.Connection({ oauth2: oauth2 });
+        const code = request.param('code');
+        await connection.authorize(code);
+        const { accessToken, instanceUrl, refreshToken } = connection;
 
         //Extra API call but gives us more information
-        const identity = await connection.identity()
+        const identity = await connection.identity();
         const {
           username,
           first_name,
@@ -130,8 +137,8 @@ async function createServer(): Promise<any> {
           organization_id,
           locale,
           language
-        } = identity
-        const { loginUrl, redirectUri } = oauth2
+        } = identity;
+        const { loginUrl, redirectUri } = oauth2;
 
         mainWindow.webContents.send('new-connection', {
           name: connectionName,
@@ -151,50 +158,50 @@ async function createServer(): Promise<any> {
           organization_id,
           locale,
           language
-        })
+        });
 
         response.set(
           'location',
           `https://adminite.app/landing/${connectionName}`
-        )
-        response.status(301).send()
+        );
+        response.status(301).send();
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-    })
+    });
 
-    const freePort = await getFreePort()
-    console.log(`Port: ${freePort}`)
-    listener = app.listen(freePort)
+    const freePort = await getFreePort();
+    console.log(`Port: ${freePort}`);
+    listener = app.listen(freePort);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 }
 
 async function getFreePort() {
   // https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
-  const ports = [42834, 29562, 38853, 40011, 44774, 47599]
+  const ports = [42834, 29562, 38853, 40011, 44774, 47599];
 
   for (let i = 0; i < ports.length; i++) {
-    const used = await tcpPortUsed.check(ports[i])
-    if (used) continue
-    return ports[i]
+    const used = await tcpPortUsed.check(ports[i]);
+    if (used) continue;
+    return ports[i];
   }
 
-  throw 'No ports are available'
+  throw 'No ports are available';
 }
 
 function createAuthenticationWindow(url: string): void {
-  shell.openExternal(url)
+  shell.openExternal(url);
 }
 
 //Prevents issues with self-signed certificates
-app.commandLine.appendSwitch('ignore-certificate-errors', 'true')
+app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 
 //Prevents multiple instances
-const gotTheLock = app.requestSingleInstanceLock()
+const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
-  app.quit()
+  app.quit();
 } else {
   app.on('second-instance', (event, commandLine, workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
@@ -202,85 +209,85 @@ if (!gotTheLock) {
       // if (mainWindow.isMinimized()) mainWindow.restore()
       // mainWindow.focus()
     }
-  })
+  });
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
-  app.on('ready', createWindow)
-  app.on('ready', createServer)
+  app.on('ready', createWindow);
+  app.on('ready', createServer);
 
   // Quit when all windows are closed.
   app.on('window-all-closed', function() {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
-      app.quit()
+      app.quit();
     }
-  })
+  });
 
   app.on('activate', function() {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) {
-      createWindow()
+      createWindow();
     }
-  })
+  });
 
   // Auto-update features
   app.on('ready', function() {
-    autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater.checkForUpdatesAndNotify();
 
     //Every 5 minutes
     setInterval(() => {
-      autoUpdater.checkForUpdatesAndNotify()
-    }, 300000)
-  })
+      autoUpdater.checkForUpdatesAndNotify();
+    }, 300000);
+  });
 
   autoUpdater.on('checking-for-update', function() {
-    sendStatusToWindow('Checking for update...')
-  })
+    sendStatusToWindow('Checking for update...');
+  });
 
   autoUpdater.on('update-available', function(info) {
-    sendStatusToWindow('Update available.')
-  })
+    sendStatusToWindow('Update available.');
+  });
 
   autoUpdater.on('update-not-available', function(info) {
-    sendStatusToWindow('Update not available.')
-  })
+    sendStatusToWindow('Update not available.');
+  });
 
   autoUpdater.on('error', function(err) {
-    sendStatusToWindow('Error in auto-updater. ' + err)
-  })
+    sendStatusToWindow('Error in auto-updater. ' + err);
+  });
 
   autoUpdater.on('download-progress', function(progressObj) {
-    const log_message = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`
-    sendStatusToWindow(log_message)
-  })
+    const log_message = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`;
+    sendStatusToWindow(log_message);
+  });
 
   autoUpdater.on('update-downloaded', function(info) {
-    sendStatusToWindow('Update downloaded')
-    mainWindow.webContents.send('update-downloaded')
-  })
+    sendStatusToWindow('Update downloaded');
+    mainWindow.webContents.send('update-downloaded');
+  });
 
   ipcMain.on('start-update', function(event, arg) {
-    sendStatusToWindow('Quit and install')
-    autoUpdater.quitAndInstall()
-  })
+    sendStatusToWindow('Quit and install');
+    autoUpdater.quitAndInstall();
+  });
 
   ipcMain.on('refresh', function(event, arg) {
-    mainWindow.reload()
-  })
+    mainWindow.reload();
+  });
 
   ipcMain.on('error', function(event, arg) {
-    console.log('Main error')
-    console.log(arg)
-    log.error(arg)
-  })
+    console.log('Main error');
+    console.log(arg);
+    log.error(arg);
+  });
 }
 
 function sendStatusToWindow(text) {
-  log.info(text)
-  mainWindow.webContents.send('message', text)
+  log.info(text);
+  mainWindow.webContents.send('message', text);
 }
 
 // app.whenReady().then(() => {

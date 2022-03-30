@@ -1,52 +1,52 @@
-import * as React from 'react'
-import { ApplicationState } from './store/index'
+import React, { ReactElement, Suspense, useEffect, lazy } from 'react';
+import { ApplicationState } from './store/index';
 
 //Apps
-const Permissions = React.lazy(() =>
+const Permissions = lazy(() =>
   import('./applications/fieldLevelSecurity/Permissions')
-)
-const QueryTabs = React.lazy(() => import('./applications/soql/QueryTabs'))
+);
+const QueryTabs = lazy(() => import('./applications/soql/QueryTabs'));
 
-import { Layout, Menu, Spin, Button, Modal } from 'antd'
-import OrgSelector from './applications/orgSelector/OrgSelector'
-import NewOrgModal from './applications/orgSelector/NewOrgModal'
-const { Sider, Content } = Layout
-import { ipcRenderer, remote, shell } from 'electron'
+import { Layout, Menu, Spin, Button, Modal } from 'antd';
+import OrgSelector from './applications/orgSelector/OrgSelector';
+import NewOrgModal from './applications/orgSelector/NewOrgModal';
+const { Sider, Content } = Layout;
+import { ipcRenderer, shell } from 'electron';
 import {
   initializeConnection,
   onConnectionCreate
-} from './store/connections/actions'
-import { toggleModal } from './store/connections/actions'
-import { onFeatureChange } from './store/feature/actions'
-import { useDispatch, useSelector } from 'react-redux'
-import { Connection } from 'jsforce'
-import IconWrapper from './applications/ui/IconWrapper'
-import { FaDatabase, FaTools, FaUnlockAlt } from 'react-icons/fa'
-import UpdateNotification from './applications/UpdateNotification'
-import * as os from 'os'
+} from './store/connections/actions';
+import { toggleModal } from './store/connections/actions';
+import { onFeatureChange } from './store/feature/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import IconWrapper from './applications/ui/IconWrapper';
+import { FaDatabase, FaTools, FaUnlockAlt } from 'react-icons/fa';
+import UpdateNotification from './applications/UpdateNotification';
+import * as os from 'os';
+import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
 
-const App: React.FC = (props: any) => {
-  const dispatch: any = useDispatch()
+const App = (): ReactElement => {
+  const dispatch = useDispatch();
   const feature = useSelector(
     (state: ApplicationState) => state.featureState.feature
-  )
-  const connection: Connection = useSelector(
+  );
+  const connection = useSelector(
     (state: ApplicationState) => state.connectionState.connection
-  )
-  const error: any = useSelector(
+  );
+  const error = useSelector(
     (state: ApplicationState) => state.connectionState.error
-  )
+  );
 
-  React.useEffect(() => {
-    dispatch(initializeConnection())
-    ipcRenderer.on('new-connection', handleNewConnection)
+  useEffect(() => {
+    dispatch(initializeConnection());
+    ipcRenderer.on('new-connection', handleNewConnection);
     return () => {
-      ipcRenderer.removeListener('new-connection', handleNewConnection)
-    }
-  }, [])
+      ipcRenderer.removeListener('new-connection', handleNewConnection);
+    };
+  }, []);
 
-  React.useEffect(() => {
-    const confirmedOffline = localStorage.getItem('offline-update')
+  useEffect(() => {
+    const confirmedOffline = localStorage.getItem('offline-update');
     if (confirmedOffline === null) {
       Modal.info({
         title: 'Hi folks!',
@@ -75,51 +75,51 @@ const App: React.FC = (props: any) => {
           </div>
         ),
         onOk() {
-          localStorage.setItem('offline-update', 'done')
+          localStorage.setItem('offline-update', 'done');
         }
-      })
+      });
     }
-  }, [])
+  }, []);
 
   async function handleNewConnection(event, connection: any) {
-    await dispatch(onConnectionCreate(connection))
-    await dispatch(toggleModal())
+    await dispatch(onConnectionCreate(connection));
+    await dispatch(toggleModal());
   }
 
   const handleOrgOpen = () => {
     shell.openExternal(
       `${connection.instanceUrl}/secur/frontdoor.jsp?sid=${connection.accessToken}`
-    )
-  }
+    );
+  };
 
   const Feature = () => {
     switch (feature) {
       case 'soql':
-        return <QueryTabs />
+        return <QueryTabs />;
       case 'permissions':
-        return <Permissions />
+        return <Permissions />;
       case 'schema':
-        return <Permissions />
+        return <SchemaExplorer />;
       default:
-        return <QueryTabs />
+        return <QueryTabs />;
     }
-  }
+  };
 
   const OrgDetails = () => {
-    if (!connection) return <div />
+    if (!connection) return <div />;
 
     return (
       <div style={{ textAlign: 'right', fontSize: 10, marginBottom: '1em' }}>
         <APIUsage />
         <OrgLauncher />
       </div>
-    )
-  }
+    );
+  };
 
   const Application = () => {
     const handleMenuItem = (event: any) => {
-      dispatch(onFeatureChange(event.key))
-    }
+      dispatch(onFeatureChange(event.key));
+    };
 
     return (
       <div>
@@ -170,7 +170,7 @@ const App: React.FC = (props: any) => {
           </Sider>
           <Layout style={{ marginLeft: 200 }}>
             <Content style={{ padding: '.5em 2em', background: '#fff' }}>
-              <React.Suspense
+              <Suspense
                 fallback={
                   <div
                     style={{
@@ -188,18 +188,18 @@ const App: React.FC = (props: any) => {
               >
                 <OrgDetails />
                 <Feature />
-              </React.Suspense>
+              </Suspense>
             </Content>
           </Layout>
         </Layout>
         <NewOrgModal />
         <div style={{ padding: 25, position: 'fixed', left: 0, bottom: 0 }}>
-          <div>{`Version ${remote.app.getVersion()}`}</div>
+          {/* <div>{`Version ${remote.app.getVersion()}`}</div> */}
           <UpdateNotification />
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const OrgLauncher = () => {
     return (
@@ -213,22 +213,22 @@ const App: React.FC = (props: any) => {
           Open org
         </Button>
       </div>
-    )
-  }
+    );
+  };
 
   const APIUsage = () => {
-    if (!connection['limitInfo']) return <div />
-    if (!connection['limitInfo'].apiUsage) return <div />
-    const { used, limit } = connection['limitInfo'].apiUsage
+    if (!connection['limitInfo']) return <div />;
+    if (!connection['limitInfo'].apiUsage) return <div />;
+    const { used, limit } = connection['limitInfo'].apiUsage;
 
     return (
       <div>
         API usage: {used}/{limit}
       </div>
-    )
-  }
+    );
+  };
 
-  return <Application />
-}
+  return <Application />;
+};
 
-export default App
+export default App;

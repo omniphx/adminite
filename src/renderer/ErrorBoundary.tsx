@@ -1,31 +1,31 @@
-import React, { Component } from 'react'
-import * as Sentry from '@sentry/browser'
-import { ipcRenderer, shell } from 'electron'
-import { Result, Button } from 'antd'
+import React, { Component } from 'react';
+import * as Sentry from '@sentry/browser';
+import { ipcRenderer, shell } from 'electron';
+import { Result, Button } from 'antd';
 
 class ExampleBoundary extends Component<any, any> {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       eventId: null
-    }
+    };
   }
 
   static getDerivedStateFromError() {
     return {
       hasError: true
-    }
+    };
   }
 
   componentDidCatch(error, errorInfo) {
     Sentry.withScope(scope => {
-      scope.setExtras(errorInfo)
-      const eventId = Sentry.captureException(error)
-      this.setState({ eventId })
-    })
-    console.error(error)
-    console.error(error.message)
-    ipcRenderer.send('error', JSON.stringify(error))
+      scope.setExtras(errorInfo);
+      const eventId = Sentry.captureException(error);
+      this.setState({ eventId });
+    });
+    console.error(error);
+    console.error(error.message);
+    ipcRenderer.send('error', JSON.stringify(error));
   }
 
   render() {
@@ -56,7 +56,7 @@ class ExampleBoundary extends Component<any, any> {
           extra={
             <Button
               onClick={() => {
-                ipcRenderer.send('refresh')
+                ipcRenderer.send('refresh');
               }}
               type='primary'
             >
@@ -64,12 +64,12 @@ class ExampleBoundary extends Component<any, any> {
             </Button>
           }
         />
-      )
+      );
     }
 
     //when there's not an error, render children untouched
-    return this.props.children
+    return this.props.children;
   }
 }
 
-export default ExampleBoundary
+export default ExampleBoundary;

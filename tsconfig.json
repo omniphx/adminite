@@ -1,16 +1,16 @@
 {
     "extends": "./node_modules/electron-webpack/tsconfig-base.json",
     "compilerOptions": {
-        "noImplicitAny": false,
-        "jsx": "react",
-        "resolveJsonModule":true,
-
         //Overrides from electron react
+        "noImplicitAny": false,
+        "jsx": "react-jsx",
+        "resolveJsonModule":true,
         "strict": false,
         "noUnusedLocals": false,
         "lib": ["dom", "esnext"],
         "module": "esnext",
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "skipLibCheck": true,
     },
     "awesomeTypescriptLoaderOptions": {
         "useWebpackText": true,

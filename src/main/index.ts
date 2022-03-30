@@ -29,7 +29,7 @@ let mainWindow: any;
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-async function createWindow(): Promise<any> {
+async function createWindow(): Promise<void> {
   try {
     //Not that this is working
     const iconUrl = url.format({
@@ -95,7 +95,7 @@ async function createWindow(): Promise<any> {
   }
 }
 
-async function createServer(): Promise<any> {
+async function createServer(): Promise<void> {
   try {
     const app = express();
 

@@ -1,3 +1,5 @@
+require('@testing-library/jest-dom/extend-expect');
+
 // Workaround for: https://github.com/ant-design/ant-design/issues/21096
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

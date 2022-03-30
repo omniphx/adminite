@@ -32,37 +32,37 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const { tabId } = props;
 
     //Global state
-    const connection: any = useSelector(
+    const connection = useSelector(
       (state: ApplicationState) => state.connectionState.connection
     );
-    const data: any = useSelector(
+    const data = useSelector(
       (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
     );
-    const filteredIds: any = useSelector(
+    const filteredIds = useSelector(
       (state: ApplicationState) =>
         state.queryResultsState.byTabId[tabId].filteredIds
     );
-    const selectedIds: any = useSelector(
+    const selectedIds = useSelector(
       (state: ApplicationState) =>
         state.queryResultsState.byTabId[tabId].selectedIds
     );
-    const queryResultsData: any = useSelector(
+    const queryResultsData = useSelector(
       (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
     );
-    const paginationConfig: TablePaginationConfig = useSelector(
+    const paginationConfig = useSelector(
       (state: ApplicationState) =>
         state.queriesState.byTabId[tabId].paginationConfig
     );
-    const parsedQuery: any = useSelector(
+    const parsedQuery = useSelector(
       (state: ApplicationState) => state.queriesState.byTabId[tabId].parsedQuery
     );
-    const fieldSchema: any = useSelector(
+    const fieldSchema = useSelector(
       (state: ApplicationState) =>
         state.resultSobjectsState.byTabId[tabId].fieldSchema
     );
 
-    const instanceUrl: string = connection ? connection.instanceUrl : '';
-    const dataSource: any[] = filteredIds
+    const instanceUrl = connection ? connection.instanceUrl : '';
+    const dataSource = filteredIds
       .filter(id => data.hasOwnProperty(id))
       .map(id => flattenData(data[id]));
 
@@ -273,26 +273,24 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
             return 0;
           },
           sortOrder: sortedInfo.columnKey === field && sortedInfo.order,
-          //TODO replace render with onCell
+          onCell: record => {
+            return {
+              className: 'table-cell',
+              style: {
+                backgroundColor:
+                  record.editFields && record.editFields.indexOf(field) >= 0
+                    ? '#fff7e6'
+                    : '#fff'
+              }
+            };
+          },
           render: (value, record) => {
             const childProps = {
               ...{ tabId, value, record, fieldSchema: fieldDescription }
             };
-            return {
-              props: {
-                className: 'table-cell',
-                style: {
-                  backgroundColor:
-                    record.editFields && record.editFields.indexOf(field) >= 0
-                      ? '#fff7e6'
-                      : '#fff'
-                }
-              },
-              children:
-                record.attributes.type === 'AggregateResult'
-                  ? formatValue(value)
-                  : renderCell(childProps)
-            };
+            return record.attributes.type === 'AggregateResult'
+              ? formatValue(value)
+              : renderCell(childProps);
           }
         };
       });

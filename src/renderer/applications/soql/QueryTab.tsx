@@ -21,8 +21,8 @@ import { formatQuery } from 'soql-parser-js'
 import SaveEdits from './actions/SaveEdits'
 import FillFields from './actions/FillFields'
 import BulkActions from './actions/BulkActions'
-import { SchemaState } from '../../store/schema/types'
 import { useTabStore } from '../../stores/useTabStore'
+import { useSObjectList } from '../../queries/useSchemaQuery'
 
 interface IQueryTabProps {
   tabId: string
@@ -38,17 +38,15 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
   const toolingMode = queryState?.toolingMode ?? false
   const query = queryState?.query ?? { body: '' }
 
-  // Redux still needed for schema and sobject (until Phase 5 & 6)
-  const schemaState: SchemaState = useSelector(
-    (state: ApplicationState) => state.schemaState
-  )
+  // TanStack Query for schema (Phase 4)
+  const { sobjects: sObjectList, isLoading: schemaLoading } = useSObjectList(toolingMode)
+
+  // Redux still needed for sobject describe (until Phase 6)
   const sobject: DescribeSObjectResult = useSelector(
     (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
   )
 
-  const sobjects: DescribeGlobalSObjectResult[] = getQueryableSObjects(
-    toolingMode ? schemaState.toolingObjects : schemaState.sobjects
-  )
+  const sobjects: DescribeGlobalSObjectResult[] = getQueryableSObjects(sObjectList ?? [])
   const sobjectName: string = sobject ? sobject.name : ''
 
   //Props

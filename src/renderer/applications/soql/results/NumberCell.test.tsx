@@ -13,11 +13,24 @@ const fieldSchema = stubInterface<DescribeField>();
 const userInfo = stubInterface<UserInfo>();
 userInfo[`userLocale`] = 'us_EN';
 
-const store = mockStore({
-  connectionState: {
-    userInfo
-  }
-});
+// Mock Zustand connection store
+jest.mock('../../../stores/useConnectionStore', () => ({
+  useConnectionStore: (selector: any) => {
+    const state = {
+      activeConnection: {
+        userInfo: {
+          userLocale: 'us_EN',
+          orgDefaultCurrencyLocale: 'us_EN',
+          orgDefaultCurrencyIsoCode: 'USD',
+        },
+      },
+    };
+    return selector(state);
+  },
+}));
+
+// Empty store since connectionState is now in Zustand
+const store = mockStore({});
 
 describe('<NumberCell/>', () => {
   it('should render', () => {

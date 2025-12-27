@@ -1,8 +1,13 @@
-import { put, select, takeLatest, all, call } from 'redux-saga/effects'
+import { put, all, call } from 'redux-saga/effects'
 import { SchemaActionTypes } from './types'
 import { DescribeGlobalResult, QueryResult } from 'jsforce'
-import { getConnection } from '../index'
 import { ipcRenderer } from 'electron'
+import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
+
+// Helper to get active connection from Zustand store (Phase 4)
+function getConnectionFromZustand() {
+  return getActiveConnection(useConnectionStore.getState())
+}
 
 export function* describe() {
   try {
@@ -18,7 +23,7 @@ export function* describe() {
 
 export function* describeGlobal() {
   try {
-    const connection: any = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const apiResult = yield ipcRenderer.invoke('salesforce:describeGlobal', connection)
     if (!apiResult.success) {
       throw new Error(apiResult.error)
@@ -36,7 +41,7 @@ export function* describeGlobal() {
 
 export function* describeToolingGlobal() {
   try {
-    const connection: any = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const apiResult = yield ipcRenderer.invoke('salesforce:toolingDescribeGlobal', connection)
     if (!apiResult.success) {
       throw new Error(apiResult.error)
@@ -53,7 +58,7 @@ export function* describeToolingGlobal() {
 
 export function* getNamespace() {
   try {
-    const connection: any = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const apiResult = yield ipcRenderer.invoke('salesforce:query', {
       ...connection,
       queryString: `SELECT NamespacePrefix FROM Organization`

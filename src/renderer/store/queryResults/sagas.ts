@@ -1,9 +1,15 @@
 import { put, select, takeLatest, all, fork, take, cancel } from 'redux-saga/effects'
 import { QueryResultActionTypes } from './types'
-import { getConnection, getFilter, getData, getToolingMode, getResultSObject, getSelectedIds, getFilteredIds, getBatchSize, getActiveTabId, getQueryString, getIncludeDeleted } from '../index'
+import { getFilter, getData, getToolingMode, getResultSObject, getSelectedIds, getFilteredIds, getBatchSize } from '../index'
 import { ipcRenderer } from 'electron'
 import { dataReducer, filterIds, getRecordId, chunk } from '../../../helpers/utils'
 import { notification } from 'antd'
+import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
+
+// Helper to get active connection from Zustand store (Phase 4)
+function getConnectionFromZustand() {
+  return getActiveConnection(useConnectionStore.getState())
+}
 
 export function* queryResultSagas() {
   yield all([
@@ -66,7 +72,7 @@ export function* updateField(action: any) {
 export function* query(action: any) {
   try {
     const { tabId, queryString, includeDeleted } = action.payload
-    const connection: any = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const filter: string = yield select(getFilter, tabId)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
     yield put({
@@ -120,7 +126,7 @@ export function* query(action: any) {
 function* queryMore(tabId, result) {
   try {
     const { nextRecordsUrl } = result
-    const connection: any = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const toolingMode: boolean = yield select(getToolingMode, tabId)
     const filter: string = yield select(getFilter, tabId)
 
@@ -157,7 +163,7 @@ function* dmlUpdate(action: any) {
       type: QueryResultActionTypes.SET
     })
 
-    const connection: any = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const data: any = yield select(getData, tabId)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
     const batchSize: number = yield select(getBatchSize, tabId)
@@ -239,7 +245,7 @@ function* dmlUpdate(action: any) {
 function* dmlDelete(action: any) {
   const { tabId } = action.payload
   try {
-    const connection: any = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const data: any = yield select(getData, tabId)
     const sobject: any = yield select(getResultSObject, tabId)
     const toolingMode: boolean = yield select(getToolingMode, tabId)

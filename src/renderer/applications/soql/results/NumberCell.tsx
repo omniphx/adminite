@@ -2,9 +2,9 @@ import * as React from 'react'
 import { InputNumber } from 'antd'
 import { Field as DescribeField } from 'jsforce'
 import { onFieldChange } from '../../../store/queryResults/actions'
-import { ApplicationState } from '../../../store/index'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import BaseCell from './BaseCell'
+import { useConnectionStore } from '../../../stores/useConnectionStore'
 
 interface INumberCellProps {
   tabId: string
@@ -16,7 +16,8 @@ interface INumberCellProps {
 const NumberCell: React.FC<INumberCellProps> = (props: INumberCellProps) => {
   const dispatch = useDispatch()
   const { tabId, fieldSchema, value, record } = props
-  const userInfo: any = useSelector((state: ApplicationState) => state.connectionState.userInfo)
+  // Get userInfo from active connection (Phase 4)
+  const userInfo: any = useConnectionStore((state) => state.activeConnection.userInfo)
 
   const [editMode, setEditMode] = React.useState(false)
   const [editValue, setEditValue] = React.useState(value)

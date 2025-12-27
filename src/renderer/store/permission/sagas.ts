@@ -1,9 +1,16 @@
 import { put, select, takeLatest, all, fork } from 'redux-saga/effects'
-import { Connection, QueryResult } from 'jsforce'
+import { QueryResult } from 'jsforce'
 import { getProfiles, getPermissionSets } from '../../utils/queryBuilder'
 import { PermissionActionTypes } from './types'
-import { getConnection, getPermissionState, getSchemaState, ApplicationState } from '../index';
+import { getPermissionState, getSchemaState, ApplicationState } from '../index';
 import { getFieldPermissions } from '../fieldPermission/sagas'
+import { ipcRenderer } from 'electron'
+import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
+
+// Helper to get active connection from Zustand store (Phase 4)
+function getConnectionFromZustand() {
+  return getActiveConnection(useConnectionStore.getState())
+}
 
 export function* permissionSagas() {
   yield all([
@@ -83,8 +90,8 @@ export function* setPermissionIds(action: any) {
 
 export function* getPermissions() {
   try {
-    const salesforce: Connection = yield select(getConnection)
-    if(!salesforce) return
+    const connection = getConnectionFromZustand()
+    if(!connection) return
 
     const { permissionIds, permissionType } = yield select(getPermissionState)
     const { namespace } = yield select(getSchemaState)
@@ -93,7 +100,15 @@ export function* getPermissions() {
         ? getProfiles(permissionIds)
         : getPermissionSets(namespace, permissionIds)
 
-    const result: QueryResult<{}> = yield salesforce.query(queryString)
+    const apiResult = yield ipcRenderer.invoke('salesforce:query', {
+      ...connection,
+      queryString,
+      toolingMode: false
+    })
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const result: QueryResult<{}> = apiResult.data
 
     yield put({
       payload: result.records,
@@ -110,8 +125,16 @@ export function* getPermissions() {
 
 export function* getSObjects() {
   try {
-    const salesforce: Connection = yield select(getConnection)
-    const queryResult: QueryResult<{}> = yield salesforce.tooling.query(`SELECT Id, DeveloperName, Label, QualifiedApiName FROM EntityDefinition WHERE IsFlsEnabled = true ORDER BY DeveloperName`)
+    const connection = getConnectionFromZustand()
+    const apiResult = yield ipcRenderer.invoke('salesforce:query', {
+      ...connection,
+      queryString: `SELECT Id, DeveloperName, Label, QualifiedApiName FROM EntityDefinition WHERE IsFlsEnabled = true ORDER BY DeveloperName`,
+      toolingMode: true
+    })
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const queryResult: QueryResult<{}> = apiResult.data
 
     yield put({
       payload: { sobjects: queryResult.records },
@@ -133,9 +156,17 @@ export function* getSObjects() {
 function* getMoreSObjects(result) {
   try {
     const { nextRecordsUrl } = result
-    const salesforce: Connection = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const sobjects: any = yield select((state: ApplicationState) => state.permissionState.sobjects)
-    const queryMoreResult = yield salesforce.tooling.queryMore(nextRecordsUrl)
+    const apiResult = yield ipcRenderer.invoke('salesforce:queryMore', {
+      ...connection,
+      nextRecordsUrl,
+      toolingMode: true
+    })
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const queryMoreResult = apiResult.data
 
     yield put({
       payload: { sobjects: [...sobjects, queryMoreResult.records] },
@@ -189,8 +220,16 @@ export function* handleSObjectChange(action: any) {
 
 export function* getFields(sobjectName: string) {
   try {
-    const salesforce: Connection = yield select(getConnection)
-    const queryResult: QueryResult<{}> = yield salesforce.tooling.query(`SELECT Id, Name, IsUpdatable, RelationshipName, DataType, ValueTypeId, IsCompound, IsCreatable, IsCalculated, IsPermissionable, Label, IsComponent, NamespacePrefix FROM EntityParticle WHERE EntityDefinitionId = '${sobjectName}'`)
+    const connection = getConnectionFromZustand()
+    const apiResult = yield ipcRenderer.invoke('salesforce:query', {
+      ...connection,
+      queryString: `SELECT Id, Name, IsUpdatable, RelationshipName, DataType, ValueTypeId, IsCompound, IsCreatable, IsCalculated, IsPermissionable, Label, IsComponent, NamespacePrefix FROM EntityParticle WHERE EntityDefinitionId = '${sobjectName}'`,
+      toolingMode: true
+    })
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const queryResult: QueryResult<{}> = apiResult.data
 
     yield put({
       payload: { fields: queryResult.records },
@@ -212,9 +251,17 @@ export function* getFields(sobjectName: string) {
 function* getMoreFields(result) {
   try {
     const { nextRecordsUrl } = result
-    const salesforce: Connection = yield select(getConnection)
+    const connection = getConnectionFromZustand()
     const fields: any = yield select((state: ApplicationState) => state.permissionState.fields)
-    const queryMoreResult = yield salesforce.tooling.queryMore(nextRecordsUrl)
+    const apiResult = yield ipcRenderer.invoke('salesforce:queryMore', {
+      ...connection,
+      nextRecordsUrl,
+      toolingMode: true
+    })
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const queryMoreResult = apiResult.data
 
     yield put({
       payload: { fields: [...fields, queryMoreResult.records] },

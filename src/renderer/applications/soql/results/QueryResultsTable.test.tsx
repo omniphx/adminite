@@ -3,35 +3,57 @@ import QueryResultsTable from './QueryResultsTable';
 
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
-const mockStore = configureMockStore<ApplicationState>();
 
 import { stubInterface } from 'ts-sinon';
-import { ApplicationState } from '../../../store/index';
 import { QueryResultState } from '../../../store/queryResults/types';
-import { ConnectionState } from '../../../store/connection/types';
-import { QueryState } from '../../../store/queries/types';
 import { SObjectState } from '../../../store/sobject/types';
-import { screen, render, waitFor } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-const stubbedState: ApplicationState = stubInterface<ApplicationState>();
-const stubbedConnectionState: ConnectionState = stubInterface<
-  ConnectionState
->();
-const stubbedQueryState: QueryState = stubInterface<QueryState>();
+// Mock Zustand connection store
+jest.mock('../../../stores/useConnectionStore', () => ({
+  useConnectionStore: (selector: any) => {
+    const state = {
+      connections: {},
+      connectionOrder: [],
+      activeConnectionId: 'test-connection',
+      activeConnection: {
+        pending: false,
+        error: undefined,
+        connection: undefined,
+        userInfo: undefined,
+      },
+    };
+    return selector(state);
+  },
+  getActiveConnection: () => ({
+    id: 'test-connection',
+    instanceUrl: 'https://test.salesforce.com',
+  }),
+}));
+
+// Mock Zustand tab store
+jest.mock('../../../stores/useTabStore', () => ({
+  useTabStore: (selector: any) => {
+    const state = {
+      queries: {
+        test: {
+          paginationConfig: { current: 1, pageSize: 25 },
+          parsedQuery: null,
+        },
+      },
+    };
+    return selector(state);
+  },
+}));
+
+const mockStore = configureMockStore();
+
 const stubbedResultSobjectsState: SObjectState = stubInterface<SObjectState>();
 const stubbedQueryResult = stubInterface<QueryResultState>();
 
-export const state: ApplicationState = {
-  ...stubbedState,
-  connectionState: {
-    ...stubbedConnectionState
-  },
-  queriesState: {
-    byTabId: {
-      test: stubbedQueryState
-    }
-  },
+// State without connectionState (now in Zustand)
+export const state = {
   resultSobjectsState: {
     byTabId: {
       test: {
@@ -50,7 +72,9 @@ export const state: ApplicationState = {
     byTabId: {
       test: {
         ...stubbedQueryResult,
-        filteredIds: []
+        filteredIds: [],
+        selectedIds: [],
+        data: {}
       }
     }
   }
@@ -62,6 +86,7 @@ const defaultState = {
     byTabId: {
       test: {
         ...stubbedQueryResult,
+        selectedIds: [],
         data: {
           '1': {
             key: '1',
@@ -101,7 +126,7 @@ describe('<QueryResultsTable/>', () => {
   });
 
   it('should filter results', () => {
-    const state = {
+    const testState = {
       ...defaultState,
       queryResultsState: {
         byTabId: {
@@ -112,7 +137,7 @@ describe('<QueryResultsTable/>', () => {
         }
       }
     };
-    const store = mockStore(state);
+    const store = mockStore(testState);
     render(
       <Provider store={store}>
         <QueryResultsTable {...{ tabId: 'test' }} />
@@ -130,6 +155,7 @@ describe('<QueryResultsTable/>', () => {
         byTabId: {
           test: {
             ...stubbedQueryResult,
+            selectedIds: [],
             data: {
               '1': {
                 key: '1',

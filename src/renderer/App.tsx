@@ -1,5 +1,4 @@
 import React, { ReactElement, Suspense, useEffect, lazy } from 'react';
-import { ApplicationState } from './store/index';
 
 //Apps
 const Permissions = lazy(() =>
@@ -12,18 +11,16 @@ import OrgSelector from './applications/orgSelector/OrgSelector';
 import NewOrgModal from './applications/orgSelector/NewOrgModal';
 const { Sider, Content } = Layout;
 import { ipcRenderer, shell } from 'electron';
-import { useDispatch, useSelector } from 'react-redux';
-import { onConnectionSelected } from './store/connection/actions';
 import IconWrapper from './applications/ui/IconWrapper';
 import { FaDatabase, FaTools, FaUnlockAlt } from 'react-icons/fa';
 import UpdateNotification from './applications/UpdateNotification';
 import * as os from 'os';
 import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
 import { useFeatureStore, Feature } from './stores/useFeatureStore';
-import { useConnectionStore } from './stores/useConnectionStore';
+import { useConnectionStore, getActiveConnection } from './stores/useConnectionStore';
+import { useConnectionQuery } from './queries/useConnectionQuery';
 
 const App = (): ReactElement => {
-  const dispatch = useDispatch();
   const feature = useFeatureStore((state) => state.feature);
   const setFeature = useFeatureStore((state) => state.setFeature);
 
@@ -33,14 +30,11 @@ const App = (): ReactElement => {
   const toggleModal = useConnectionStore((state) => state.toggleModal);
   const initializeFromLegacyStorage = useConnectionStore((state) => state.initializeFromLegacyStorage);
   const connectionOrder = useConnectionStore((state) => state.connectionOrder);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const { error } = useConnectionStore((state) => state.activeConnection);
 
-  // Redux still needed for active connection details (until Phase 4)
-  const connection = useSelector(
-    (state: ApplicationState) => state.connectionState.connection
-  );
-  const error = useSelector(
-    (state: ApplicationState) => state.connectionState.error
-  );
+  // TanStack Query for connection identity/userInfo (Phase 4)
+  useConnectionQuery();
 
   useEffect(() => {
     // Migrate from legacy localStorage format if needed
@@ -50,8 +44,7 @@ const App = (): ReactElement => {
     if (connectionOrder.length > 0) {
       const firstConnectionId = connectionOrder[0];
       setActiveConnectionId(firstConnectionId);
-      // Dispatch Redux action to trigger connection saga (until Phase 4 migration)
-      dispatch(onConnectionSelected(firstConnectionId));
+      // TanStack Query will automatically fetch identity when activeConnectionId changes
     }
 
     ipcRenderer.on('new-connection', handleNewConnection);
@@ -99,15 +92,16 @@ const App = (): ReactElement => {
   async function handleNewConnection(event, connectionData: any) {
     const newConnection = addConnection(connectionData);
     setActiveConnectionId(newConnection.id);
-    // Dispatch Redux action to trigger connection saga (until Phase 4 migration)
-    dispatch(onConnectionSelected(newConnection.id));
+    // TanStack Query will automatically fetch identity when activeConnectionId changes
     toggleModal();
   }
 
   const handleOrgOpen = () => {
-    shell.openExternal(
-      `${connection.instanceUrl}/secur/frontdoor.jsp?sid=${connection.accessToken}`
-    );
+    if (activeConnection) {
+      shell.openExternal(
+        `${activeConnection.instanceUrl}/secur/frontdoor.jsp?sid=${activeConnection.accessToken}`
+      );
+    }
   };
 
   const Feature = () => {
@@ -124,7 +118,7 @@ const App = (): ReactElement => {
   };
 
   const OrgDetails = () => {
-    if (!connection) return <div />;
+    if (!activeConnection) return <div />;
 
     return (
       <div style={{ textAlign: 'right', fontSize: 10, marginBottom: '1em' }}>
@@ -226,7 +220,7 @@ const App = (): ReactElement => {
           type='link'
           style={{ padding: 0, fontSize: 10, height: 'auto' }}
           onClick={handleOrgOpen}
-          disabled={error}
+          disabled={!!error}
         >
           Open org
         </Button>
@@ -235,15 +229,10 @@ const App = (): ReactElement => {
   };
 
   const APIUsage = () => {
-    if (!connection['limitInfo']) return <div />;
-    if (!connection['limitInfo'].apiUsage) return <div />;
-    const { used, limit } = connection['limitInfo'].apiUsage;
-
-    return (
-      <div>
-        API usage: {used}/{limit}
-      </div>
-    );
+    // API usage info is not available in StoredConnection
+    // This would need to come from a query response with limitInfo
+    // For now, return empty since we don't track API usage in Zustand
+    return <div />;
   };
 
   return <Application />;

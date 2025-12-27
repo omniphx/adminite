@@ -12,20 +12,17 @@ import permissionReducer from './permission/reducers'
 import { permissionSagas } from './permission/sagas'
 
 // ConnectionsState removed - now managed by useConnectionStore (Zustand)
+// ConnectionState removed - now managed by useConnectionStore (Zustand) and TanStack Query
 
 import { FieldPermissionState } from './fieldPermission/types'
 import fieldPermissionReducer from './fieldPermission/reducers'
 import { fieldPermissionSagas } from './fieldPermission/sagas'
 
-// Feature, User, and Connections state are now managed by Zustand stores
-// Keeping minimal state in Redux for backward compatibility during migration
+// Feature, User, Connections, and Connection state are now managed by Zustand stores
+// Schema global describe is now loaded via TanStack Query
 
 import { QueryHistoryState } from './queryHistory/types'
 import queryHistoryReducer from './queryHistory/reducers'
-
-import { ConnectionState } from './connection/types'
-import connectionReducer from './connection/reducers'
-import { connectionSagas } from './connection/sagas'
 
 import { QueryTabsState } from './queryTabs/types'
 import queryTabsReducer from './queryTabs/reducers'
@@ -42,10 +39,7 @@ import { QueriesState } from './queries/types'
 import queriesReducer from './queries/reducers'
 import { queriesSagas } from './queries/sagas'
 
-//Used inside sagas using select()
-export const getConnection = (state: ApplicationState) => state.connectionState.connection
-export const getConnectionId = (state: ApplicationState) => state.connectionState.connectionId
-
+// getConnection removed - use useConnectionStore.getState() + getActiveConnection instead
 // getConnections removed - use useConnectionStore.getState().connections instead
 export const getPermissionState = (state: ApplicationState) => state.permissionState
 export const getFieldPermissionState = (state: ApplicationState) => state.fieldPermissionState
@@ -72,13 +66,12 @@ export interface ApplicationState {
   fieldPermissionState: FieldPermissionState
   permissionState: PermissionState
   queryHistoryState: QueryHistoryState
-  connectionState: ConnectionState
   queryTabsState: QueryTabsState
   querySobjectsState: SObjectsState
   resultSobjectsState: SObjectsState
   queryResultsState: QueryResultsState
   queriesState: QueriesState
-  // featureState, userState, and connectionsState are now managed by Zustand stores
+  // featureState, userState, connectionsState, and connectionState are now managed by Zustand stores
 }
 
 export const rootReducer = combineReducers<ApplicationState>({
@@ -87,21 +80,20 @@ export const rootReducer = combineReducers<ApplicationState>({
   fieldPermissionState: fieldPermissionReducer,
   permissionState: permissionReducer,
   queryHistoryState: queryHistoryReducer,
-  connectionState: connectionReducer,
   queryTabsState: queryTabsReducer,
   querySobjectsState: createSObjectReducer('QUERY'),
   resultSobjectsState: createSObjectReducer('RESULT'),
   queryResultsState: queryResultReducer,
   queriesState: queriesReducer,
-  // featureState, userState, and connectionsState removed - now managed by Zustand stores
+  // featureState, userState, connectionsState, and connectionState removed - now managed by Zustand stores
 })
 
 export function* rootSaga() {
   yield all([
     // connectionsSagas removed - connections now managed by Zustand
+    // connectionSagas removed - connection identity now managed by TanStack Query
     fork(permissionSagas),
     fork(fieldPermissionSagas),
-    fork(connectionSagas),
     fork(sObjectSagas, 'RESULT'),
     fork(sObjectSagas, 'QUERY'),
     fork(queryResultSagas),

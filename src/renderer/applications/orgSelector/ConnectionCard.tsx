@@ -1,9 +1,7 @@
 import * as React from 'react'
 import { DeleteTwoTone, EditOutlined } from '@ant-design/icons'
 import { Card, Row, Col, Modal, Input, Tooltip } from 'antd'
-import { useDispatch } from 'react-redux'
 import { useConnectionStore } from '../../stores/useConnectionStore'
-import { onConnectionSelected } from '../../store/connection/actions'
 
 const { Meta } = Card
 import { useDrag, useDrop } from 'react-dnd'
@@ -20,7 +18,6 @@ interface IConnectionCardProps {
 const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
   (props: IConnectionCardProps) => {
     const { connection, setShowDropdown, index } = props
-    const dispatch = useDispatch()
 
     // Zustand store actions
     const setActiveConnectionId = useConnectionStore((state) => state.setActiveConnectionId)
@@ -55,8 +52,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
     const handleConnectionSelection = (connectionId: string) => {
       setShowDropdown(false)
       setActiveConnectionId(connectionId)
-      // Dispatch Redux action to trigger connection saga (until Phase 4 migration)
-      dispatch(onConnectionSelected(connectionId))
+      // TanStack Query will automatically fetch identity when activeConnectionId changes
     }
 
     const handleDelete = (connectionId: string) => {

@@ -21,6 +21,7 @@ import BooleanCell from './BooleanCell';
 import { onQueryResultChange } from '../../../store/queryResults/actions';
 import { flattenData } from '../../../utils/queryResultsHandler';
 import { useTabStore } from '../../../stores/useTabStore';
+import { useConnectionStore, getActiveConnection } from '../../../stores/useConnectionStore';
 
 interface IQueryResultsTableProps {
   tabId: string;
@@ -31,10 +32,8 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const dispatch = useDispatch();
     const { tabId } = props;
 
-    //Global state
-    const connection = useSelector(
-      (state: ApplicationState) => state.connectionState.connection
-    );
+    //Global state - Zustand connection store (Phase 4)
+    const activeConnection = useConnectionStore(getActiveConnection);
     const data = useSelector(
       (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
     );
@@ -57,7 +56,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
         state.resultSobjectsState.byTabId[tabId].fieldSchema
     );
 
-    const instanceUrl = connection ? connection.instanceUrl : '';
+    const instanceUrl = activeConnection ? activeConnection.instanceUrl : '';
     const dataSource = filteredIds
       .filter(id => data.hasOwnProperty(id))
       .map(id => flattenData(data[id]));

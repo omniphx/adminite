@@ -332,6 +332,23 @@ async function createServer(): Promise<void> {
       }
     });
 
+    ipcMain.handle('salesforce:insert', async (event, { accessToken, instanceUrl, refreshToken, sobjectType, records, toolingMode }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = toolingMode
+          ? await connection.tooling.sobject(sobjectType).insert(records)
+          : await connection.sobject(sobjectType).insert(records);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:insert error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     ipcMain.handle('salesforce:update', async (event, { accessToken, instanceUrl, refreshToken, sobjectType, records, toolingMode }) => {
       try {
         const connection = new jsforce.Connection({

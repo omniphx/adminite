@@ -12,12 +12,13 @@ import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import AutoComplete from './Autocomplete'
 import { useSelector, useDispatch } from 'react-redux'
 import { onQuerySObjectChange } from '../../store/sobject/actions'
-import { SchemaState } from '../../store/schema/types'
 import { Input, Select } from 'antd'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { ipcRenderer } from 'electron'
 import { useUserStore } from '../../stores/useUserStore'
 import { useTabStore, SoqlQuery } from '../../stores/useTabStore'
+import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
+import { useSObjectList } from '../../queries/useSchemaQuery'
 
 interface ConnectionInfo {
   accessToken: string
@@ -48,10 +49,10 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   const toolingMode = queryState?.toolingMode ?? false
   const query: SoqlQuery = queryState?.query ?? { body: '' }
 
-  // Redux still needed for schema and sobject (until Phase 5 & 6)
-  const schemaState: SchemaState = useSelector(
-    (state: ApplicationState) => state.schemaState
-  )
+  // TanStack Query for schema (Phase 4)
+  const { sobjects: sObjectList } = useSObjectList(toolingMode)
+
+  // Redux still needed for sobject describe (until Phase 6)
   const sobject: DescribeSObjectResult = useSelector(
     (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
   )
@@ -59,9 +60,13 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   const disableAutoComplete = useUserStore((state) => state.disableAutoComplete)
   const disableInlineTabs = useUserStore((state) => state.disableInlineTabs)
 
-  const connectionInfo: ConnectionInfo = useSelector(
-    (state: ApplicationState) => state.connectionState.connection
-  )
+  // Get active connection from Zustand store (Phase 4)
+  const activeConnection = useConnectionStore(getActiveConnection)
+  const connectionInfo: ConnectionInfo | undefined = activeConnection ? {
+    accessToken: activeConnection.accessToken,
+    instanceUrl: activeConnection.instanceUrl,
+    refreshToken: activeConnection.refreshToken,
+  } : undefined
 
   const keywords = [
     { name: 'AND', tokenType: 'keyword' },
@@ -197,15 +202,11 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   }, [sobject])
 
   useEffect(() => {
-    if (schemaState) {
-      const sobjects = toolingMode
-        ? schemaState.toolingObjects
-        : schemaState.sobjects
-      const queryableSObjects = sobjects.filter(sobject => sobject.queryable)
-
+    if (sObjectList) {
+      const queryableSObjects = sObjectList.filter((sobject: DescribeGlobalSObjectResult) => sobject.queryable)
       setSobjects(queryableSObjects)
     }
-  }, [toolingMode, schemaState])
+  }, [toolingMode, sObjectList])
 
   const handleChange = (event: any) => {
     setQueryBody(tabId, event.target.value)

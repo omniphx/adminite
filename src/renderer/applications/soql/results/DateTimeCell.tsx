@@ -4,8 +4,8 @@ import { Field as DescribeField } from 'jsforce'
 import { onFieldChange } from '../../../store/queryResults/actions'
 import BaseCell from './BaseCell'
 import moment from 'moment'
-import { useDispatch, useSelector } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
+import { useDispatch } from 'react-redux'
+import { useConnectionStore, getActiveConnection } from '../../../stores/useConnectionStore'
 
 interface IDateTimeCellProps {
   tabId: string
@@ -18,8 +18,9 @@ const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) =
   const dispatch = useDispatch()
   const {tabId, fieldSchema, record} = props
 
-  const userInfo: any = useSelector((state: ApplicationState) => state.connectionState.userInfo)
-  const locale = userInfo ? userInfo.userLocale.substring(0,2) : 'us'
+  // Get locale from active connection identity (Phase 4)
+  const activeConnection = useConnectionStore(getActiveConnection)
+  const locale = activeConnection?.locale ? activeConnection.locale.substring(0,2) : 'us'
   moment.locale(locale)
 
   const [editMode, setEditMode] = React.useState(false)

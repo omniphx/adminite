@@ -27,6 +27,7 @@ export interface StoredConnection {
   accessToken?: string
   refreshToken?: string
   instanceUrl?: string
+  loginUrl?: string // OAuth login URL (e.g., https://login.salesforce.com or https://test.salesforce.com)
 }
 
 export interface ActiveConnectionState {

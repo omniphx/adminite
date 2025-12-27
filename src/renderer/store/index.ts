@@ -19,12 +19,8 @@ import { FieldPermissionState } from './fieldPermission/types'
 import fieldPermissionReducer from './fieldPermission/reducers'
 import { fieldPermissionSagas } from './fieldPermission/sagas'
 
-import { FeatureState } from './feature/types'
-import featureReducer from './feature/reducers'
-
-import { UserState } from './user/types'
-import userReducer from './user/reducers'
-import { userSagas } from './user/sagas'
+// Feature and User state are now managed by Zustand stores
+// Keeping minimal state in Redux for backward compatibility during migration
 
 import { QueryHistoryState } from './queryHistory/types'
 import queryHistoryReducer from './queryHistory/reducers'
@@ -57,7 +53,7 @@ export const getPermissionState = (state: ApplicationState) => state.permissionS
 export const getFieldPermissionState = (state: ApplicationState) => state.fieldPermissionState
 
 export const getSchemaState = (state: ApplicationState) => state.schemaState
-export const getFeatureState = (state: ApplicationState) => state.featureState
+// getFeatureState removed - use useFeatureStore from Zustand instead
 
 export const getData = (state: ApplicationState, tabId: string) => state.queryResultsState.byTabId[tabId].data
 export const getSelectedIds = (state: ApplicationState, tabId: string) => state.queryResultsState.byTabId[tabId].selectedIds
@@ -78,8 +74,6 @@ export interface ApplicationState {
   fieldPermissionState: FieldPermissionState
   permissionState: PermissionState
   connectionsState: ConnectionsState
-  featureState: FeatureState
-  userState: UserState
   queryHistoryState: QueryHistoryState
   connectionState: ConnectionState
   queryTabsState: QueryTabsState
@@ -87,6 +81,7 @@ export interface ApplicationState {
   resultSobjectsState: SObjectsState
   queryResultsState: QueryResultsState
   queriesState: QueriesState
+  // featureState and userState are now managed by Zustand stores
 }
 
 export const rootReducer = combineReducers<ApplicationState>({
@@ -95,15 +90,14 @@ export const rootReducer = combineReducers<ApplicationState>({
   fieldPermissionState: fieldPermissionReducer,
   permissionState: permissionReducer,
   connectionsState: connectionsReducer,
-  featureState: featureReducer,
-  userState: userReducer,
   queryHistoryState: queryHistoryReducer,
   connectionState: connectionReducer,
   queryTabsState: queryTabsReducer,
   querySobjectsState: createSObjectReducer('QUERY'),
   resultSobjectsState: createSObjectReducer('RESULT'),
   queryResultsState: queryResultReducer,
-  queriesState: queriesReducer
+  queriesState: queriesReducer,
+  // featureState and userState removed - now managed by Zustand stores
 })
 
 export function* rootSaga() {
@@ -116,6 +110,6 @@ export function* rootSaga() {
     fork(sObjectSagas, 'QUERY'),
     fork(queryResultSagas),
     fork(queriesSagas),
-    fork(userSagas)
+    // userSagas removed - user state now managed by Zustand
   ])
 }

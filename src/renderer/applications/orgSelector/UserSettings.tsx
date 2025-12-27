@@ -1,9 +1,6 @@
 import * as React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
 import { Modal, Button, Checkbox, Tooltip, Row } from 'antd'
-import { ApplicationState } from '../../store/index'
-import { onUserChange } from '../../store/user/actions'
-// import KeyMapping from './keyMapping'
+import { useUserStore } from '../../stores/useUserStore'
 
 interface IUserSettingsProps {
   setShowModal(show: boolean)
@@ -12,17 +9,17 @@ interface IUserSettingsProps {
 
 const UserSettings: React.FC<any> = React.memo((props: IUserSettingsProps) => {
   const { setShowModal, showModal } = props
-  const dispatch = useDispatch()
-  const id: string = useSelector((state: ApplicationState) => state.userState.id)
-  const disableAutoComplete: boolean = useSelector((state: ApplicationState) => state.userState.disableAutoComplete)
-  const disableInlineTabs: boolean = useSelector((state: ApplicationState) => state.userState.disableInlineTabs)
+  const disableAutoComplete = useUserStore((state) => state.disableAutoComplete)
+  const disableInlineTabs = useUserStore((state) => state.disableInlineTabs)
+  const setDisableAutoComplete = useUserStore((state) => state.setDisableAutoComplete)
+  const setDisableInlineTabs = useUserStore((state) => state.setDisableInlineTabs)
 
   const onDisableAutoComplete = (event: any) => {
-    dispatch(onUserChange({ disableAutoComplete: event.target.checked, id }))
+    setDisableAutoComplete(event.target.checked)
   }
 
   const onDisableInlineTabs = (event: any) => {
-    dispatch(onUserChange({ disableInlineTabs: event.target.checked, id }))
+    setDisableInlineTabs(event.target.checked)
   }
 
   return (

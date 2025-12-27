@@ -47,12 +47,7 @@ export const loadState = () => {
           batchSize: 200
         }
       }
-      if(!state.userState.queryHotkey) {
-        state.userState = {
-          ...state.userState,
-          queryHotkey: 'ctrl+shift+x'
-        }
-      }
+      // userState is now managed by Zustand with its own persistence
     })
 
     return state

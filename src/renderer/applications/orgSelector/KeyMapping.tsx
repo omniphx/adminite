@@ -1,22 +1,19 @@
 import * as React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
 import { EditOutlined } from '@ant-design/icons'
 import { Row, Col } from 'antd'
-import { ApplicationState } from '../../store/index'
 import Hotkeys from '../ui/Hotkeys'
 import hotkeys from 'hotkeys-js'
 import * as os from 'os'
-import { onUserChange } from '../../store/user/actions'
+import { useUserStore } from '../../stores/useUserStore'
 
 interface IKeyMappingProps {
   showModal: boolean
 }
 
 const KeyMapping: React.FC<any> = React.memo((props: IKeyMappingProps) => {
-  const dispatch = useDispatch()
   const { showModal } = props
-  const id: string = useSelector((state: ApplicationState) => state.userState.id)
-  const queryHotkey: string = useSelector((state: ApplicationState) => state.userState.queryHotkey)
+  const queryHotkey = useUserStore((state) => state.queryHotkey)
+  const setQueryHotkey = useUserStore((state) => state.setQueryHotkey)
 
   const [editMode, setEditMode] = React.useState(false)
   const [keyCombo, setKeyCombo] = React.useState('')
@@ -44,7 +41,7 @@ const KeyMapping: React.FC<any> = React.memo((props: IKeyMappingProps) => {
         if(hotkeys.isPressed('enter')) {
           hotkeys.deleteScope('setting')
           setEditMode(false)
-          dispatch(onUserChange({ id, queryHotkey: keyCodeCombo }))
+          setQueryHotkey(keyCodeCombo)
         } else if(hotkeys.isPressed('esc')) {
           hotkeys.deleteScope('setting')
           setEditMode(false)

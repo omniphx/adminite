@@ -30,7 +30,7 @@ store.subscribe(
       resultSobjectsState: store.getState().resultSobjectsState,
       queryResultsState: store.getState().queryResultsState,
       queriesState: store.getState().queriesState,
-      userState: store.getState().userState
+      // userState is now managed by Zustand with its own persistence
     })
   }, 1000)
 )

@@ -18,6 +18,7 @@ import { SchemaState } from '../../store/schema/types'
 import { Input, Select } from 'antd'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { ipcRenderer } from 'electron'
+import { useUserStore } from '../../stores/useUserStore'
 
 interface ConnectionInfo {
   accessToken: string
@@ -57,12 +58,8 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   const activeId: string = useSelector(
     (state: ApplicationState) => state.queryTabsState.activeId
   )
-  const disableAutoComplete: boolean = useSelector(
-    (state: ApplicationState) => state.userState.disableAutoComplete
-  )
-  const disableInlineTabs: boolean = useSelector(
-    (state: ApplicationState) => state.userState.disableInlineTabs
-  )
+  const disableAutoComplete = useUserStore((state) => state.disableAutoComplete)
+  const disableInlineTabs = useUserStore((state) => state.disableInlineTabs)
 
   const connectionInfo: ConnectionInfo = useSelector(
     (state: ApplicationState) => state.connectionState.connection

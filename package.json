@@ -26,6 +26,7 @@
         "@electron-forge/plugin-webpack": "^7.10.2",
         "@electron-forge/publisher-github": "^7.10.2",
         "@electron-forge/shared-types": "^7.10.2",
+        "@tanstack/react-query-devtools": "^5.91.1",
         "@testing-library/dom": "^9.3.4",
         "@testing-library/jest-dom": "^5.16.3",
         "@testing-library/react": "^13.4.0",
@@ -67,6 +68,7 @@
         "@sentry/electron": "^3.0.6",
         "@sentry/react": "^6.15.0",
         "@sentry/tracing": "^6.15.0",
+        "@tanstack/react-query": "^5.90.12",
         "antd": "^5.22.5",
         "dotenv": "^17.2.3",
         "electron-log": "^4.4.6",
@@ -89,7 +91,8 @@
         "source-map-support": "^0.5.19",
         "tcp-port-used": "^1.0.1",
         "uuid": "^8.3.2",
-        "xlsx": "^0.17.0"
+        "xlsx": "^0.17.0",
+        "zustand": "^5.0.9"
     },
     "resolutions": {
         "glob-parent": ">=5.1.2"

@@ -17,19 +17,18 @@ import {
   onConnectionCreate
 } from './store/connections/actions';
 import { toggleModal } from './store/connections/actions';
-import { onFeatureChange } from './store/feature/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import IconWrapper from './applications/ui/IconWrapper';
 import { FaDatabase, FaTools, FaUnlockAlt } from 'react-icons/fa';
 import UpdateNotification from './applications/UpdateNotification';
 import * as os from 'os';
 import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
+import { useFeatureStore, Feature } from './stores/useFeatureStore';
 
 const App = (): ReactElement => {
   const dispatch = useDispatch();
-  const feature = useSelector(
-    (state: ApplicationState) => state.featureState.feature
-  );
+  const feature = useFeatureStore((state) => state.feature);
+  const setFeature = useFeatureStore((state) => state.setFeature);
   const connection = useSelector(
     (state: ApplicationState) => state.connectionState.connection
   );
@@ -118,7 +117,7 @@ const App = (): ReactElement => {
 
   const Application = () => {
     const handleMenuItem = (event: any) => {
-      dispatch(onFeatureChange(event.key));
+      setFeature(event.key as Feature);
     };
 
     return (

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Modal, Input, Select, Button, Form } from 'antd'
+import { ipcRenderer } from 'electron'
 import { toggleModal } from '../../store/connections/actions'
 import { ApplicationState } from '../../store/index'
 import { useForm } from 'antd/lib/form/Form'
@@ -38,7 +39,7 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
           break
       }
 
-      window.electronAPI.createNewConnection(result);
+      ipcRenderer.send('create-new-connection', result)
     } catch (exception) {
       console.error(exception)
     }

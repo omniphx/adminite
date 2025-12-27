@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { ApplicationState } from '../../../store/index'
 import * as XLSX from 'xlsx'
 import FileSaver from 'file-saver'
+import { ipcRenderer, shell } from 'electron'
 
 const { Option } = Select
 
@@ -26,8 +27,11 @@ const Export = React.memo((props: IExportProps) => {
   const [formattedData, setFormattedData] = React.useState([])
 
   React.useEffect(() => {
-    const cleanup = window.electronAPI.onDownloadComplete(handleDownloadComplete);
-    return cleanup;
+    ipcRenderer.on('download-complete', handleDownloadComplete)
+
+    return () => {
+      ipcRenderer.removeListener('download-complete', handleDownloadComplete)
+    }
   }, [])
 
   React.useEffect(() => {
@@ -39,8 +43,8 @@ const Export = React.memo((props: IExportProps) => {
     setFormattedData(formatData(Object.values(data)))
   }, [data])
 
-  function handleDownloadComplete(downloadPath: string) {
-    window.electronAPI.showItemInFolder(downloadPath);
+  function handleDownloadComplete(event, downloadPath: any) {
+    shell.showItemInFolder(downloadPath)
   }
 
   const handleFileNameChange = (event: any) => {

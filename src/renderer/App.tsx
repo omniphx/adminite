@@ -11,6 +11,7 @@ import { Layout, Menu, Spin, Button, Modal } from 'antd';
 import OrgSelector from './applications/orgSelector/OrgSelector';
 import NewOrgModal from './applications/orgSelector/NewOrgModal';
 const { Sider, Content } = Layout;
+import { ipcRenderer, shell } from 'electron';
 import {
   initializeConnection,
   onConnectionCreate
@@ -38,8 +39,10 @@ const App = (): ReactElement => {
 
   useEffect(() => {
     dispatch(initializeConnection());
-    const cleanup = window.electronAPI.onNewConnection(handleNewConnection);
-    return cleanup;
+    ipcRenderer.on('new-connection', handleNewConnection);
+    return () => {
+      ipcRenderer.removeListener('new-connection', handleNewConnection);
+    };
   }, []);
 
   useEffect(() => {
@@ -78,13 +81,13 @@ const App = (): ReactElement => {
     }
   }, []);
 
-  async function handleNewConnection(connection: any) {
+  async function handleNewConnection(event, connection: any) {
     await dispatch(onConnectionCreate(connection));
     await dispatch(toggleModal());
   }
 
   const handleOrgOpen = () => {
-    window.electronAPI.openExternal(
+    shell.openExternal(
       `${connection.instanceUrl}/secur/frontdoor.jsp?sid=${connection.accessToken}`
     );
   };

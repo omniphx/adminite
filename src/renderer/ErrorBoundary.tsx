@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import * as Sentry from '@sentry/browser';
+import { ipcRenderer, shell } from 'electron';
 import { Result, Button } from 'antd';
 
 class ExampleBoundary extends Component<any, any> {
@@ -24,7 +25,7 @@ class ExampleBoundary extends Component<any, any> {
     });
     console.error(error);
     console.error(error.message);
-    window.electronAPI.sendError(JSON.stringify(error));
+    ipcRenderer.send('error', JSON.stringify(error));
   }
 
   render() {
@@ -41,7 +42,7 @@ class ExampleBoundary extends Component<any, any> {
                 <Button
                   style={{ margin: 0, padding: 0 }}
                   onClick={() =>
-                    window.electronAPI.openExternal(
+                    shell.openExternal(
                       'https://github.com/omniphx/adminite/issues/new'
                     )
                   }
@@ -55,7 +56,7 @@ class ExampleBoundary extends Component<any, any> {
           extra={
             <Button
               onClick={() => {
-                window.electronAPI.refresh();
+                ipcRenderer.send('refresh');
               }}
               type='primary'
             >

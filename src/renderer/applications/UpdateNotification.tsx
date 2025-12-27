@@ -1,16 +1,19 @@
 import * as React from 'react'
 import { Button } from 'antd'
+import { ipcRenderer } from 'electron'
 
 const UpdateNotification = React.memo((props: any) => {
   const [updateAvailable, setUpdateAvailable] = React.useState(false)
 
   React.useEffect(() => {
-    const cleanup = window.electronAPI.onUpdateDownloaded(updateListener);
-    return cleanup;
+    ipcRenderer.on('update-downloaded', updateListener)
+    return () => {
+      ipcRenderer.removeListener('update-downloaded', updateListener)
+    }
   }, [])
 
   const handleUpdate = () => {
-    window.electronAPI.startUpdate();
+    ipcRenderer.send('start-update')
   }
 
   if (!updateAvailable) return <div />

@@ -2,8 +2,7 @@ import * as React from 'react'
 import { Row, Col } from 'antd'
 import Table from './QueryResultsTable'
 import ErrorAlert from './ErrorAlert'
-import { useSelector } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
+import { useQueryResultStore, selectTabErrors } from '../../../stores/useQueryResultStore'
 
 interface IQueryResultProps {
   tabId: string
@@ -11,7 +10,8 @@ interface IQueryResultProps {
 
 const QueryResult = React.memo((props: IQueryResultProps) => {
   const { tabId } = props
-  const errors: any = useSelector((state: ApplicationState) => state.queryResultsState.byTabId[tabId].errors)
+  // Zustand for query results errors (Phase 9)
+  const errors = useQueryResultStore(selectTabErrors(tabId))
 
   return errors ? renderErrors() : renderResults()
 

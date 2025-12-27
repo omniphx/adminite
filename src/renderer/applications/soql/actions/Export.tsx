@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { Input, Button, Modal, Select, Row, Col, Table } from 'antd'
-import { useSelector } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
 import * as XLSX from 'xlsx'
 import FileSaver from 'file-saver'
 import { ipcRenderer, shell } from 'electron'
+import { useQueryResultStore, selectTabData, selectTabPending } from '../../../stores/useQueryResultStore'
 
 const { Option } = Select
 
@@ -14,12 +13,10 @@ interface IExportProps {
 
 const Export = React.memo((props: IExportProps) => {
   const { tabId } = props
-  const data: string[] = useSelector(
-    (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
-  )
-  const pending: boolean = useSelector(
-    (state: ApplicationState) => state.queryResultsState.byTabId[tabId].pending
-  )
+
+  // Zustand for query results (Phase 9)
+  const data = useQueryResultStore(selectTabData(tabId))
+  const pending = useQueryResultStore(selectTabPending(tabId))
 
   const [showModal, setShowModal] = React.useState(false)
   const [fileName, setFileName] = React.useState<string>('')
@@ -118,12 +115,14 @@ const Export = React.memo((props: IExportProps) => {
     setShowModal(false)
   }
 
+  const dataValues = Object.values(data)
+
   return (
     <div className='button-style'>
       <Button
         type='link'
         onClick={showExportModal}
-        disabled={!data || data.length <= 0 || pending}
+        disabled={!data || dataValues.length <= 0 || pending}
       >
         Export
       </Button>

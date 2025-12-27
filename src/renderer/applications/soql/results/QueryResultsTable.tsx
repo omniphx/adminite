@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { LinkOutlined } from '@ant-design/icons';
 import { Table as AntTable, TablePaginationConfig } from 'antd';
-import { ApplicationState } from '../../../store/index';
 import {
   isSalesforceId,
   isDate,
@@ -10,7 +9,6 @@ import {
 } from '../../../../helpers/utils';
 import { shell } from 'electron';
 import moment from 'moment';
-import { useSelector, useDispatch } from 'react-redux';
 import TextCell from './TextCell';
 import NumberCell from './NumberCell';
 import PicklistCell from './PicklistCell';
@@ -18,11 +16,11 @@ import DateCell from './DateCell';
 import DateTimeCell from './DateTimeCell';
 import MultiPicklistCell from './MultiPicklistCell';
 import BooleanCell from './BooleanCell';
-import { onQueryResultChange } from '../../../store/queryResults/actions';
 import { flattenData } from '../../../utils/queryResultsHandler';
 import { useTabStore } from '../../../stores/useTabStore';
 import { useConnectionStore, getActiveConnection } from '../../../stores/useConnectionStore';
 import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery';
+import { useQueryResultStore, selectTabData, selectTabFilteredIds, selectTabSelectedIds } from '../../../stores/useQueryResultStore';
 
 interface IQueryResultsTableProps {
   tabId: string;
@@ -30,25 +28,17 @@ interface IQueryResultsTableProps {
 
 const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
   (props: IQueryResultsTableProps) => {
-    const dispatch = useDispatch();
     const { tabId } = props;
 
     //Global state - Zustand connection store (Phase 4)
     const activeConnection = useConnectionStore(getActiveConnection);
-    const data = useSelector(
-      (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
-    );
-    const filteredIds = useSelector(
-      (state: ApplicationState) =>
-        state.queryResultsState.byTabId[tabId].filteredIds
-    );
-    const selectedIds = useSelector(
-      (state: ApplicationState) =>
-        state.queryResultsState.byTabId[tabId].selectedIds
-    );
-    const queryResultsData = useSelector(
-      (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
-    );
+
+    // Zustand for query results (Phase 9)
+    const data = useQueryResultStore(selectTabData(tabId));
+    const filteredIds = useQueryResultStore(selectTabFilteredIds(tabId));
+    const selectedIds = useQueryResultStore(selectTabSelectedIds(tabId));
+    const setSelectedIds = useQueryResultStore((state) => state.setSelectedIds);
+
     // Zustand store for query state
     const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? { current: 1, pageSize: 25 };
     const parsedQuery = useTabStore((state) => state.queries[tabId]?.parsedQuery);
@@ -73,7 +63,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     //Reset selection after a query
     React.useEffect(() => {
       setSelectedRowKeys([]);
-    }, [queryResultsData]);
+    }, [data]);
 
     const handleChange = (
       pagination: TablePaginationConfig,
@@ -176,25 +166,17 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
       : {};
 
     const onSelect = (selectedRow: any, selected: boolean) => {
-      dispatch(
-        onQueryResultChange({
-          tabId,
-          selectedIds: selected
-            ? [...selectedIds, selectedRow.Id]
-            : selectedIds.filter(id => id !== selectedRow.Id)
-        })
-      );
+      const newSelectedIds = selected
+        ? [...selectedIds, selectedRow.Id]
+        : selectedIds.filter(id => id !== selectedRow.Id);
+      setSelectedIds(tabId, newSelectedIds);
     };
 
     const onSelectAll = (selected: boolean) => {
-      dispatch(
-        onQueryResultChange({
-          tabId,
-          selectedIds: selected
-            ? filteredIds
-            : selectedIds.filter(id => !filteredIds.includes(id))
-        })
-      );
+      const newSelectedIds = selected
+        ? filteredIds
+        : selectedIds.filter(id => !filteredIds.includes(id));
+      setSelectedIds(tabId, newSelectedIds);
     };
 
     return (

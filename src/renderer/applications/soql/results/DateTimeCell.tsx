@@ -1,11 +1,10 @@
 import * as React from 'react'
 import { DatePicker, Button } from 'antd'
 import { Field as DescribeField } from 'jsforce'
-import { onFieldChange } from '../../../store/queryResults/actions'
 import BaseCell from './BaseCell'
 import moment from 'moment'
-import { useDispatch } from 'react-redux'
 import { useConnectionStore, getActiveConnection } from '../../../stores/useConnectionStore'
+import { useFieldUpdate } from '../../../queries/useQueryExecution'
 
 interface IDateTimeCellProps {
   tabId: string
@@ -15,7 +14,7 @@ interface IDateTimeCellProps {
 }
 
 const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) => {
-  const dispatch = useDispatch()
+  const { updateField } = useFieldUpdate()
   const {tabId, fieldSchema, record} = props
 
   // Get locale from active connection identity (Phase 4)
@@ -45,14 +44,14 @@ const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) =
     if(moment(editValue).format() === moment(value).format()) return
     record[fieldSchema.name] = editValue
     record.editFields = [...record.editFields, fieldSchema.name]
-    dispatch(onFieldChange(tabId, record))
+    updateField(tabId, record)
   }
 
   const handleClear = () => {
     setEditMode(false)
     record[fieldSchema.name] = null
     record.editFields = [...record.editFields, fieldSchema.name]
-    dispatch(onFieldChange(tabId, record))
+    updateField(tabId, record)
   }
 
   const combineProps = { ...props, handleCancelEditMode, handleConfirmChange, editMode, setEditMode, setEditValue, value}

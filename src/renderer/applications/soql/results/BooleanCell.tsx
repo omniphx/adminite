@@ -1,9 +1,8 @@
 import * as React from 'react'
 import { Checkbox } from 'antd'
 import { Field as DescribeField } from 'jsforce'
-import { onFieldChange } from '../../../store/queryResults/actions'
 import BaseCell from './BaseCell'
-import { useDispatch } from 'react-redux'
+import { useFieldUpdate } from '../../../queries/useQueryExecution'
 
 interface IBooleanCellProps {
   tabId: string
@@ -13,14 +12,14 @@ interface IBooleanCellProps {
 }
 
 const BooleanCell: React.FC<IBooleanCellProps> = (props: IBooleanCellProps) => {
-  const dispatch = useDispatch()
+  const { updateField } = useFieldUpdate()
   const [editMode, setEditMode] = React.useState(false)
   const { tabId, fieldSchema, value, record } = props
 
   const handleChange = (value) => {
     record[fieldSchema.name] = value.target.checked
     record.editFields = [...new Set([...record.editFields, fieldSchema.name])]
-    dispatch(onFieldChange(tabId, record))
+    updateField(tabId, record)
     setEditMode(false)
   }
 

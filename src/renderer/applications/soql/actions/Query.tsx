@@ -1,22 +1,19 @@
 import * as React from 'react'
 import { CloseCircleOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
-import { onQuery, onCancel } from '../../../store/queryResults/actions'
 
 const { Group: ButtonGroup } = Button
-import { useSelector, useDispatch } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
 import { Query as ParsedQuery, isQueryValid, parseQuery } from 'soql-parser-js'
 import { useTabStore } from '../../../stores/useTabStore'
 import { useQueryHistoryStore } from '../../../stores/useQueryHistoryStore'
+import { useQueryResultStore, selectTabPending } from '../../../stores/useQueryResultStore'
+import { useQueryExecution, useQueryCancel } from '../../../queries/useQueryExecution'
 
 interface IQueryProps {
   tabId: string
 }
 
 const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
-  //Global state
-  const dispatch = useDispatch()
   const { tabId } = props
 
   // Zustand stores
@@ -31,10 +28,12 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
   const previousQueries = useQueryHistoryStore((state) => state.queries)
   const addToHistory = useQueryHistoryStore((state) => state.addQuery)
 
-  // Redux still needed for queryResults pending state (until Phase 9)
-  const pending: boolean = useSelector(
-    (state: ApplicationState) => state.queryResultsState.byTabId[tabId]?.pending ?? false
-  )
+  // Zustand for query results pending state (Phase 9)
+  const pending = useQueryResultStore(selectTabPending(tabId))
+
+  // TanStack Query mutation for query execution (Phase 9)
+  const queryExecution = useQueryExecution()
+  const { cancel } = useQueryCancel()
 
   const handleQuery = () => {
     if (isQueryValid(query.body)) {
@@ -45,8 +44,8 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
       setResultSObjectName(tabId, parsedQuery.sObject)
       setQuerySObjectName(tabId, parsedQuery.sObject)
     }
-    // Redux dispatch for query execution (until Phase 9)
-    dispatch(onQuery(tabId, query.body, includeDeleted))
+    // TanStack Query mutation for query execution (Phase 9)
+    queryExecution.mutate({ tabId, queryString: query.body, includeDeleted })
     if (previousQueries[previousQueries.length - 1] !== query.body)
       addToHistory(query.body)
   }
@@ -64,7 +63,7 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
       </Button>
       <Button
         style={{ display: pending ? '' : 'none' }}
-        onClick={() => dispatch(onCancel(tabId))}
+        onClick={() => cancel(tabId)}
         icon={<CloseCircleOutlined />}
       />
     </ButtonGroup>

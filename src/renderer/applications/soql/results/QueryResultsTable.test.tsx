@@ -1,13 +1,11 @@
 import * as React from 'react';
 import QueryResultsTable from './QueryResultsTable';
 
-import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
-
-import { stubInterface } from 'ts-sinon';
-import { QueryResultState } from '../../../store/queryResults/types';
-import { screen, render } from '@testing-library/react';
+import { screen, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+// Mock useFieldUpdate hook
+const mockUpdateField = jest.fn();
 
 // Mock Zustand connection store
 jest.mock('../../../stores/useConnectionStore', () => ({
@@ -32,19 +30,46 @@ jest.mock('../../../stores/useConnectionStore', () => ({
 }));
 
 // Mock Zustand tab store
-jest.mock('../../../stores/useTabStore', () => ({
-  useTabStore: (selector: any) => {
-    const state = {
-      queries: {
-        test: {
-          paginationConfig: { current: 1, pageSize: 25 },
-          parsedQuery: null,
-          resultSObjectName: 'Opportunity',
-        },
-      },
-    };
-    return selector(state);
+const mockTabStoreState = {
+  queries: {
+    test: {
+      paginationConfig: { current: 1, pageSize: 25 },
+      parsedQuery: null,
+      resultSObjectName: 'Opportunity',
+    },
   },
+};
+
+jest.mock('../../../stores/useTabStore', () => ({
+  useTabStore: Object.assign(
+    (selector: any) => selector(mockTabStoreState),
+    {
+      getState: () => mockTabStoreState,
+    }
+  ),
+}));
+
+// Mock Zustand query result store (Phase 9)
+const mockQueryResultStoreState = {
+  byTabId: {
+    test: {
+      data: {},
+      filteredIds: [],
+      selectedIds: [],
+      totalSize: 0,
+      pending: false,
+      dmlPending: false,
+      errors: null,
+    }
+  },
+  setSelectedIds: jest.fn(),
+};
+
+jest.mock('../../../stores/useQueryResultStore', () => ({
+  useQueryResultStore: (selector: any) => selector(mockQueryResultStoreState),
+  selectTabData: (tabId: string) => (state: any) => state.byTabId[tabId]?.data ?? {},
+  selectTabFilteredIds: (tabId: string) => (state: any) => state.byTabId[tabId]?.filteredIds ?? [],
+  selectTabSelectedIds: (tabId: string) => (state: any) => state.byTabId[tabId]?.selectedIds ?? [],
 }));
 
 // Mock TanStack Query for sObject describe (Phase 6)
@@ -65,155 +90,153 @@ jest.mock('../../../queries/useSObjectQuery', () => ({
   }),
 }));
 
-const mockStore = configureMockStore();
-
-const stubbedQueryResult = stubInterface<QueryResultState>();
-
-// State without connectionState (now in Zustand), sobjectState (now in TanStack Query)
-export const state = {
-  queryResultsState: {
-    byTabId: {
-      test: {
-        ...stubbedQueryResult,
-        filteredIds: [],
-        selectedIds: [],
-        data: {}
-      }
-    }
-  }
-};
-
-const defaultState = {
-  ...state,
-  queryResultsState: {
-    byTabId: {
-      test: {
-        ...stubbedQueryResult,
-        selectedIds: [],
-        data: {
-          '1': {
-            key: '1',
-            Name: 'Morty Smith',
-            attributes: {
-              type: 'Opportunity',
-              url:
-                '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
-            },
-            editFields: []
-          },
-          '2': {
-            key: '2',
-            Name: 'Rick Sanchez',
-            attributes: {
-              type: 'Opportunity',
-              url:
-                '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
-            },
-            editFields: []
-          }
-        },
-        filteredIds: ['1', '2']
-      }
-    }
-  }
-};
+// Mock useFieldUpdate hook (Phase 9)
+jest.mock('../../../queries/useQueryExecution', () => ({
+  useFieldUpdate: () => ({
+    updateField: mockUpdateField,
+  }),
+}));
 
 describe('<QueryResultsTable/>', () => {
+  beforeEach(() => {
+    // Reset mocks before each test
+    mockQueryResultStoreState.byTabId.test = {
+      data: {},
+      filteredIds: [],
+      selectedIds: [],
+      totalSize: 0,
+      pending: false,
+      dmlPending: false,
+      errors: null,
+    };
+    mockQueryResultStoreState.setSelectedIds.mockClear();
+    mockUpdateField.mockClear();
+  });
+
   it('should render', () => {
-    const store = mockStore(state);
-    render(
-      <Provider store={store}>
-        <QueryResultsTable {...{ tabId: 'test' }} />
-      </Provider>
-    );
+    render(<QueryResultsTable tabId='test' />);
   });
 
   it('should filter results', () => {
-    const testState = {
-      ...defaultState,
-      queryResultsState: {
-        byTabId: {
-          test: {
-            ...defaultState.queryResultsState.byTabId.test,
-            filteredIds: ['2']
-          }
+    mockQueryResultStoreState.byTabId.test = {
+      data: {
+        '1': {
+          key: '1',
+          Name: 'Morty Smith',
+          attributes: {
+            type: 'Opportunity',
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+          },
+          editFields: []
+        },
+        '2': {
+          key: '2',
+          Name: 'Rick Sanchez',
+          attributes: {
+            type: 'Opportunity',
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+          },
+          editFields: []
         }
-      }
+      },
+      filteredIds: ['2'],
+      selectedIds: [],
+      totalSize: 2,
+      pending: false,
+      dmlPending: false,
+      errors: null,
     };
-    const store = mockStore(testState);
-    render(
-      <Provider store={store}>
-        <QueryResultsTable {...{ tabId: 'test' }} />
-      </Provider>
-    );
+
+    render(<QueryResultsTable tabId='test' />);
 
     screen.getByText('Rick Sanchez');
     expect(screen.queryByText('Morty Smith')).toBeNull();
   });
 
   it('should show parent record', () => {
-    const newState = {
-      ...state,
-      queryResultsState: {
-        byTabId: {
-          test: {
-            ...stubbedQueryResult,
-            selectedIds: [],
-            data: {
-              '1': {
-                key: '1',
-                Account: {
-                  Name: 'Morty Smith',
-                  ParentAccount: {
-                    Name: 'Jerry Smith'
-                  }
-                },
-                attributes: {
-                  type: 'Opportunity',
-                  url:
-                    '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
-                }
-              }
-            },
-            filteredIds: ['1']
-          }
+    mockQueryResultStoreState.byTabId.test = {
+      data: {
+        '1': {
+          key: '1',
+          Account: {
+            Name: 'Morty Smith',
+            ParentAccount: {
+              Name: 'Jerry Smith'
+            }
+          },
+          attributes: {
+            type: 'Opportunity',
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+          },
+          editFields: []
         }
-      }
+      },
+      filteredIds: ['1'],
+      selectedIds: [],
+      totalSize: 1,
+      pending: false,
+      dmlPending: false,
+      errors: null,
     };
 
-    const store = mockStore(newState);
-    render(
-      <Provider store={store}>
-        <QueryResultsTable {...{ tabId: 'test' }} />
-      </Provider>
-    );
+    render(<QueryResultsTable tabId='test' />);
 
-    screen.getByText('Account.Name');
-    screen.getByText('Account.ParentAccount.Name');
+    // These column names appear multiple times (header, sorter labels, etc.)
+    // Just verify they appear at least once
+    expect(screen.getAllByText('Account.Name').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Account.ParentAccount.Name').length).toBeGreaterThan(0);
     screen.getByText('Morty Smith');
     screen.getByText('Jerry Smith');
   });
 
   it('cell should have allow editing', async () => {
-    const store = mockStore(defaultState);
-    render(
-      <Provider store={store}>
-        <QueryResultsTable {...{ tabId: 'test' }} />
-      </Provider>
-    );
+    mockQueryResultStoreState.byTabId.test = {
+      data: {
+        '1': {
+          key: '1',
+          Name: 'Morty Smith',
+          attributes: {
+            type: 'Opportunity',
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+          },
+          editFields: []
+        },
+        '2': {
+          key: '2',
+          Name: 'Rick Sanchez',
+          attributes: {
+            type: 'Opportunity',
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+          },
+          editFields: []
+        }
+      },
+      filteredIds: ['1', '2'],
+      selectedIds: [],
+      totalSize: 2,
+      pending: false,
+      dmlPending: false,
+      errors: null,
+    };
+
+    render(<QueryResultsTable tabId='test' />);
 
     const mortyCell = screen.getByText('Morty Smith');
     expect(mortyCell).toHaveClass('table-cell');
 
     const editAction = mortyCell.querySelector('a');
-    userEvent.click(editAction);
+    await userEvent.click(editAction!);
 
     const input = mortyCell.querySelector('input');
-    userEvent.clear(input);
-    userEvent.type(input, 'Evil Morty{enter}');
+    await userEvent.clear(input!);
+    await userEvent.type(input!, 'Evil Morty{enter}');
 
-    const actions = store.getActions();
-    expect(actions[0].type).toEqual('@@queryResult/ON_FIELD_CHANGE');
-    expect(actions[0].payload.record.Name).toEqual('Evil Morty');
+    // Now uses Zustand updateField instead of Redux dispatch (Phase 9)
+    await waitFor(() => {
+      expect(mockUpdateField).toHaveBeenCalled();
+    });
+    const callArgs = mockUpdateField.mock.calls[0];
+    expect(callArgs[0]).toBe('test'); // tabId
+    expect(callArgs[1].Name).toBe('Evil Morty');
   });
 });

@@ -2,18 +2,12 @@ import * as React from 'react'
 
 //Components
 import { Tabs } from 'antd'
-import { useDispatch } from 'react-redux'
 import QueryTab from './QueryTab'
-import {
-  onQueryResultCreate,
-  onQueryResultDelete
-} from '../../store/queryResults/actions'
 import QueryTabDragDrop from './QueryTabDragDrop'
 import { useTabStore } from '../../stores/useTabStore'
+import { useQueryResultStore } from '../../stores/useQueryResultStore'
 
 const QueryTabs: React.FC = () => {
-  const dispatch = useDispatch()
-
   // Zustand store for tabs
   const tabs = useTabStore((state) => state.tabs)
   const tabOrder = useTabStore((state) => state.tabOrder)
@@ -21,6 +15,10 @@ const QueryTabs: React.FC = () => {
   const createTab = useTabStore((state) => state.createTab)
   const closeTab = useTabStore((state) => state.closeTab)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
+
+  // Zustand store for query results (Phase 9)
+  const createQueryResultTab = useQueryResultStore((state) => state.createTab)
+  const deleteQueryResultTab = useQueryResultStore((state) => state.deleteTab)
 
   const onChange = (activeKey: string) => {
     setActiveTab(activeKey)
@@ -39,15 +37,13 @@ const QueryTabs: React.FC = () => {
 
   const add = () => {
     const id = createTab()
-    // Still need to dispatch to Redux for queryResults (until Phase 9)
-    // sObject state now managed by Zustand + TanStack Query (Phase 6)
-    dispatch(onQueryResultCreate(id))
+    // Zustand for query results (Phase 9)
+    createQueryResultTab(id)
   }
 
   const remove = (id: string) => {
-    // Still need to dispatch to Redux for queryResults (until Phase 9)
-    // sObject state now managed by Zustand + TanStack Query (Phase 6)
-    dispatch(onQueryResultDelete(id))
+    // Zustand for query results (Phase 9)
+    deleteQueryResultTab(id)
     closeTab(id)
   }
 

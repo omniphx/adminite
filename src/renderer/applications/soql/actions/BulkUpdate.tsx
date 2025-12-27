@@ -1,10 +1,8 @@
 import * as React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
 import { Modal, Button, Select, Input, InputNumber, DatePicker, Checkbox } from 'antd'
-import { onQueryResultDataChange } from '../../../store/queryResults/actions'
 import { useTabStore } from '../../../stores/useTabStore'
 import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery'
+import { useQueryResultStore, selectTabData, selectTabSelectedIds } from '../../../stores/useQueryResultStore'
 
 const { Option } = Select
 
@@ -15,12 +13,12 @@ interface IBulkUpdateProps {
 }
 
 const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdateProps) => {
-  const dispatch = useDispatch()
   const { tabId, showModal, setShowModal } = props
 
-  // Redux still needed for queryResults (until Phase 9)
-  const data: any = useSelector((state: ApplicationState) => state.queryResultsState.byTabId[tabId].data)
-  const selectedIds: any = useSelector((state: ApplicationState) => state.queryResultsState.byTabId[tabId].selectedIds)
+  // Zustand for query results (Phase 9)
+  const data = useQueryResultStore(selectTabData(tabId))
+  const selectedIds = useQueryResultStore(selectTabSelectedIds(tabId))
+  const setData = useQueryResultStore((state) => state.setData)
 
   // Zustand + TanStack Query for sObject describe (Phase 6)
   const resultSObjectName = useTabStore((state) => state.queries[tabId]?.resultSObjectName)
@@ -59,16 +57,17 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
     })
 
   const handleApply = () => {
-    Object.values(data).forEach((record: any) => {
+    const updatedData = { ...data }
+    Object.values(updatedData).forEach((record: any) => {
       if(selectedIds.includes(record.Id)) {
         record[field] = editValue
-        record.editFields = [...new Set([...record.editFields, field])]
+        record.editFields = [...new Set([...(record.editFields || []), field])]
       } else {
         //Sets property if it doesn't exist
-        record[field] = record[field] 
+        record[field] = record[field]
       }
     })
-    dispatch(onQueryResultDataChange(tabId, {...data}))
+    setData(tabId, updatedData)
     setShowModal(false)
   }
 

@@ -1,8 +1,7 @@
 import * as React from 'react'
 import { Alert } from 'antd'
 import { GiSadCrab } from 'react-icons/gi';
-import { useSelector } from 'react-redux';
-import { ApplicationState } from '../../../store/index';
+import { useQueryResultStore, selectTabErrors } from '../../../stores/useQueryResultStore';
 
 interface IErrorAlertProps {
   tabId: string
@@ -10,7 +9,8 @@ interface IErrorAlertProps {
 
 const ErrorAlert: React.FC<IErrorAlertProps> = React.memo((props: IErrorAlertProps) => {
   const { tabId } = props
-  const errors: any = useSelector((state: ApplicationState) => state.queryResultsState.byTabId[tabId].errors)
+  // Zustand for query results errors (Phase 9)
+  const errors = useQueryResultStore(selectTabErrors(tabId))
 
   const errorComponent = <pre className='mono-font'>{errors}</pre>
 

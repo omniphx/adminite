@@ -2,22 +2,21 @@ import * as React from 'react'
 import { DownOutlined } from '@ant-design/icons'
 import { Menu, Dropdown, Modal } from 'antd'
 import BulkUpdate from './BulkUpdate'
-import { useDispatch, useSelector } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
-import { onDelete } from '../../../store/queryResults/actions'
+import { useQueryResultStore, selectTabSelectedIds } from '../../../stores/useQueryResultStore'
+import { useDmlDelete } from '../../../queries/useDmlMutations'
 
 interface IBulkActionsProps {
   tabId: string
 }
 
 const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
 
-  const selectedIds: string[] = useSelector(
-    (state: ApplicationState) =>
-      state.queryResultsState.byTabId[tabId].selectedIds
-  )
+  // Zustand for selected IDs (Phase 9)
+  const selectedIds = useQueryResultStore(selectTabSelectedIds(tabId))
+
+  // TanStack Query mutation for DML delete (Phase 9)
+  const dmlDelete = useDmlDelete()
 
   const [showUpdateModal, setShowUpdateModal] = React.useState(false)
 
@@ -63,7 +62,7 @@ const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
       cancelText: 'No',
       style: { top: 150 },
       onOk() {
-        dispatch(onDelete(tabId))
+        dmlDelete.mutate(tabId)
       }
     })
   }

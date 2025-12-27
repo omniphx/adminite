@@ -1,9 +1,8 @@
 import * as React from 'react'
 import { Select, Tooltip } from 'antd'
 import { Field as DescribeField } from 'jsforce'
-import { onFieldChange } from '../../../store/queryResults/actions'
 import BaseCell from './BaseCell'
-import { useDispatch } from 'react-redux'
+import { useFieldUpdate } from '../../../queries/useQueryExecution'
 
 interface IPicklistCellProps {
   tabId: string
@@ -13,7 +12,7 @@ interface IPicklistCellProps {
 }
 
 const PicklistCell: React.FC<IPicklistCellProps> = (props: IPicklistCellProps) => {
-  const dispatch = useDispatch()
+  const { updateField } = useFieldUpdate()
   const { tabId, fieldSchema, value, record } = props
 
   const [editMode, setEditMode] = React.useState(false)
@@ -21,7 +20,7 @@ const PicklistCell: React.FC<IPicklistCellProps> = (props: IPicklistCellProps) =
   const handleChange = (value) => {
     record[fieldSchema.name] = value
     record.editFields = [...record.editFields, fieldSchema.name]
-    dispatch(onFieldChange(tabId, record))
+    updateField(tabId, record)
     setEditMode(false)
   }
 

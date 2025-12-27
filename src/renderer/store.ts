@@ -1,5 +1,5 @@
 import { createStore, applyMiddleware, Store } from 'redux'
-import { rootReducer, rootSaga } from './store/index'
+import { rootReducer } from './store/index'
 // import { composeWithDevTools } from 'redux-devtools-extension'
 import createSagaMiddleware from 'redux-saga'
 import throttle from 'lodash/throttle'
@@ -26,15 +26,12 @@ store.subscribe(
     saveState({
       queryHistoryState: store.getState().queryHistoryState,
       queryTabsState: store.getState().queryTabsState,
-      querySobjectsState: store.getState().querySobjectsState,
-      resultSobjectsState: store.getState().resultSobjectsState,
-      queryResultsState: store.getState().queryResultsState,
-      queriesState: store.getState().queriesState,
+      // queriesState and queryResultsState removed - now managed by Zustand with its own persistence (Phase 9)
       // userState is now managed by Zustand with its own persistence
     })
   }, 1000)
 )
 
-sagaMiddleware.run(rootSaga)
+// rootSaga removed - all sagas have been migrated to TanStack Query/Zustand (Phase 9)
 
 export default store

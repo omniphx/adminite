@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { Input } from 'antd';
 import { Field as DescribeField } from 'jsforce';
-import { onFieldChange } from '../../../store/queryResults/actions';
 import BaseCell from './BaseCell';
 import { shell } from 'electron';
-import { useDispatch } from 'react-redux';
+import { useFieldUpdate } from '../../../queries/useQueryExecution';
 
 interface ITextCellProps {
   tabId: string;
@@ -14,7 +13,7 @@ interface ITextCellProps {
 }
 
 const TextCell: React.FC<ITextCellProps> = (props: ITextCellProps) => {
-  const dispatch = useDispatch();
+  const { updateField } = useFieldUpdate();
   const [editMode, setEditMode] = React.useState(false);
   const { tabId, fieldSchema, value, record } = props;
   const [editValue, setEditValue] = React.useState(value);
@@ -53,7 +52,7 @@ const TextCell: React.FC<ITextCellProps> = (props: ITextCellProps) => {
     if (editValue === value) return;
     record[fieldSchema.name] = editValue;
     record.editFields = [...record.editFields, fieldSchema.name];
-    dispatch(onFieldChange(tabId, record));
+    updateField(tabId, record);
   };
 
   const combineProps = {

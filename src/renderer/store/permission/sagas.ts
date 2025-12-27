@@ -2,14 +2,23 @@ import { put, select, takeLatest, all, fork } from 'redux-saga/effects'
 import { QueryResult } from 'jsforce'
 import { getProfiles, getPermissionSets } from '../../utils/queryBuilder'
 import { PermissionActionTypes } from './types'
-import { getPermissionState, getSchemaState, ApplicationState } from '../index';
+import { getPermissionState, ApplicationState } from '../index';
 import { getFieldPermissions } from '../fieldPermission/sagas'
 import { ipcRenderer } from 'electron'
 import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
+import { queryClient } from '../../queries/queryClient'
+import { queryKeys } from '../../queries/queryKeys'
 
 // Helper to get active connection from Zustand store (Phase 4)
 function getConnectionFromZustand() {
   return getActiveConnection(useConnectionStore.getState())
+}
+
+// Helper to get namespace from TanStack Query cache (Phase 5)
+function getNamespaceFromCache(): string | null {
+  const activeConnectionId = useConnectionStore.getState().activeConnectionId
+  if (!activeConnectionId) return null
+  return queryClient.getQueryData<string | null>(queryKeys.schema.namespace(activeConnectionId)) ?? null
 }
 
 export function* permissionSagas() {
@@ -94,7 +103,7 @@ export function* getPermissions() {
     if(!connection) return
 
     const { permissionIds, permissionType } = yield select(getPermissionState)
-    const { namespace } = yield select(getSchemaState)
+    const namespace = getNamespaceFromCache()
     const queryString: string =
       permissionType === 'profile'
         ? getProfiles(permissionIds)

@@ -4,9 +4,6 @@ import { combineReducers } from 'redux'
 import { PaginationState } from './pagination/types'
 import paginationReducer from './pagination/reducers'
 
-import { SchemaState } from './schema/types'
-import schemaReducer from './schema/reducers'
-
 import { PermissionState } from './permission/types'
 import permissionReducer from './permission/reducers'
 import { permissionSagas } from './permission/sagas'
@@ -19,7 +16,7 @@ import fieldPermissionReducer from './fieldPermission/reducers'
 import { fieldPermissionSagas } from './fieldPermission/sagas'
 
 // Feature, User, Connections, and Connection state are now managed by Zustand stores
-// Schema global describe is now loaded via TanStack Query
+// Schema state (sobjects, toolingObjects, namespace) is now managed by TanStack Query
 
 import { QueryHistoryState } from './queryHistory/types'
 import queryHistoryReducer from './queryHistory/reducers'
@@ -43,8 +40,7 @@ import { queriesSagas } from './queries/sagas'
 // getConnections removed - use useConnectionStore.getState().connections instead
 export const getPermissionState = (state: ApplicationState) => state.permissionState
 export const getFieldPermissionState = (state: ApplicationState) => state.fieldPermissionState
-
-export const getSchemaState = (state: ApplicationState) => state.schemaState
+// getSchemaState removed - use TanStack Query hooks (useGlobalDescribeQuery, useNamespaceQuery) instead
 // getFeatureState removed - use useFeatureStore from Zustand instead
 
 export const getData = (state: ApplicationState, tabId: string) => state.queryResultsState.byTabId[tabId].data
@@ -62,7 +58,6 @@ export const getResultSObject = (state: ApplicationState, tabId: string) => stat
 export const getActiveTabId = (state: ApplicationState) => state.queryTabsState.activeId
 export interface ApplicationState {
   paginationState: PaginationState
-  schemaState: SchemaState
   fieldPermissionState: FieldPermissionState
   permissionState: PermissionState
   queryHistoryState: QueryHistoryState
@@ -71,12 +66,11 @@ export interface ApplicationState {
   resultSobjectsState: SObjectsState
   queryResultsState: QueryResultsState
   queriesState: QueriesState
-  // featureState, userState, connectionsState, and connectionState are now managed by Zustand stores
+  // featureState, userState, connectionsState, connectionState, and schemaState are now managed by Zustand/TanStack Query
 }
 
 export const rootReducer = combineReducers<ApplicationState>({
   paginationState: paginationReducer,
-  schemaState: schemaReducer,
   fieldPermissionState: fieldPermissionReducer,
   permissionState: permissionReducer,
   queryHistoryState: queryHistoryReducer,
@@ -85,7 +79,7 @@ export const rootReducer = combineReducers<ApplicationState>({
   resultSobjectsState: createSObjectReducer('RESULT'),
   queryResultsState: queryResultReducer,
   queriesState: queriesReducer,
-  // featureState, userState, connectionsState, and connectionState removed - now managed by Zustand stores
+  // featureState, userState, connectionsState, connectionState, and schemaState removed - now managed by Zustand/TanStack Query
 })
 
 export function* rootSaga() {

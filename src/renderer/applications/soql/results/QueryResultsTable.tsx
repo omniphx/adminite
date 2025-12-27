@@ -22,6 +22,7 @@ import { onQueryResultChange } from '../../../store/queryResults/actions';
 import { flattenData } from '../../../utils/queryResultsHandler';
 import { useTabStore } from '../../../stores/useTabStore';
 import { useConnectionStore, getActiveConnection } from '../../../stores/useConnectionStore';
+import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery';
 
 interface IQueryResultsTableProps {
   tabId: string;
@@ -51,10 +52,11 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     // Zustand store for query state
     const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? { current: 1, pageSize: 25 };
     const parsedQuery = useTabStore((state) => state.queries[tabId]?.parsedQuery);
-    const fieldSchema = useSelector(
-      (state: ApplicationState) =>
-        state.resultSobjectsState.byTabId[tabId].fieldSchema
-    );
+    const resultSObjectName = useTabStore((state) => state.queries[tabId]?.resultSObjectName);
+
+    // TanStack Query for sObject describe (Phase 6)
+    const { data: sobjectData } = useResultSObjectDescribe(tabId, resultSObjectName);
+    const fieldSchema = sobjectData?.fieldSchema;
 
     const instanceUrl = activeConnection ? activeConnection.instanceUrl : '';
     const dataSource = filteredIds

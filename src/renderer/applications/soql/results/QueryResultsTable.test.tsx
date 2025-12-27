@@ -6,7 +6,6 @@ import configureMockStore from 'redux-mock-store';
 
 import { stubInterface } from 'ts-sinon';
 import { QueryResultState } from '../../../store/queryResults/types';
-import { SObjectState } from '../../../store/sobject/types';
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -40,6 +39,7 @@ jest.mock('../../../stores/useTabStore', () => ({
         test: {
           paginationConfig: { current: 1, pageSize: 25 },
           parsedQuery: null,
+          resultSObjectName: 'Opportunity',
         },
       },
     };
@@ -47,27 +47,30 @@ jest.mock('../../../stores/useTabStore', () => ({
   },
 }));
 
-const mockStore = configureMockStore();
-
-const stubbedResultSobjectsState: SObjectState = stubInterface<SObjectState>();
-const stubbedQueryResult = stubInterface<QueryResultState>();
-
-// State without connectionState (now in Zustand)
-export const state = {
-  resultSobjectsState: {
-    byTabId: {
-      test: {
-        ...stubbedResultSobjectsState,
-        fieldSchema: {
-          Name: {
-            name: 'Name',
-            type: 'string',
-            updateable: true
-          }
+// Mock TanStack Query for sObject describe (Phase 6)
+jest.mock('../../../queries/useSObjectQuery', () => ({
+  useResultSObjectDescribe: () => ({
+    data: {
+      sobject: { name: 'Opportunity', fields: [] },
+      fieldSchema: {
+        Name: {
+          name: 'Name',
+          type: 'string',
+          updateable: true
         }
       }
-    }
-  },
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+const mockStore = configureMockStore();
+
+const stubbedQueryResult = stubInterface<QueryResultState>();
+
+// State without connectionState (now in Zustand), sobjectState (now in TanStack Query)
+export const state = {
   queryResultsState: {
     byTabId: {
       test: {

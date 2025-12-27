@@ -8,12 +8,6 @@ import {
   onQueryResultCreate,
   onQueryResultDelete
 } from '../../store/queryResults/actions'
-import {
-  onQuerySObjectCreate,
-  onResultSObjectCreate,
-  onQuerySObjectDelete,
-  onResultObjectDelete
-} from '../../store/sobject/actions'
 import QueryTabDragDrop from './QueryTabDragDrop'
 import { useTabStore } from '../../stores/useTabStore'
 
@@ -45,17 +39,15 @@ const QueryTabs: React.FC = () => {
 
   const add = () => {
     const id = createTab()
-    // Still need to dispatch to Redux for queryResults and sobject (until Phase 6 & 9)
+    // Still need to dispatch to Redux for queryResults (until Phase 9)
+    // sObject state now managed by Zustand + TanStack Query (Phase 6)
     dispatch(onQueryResultCreate(id))
-    dispatch(onQuerySObjectCreate(id))
-    dispatch(onResultSObjectCreate(id))
   }
 
   const remove = (id: string) => {
-    // Still need to dispatch to Redux for queryResults and sobject (until Phase 6 & 9)
+    // Still need to dispatch to Redux for queryResults (until Phase 9)
+    // sObject state now managed by Zustand + TanStack Query (Phase 6)
     dispatch(onQueryResultDelete(id))
-    dispatch(onQuerySObjectDelete(id))
-    dispatch(onResultObjectDelete(id))
     closeTab(id)
   }
 

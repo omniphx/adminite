@@ -11,10 +11,7 @@ import QueryOptions from './actions/QueryOptions'
 import QueryResult from './results/QueryResult'
 import Query from './actions/Query'
 import SelectContext from '../SelectContext'
-import { DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce'
-import { ApplicationState } from '../../store/index'
-import { onQuerySObjectChange } from '../../store/sobject/actions'
-import { useSelector, useDispatch } from 'react-redux'
+import { DescribeGlobalSObjectResult } from 'jsforce'
 import History from './actions/History'
 import QueryValidator from './QueryValidator'
 import { formatQuery } from 'soql-parser-js'
@@ -29,32 +26,27 @@ interface IQueryTabProps {
 }
 
 const QueryTab = React.memo((props: IQueryTabProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
 
   // Zustand store for query state
   const queryState = useTabStore((state) => state.queries[tabId])
   const setQuery = useTabStore((state) => state.setQuery)
+  const setQuerySObjectName = useTabStore((state) => state.setQuerySObjectName)
   const toolingMode = queryState?.toolingMode ?? false
   const query = queryState?.query ?? { body: '' }
+  const querySObjectName = queryState?.querySObjectName ?? ''
 
-  // TanStack Query for schema (Phase 4)
-  const { sobjects: sObjectList, isLoading: schemaLoading } = useSObjectList(toolingMode)
-
-  // Redux still needed for sobject describe (until Phase 6)
-  const sobject: DescribeSObjectResult = useSelector(
-    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
-  )
+  // TanStack Query for schema (Phase 5)
+  const { sobjects: sObjectList } = useSObjectList(toolingMode)
 
   const sobjects: DescribeGlobalSObjectResult[] = getQueryableSObjects(sObjectList ?? [])
-  const sobjectName: string = sobject ? sobject.name : ''
 
   //Props
   const childProps = { tabId }
 
-  const handleChange = (sobjectName: string) => {
-    // Still dispatch to Redux for sobject (until Phase 6)
-    dispatch(onQuerySObjectChange(tabId, sobjectName))
+  const handleChange = (sObjectName: string) => {
+    // Update Zustand store (Phase 6)
+    setQuerySObjectName(tabId, sObjectName)
   }
 
   const formatConfig = {
@@ -76,7 +68,7 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
         <Col span={12}>
           <SelectContext
             {...{ sobjects, handleChange }}
-            sobject={sobjectName}
+            sobject={querySObjectName}
             loading={false}
           />
         </Col>

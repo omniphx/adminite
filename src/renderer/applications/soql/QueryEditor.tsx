@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState, useRef } from 'react'
 
-import { ApplicationState } from '../../store/index'
 import {
   DescribeGlobalSObjectResult,
   DescribeSObjectResult,
@@ -10,8 +9,6 @@ import {
 import { Caret, CaretLocator } from '../../utils/caretPosition'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import AutoComplete from './Autocomplete'
-import { useSelector, useDispatch } from 'react-redux'
-import { onQuerySObjectChange } from '../../store/sobject/actions'
 import { Input, Select } from 'antd'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { ipcRenderer } from 'electron'
@@ -19,6 +16,7 @@ import { useUserStore } from '../../stores/useUserStore'
 import { useTabStore, SoqlQuery } from '../../stores/useTabStore'
 import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
 import { useSObjectList } from '../../queries/useSchemaQuery'
+import { useQuerySObjectDescribe } from '../../queries/useSObjectQuery'
 
 interface ConnectionInfo {
   accessToken: string
@@ -39,23 +37,23 @@ interface IObjectDescriptions {
 }
 
 const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
 
   // Zustand stores
   const queryState = useTabStore((state) => state.queries[tabId])
   const activeTabId = useTabStore((state) => state.activeTabId)
   const setQueryBody = useTabStore((state) => state.setQueryBody)
+  const setQuerySObjectName = useTabStore((state) => state.setQuerySObjectName)
   const toolingMode = queryState?.toolingMode ?? false
   const query: SoqlQuery = queryState?.query ?? { body: '' }
+  const querySObjectName = queryState?.querySObjectName
 
-  // TanStack Query for schema (Phase 4)
+  // TanStack Query for schema (Phase 5)
   const { sobjects: sObjectList } = useSObjectList(toolingMode)
 
-  // Redux still needed for sobject describe (until Phase 6)
-  const sobject: DescribeSObjectResult = useSelector(
-    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
-  )
+  // TanStack Query for sObject describe (Phase 6)
+  const { data: sobjectData } = useQuerySObjectDescribe(tabId, querySObjectName)
+  const sobject: DescribeSObjectResult | undefined = sobjectData?.sobject
 
   const disableAutoComplete = useUserStore((state) => state.disableAutoComplete)
   const disableInlineTabs = useUserStore((state) => state.disableInlineTabs)
@@ -391,7 +389,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     }
 
     if (value.tokenType === 'sobject') {
-      dispatch(onQuerySObjectChange(tabId, value.name))
+      setQuerySObjectName(tabId, value.name)
     }
   }
 

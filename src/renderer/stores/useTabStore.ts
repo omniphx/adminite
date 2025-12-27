@@ -25,6 +25,9 @@ export interface QueryState {
   parsedQuery?: any
   batchSize: number
   errors?: any
+  // SObject names for describe queries (Phase 6)
+  querySObjectName?: string // For query editor autocomplete
+  resultSObjectName?: string // For results table rendering
 }
 
 export interface QueryResultUIState {
@@ -67,6 +70,8 @@ interface TabActions {
   setBatchSize: (tabId: string, batchSize: number) => void
   setPaginationConfig: (tabId: string, config: TablePaginationConfig) => void
   setParsedQuery: (tabId: string, parsedQuery: any) => void
+  setQuerySObjectName: (tabId: string, sObjectName: string | undefined) => void
+  setResultSObjectName: (tabId: string, sObjectName: string | undefined) => void
 
   // Result UI state
   setSelectedIds: (tabId: string, ids: string[]) => void
@@ -230,6 +235,22 @@ export const useTabStore = create<TabState & TabActions>()(
           queries: {
             ...state.queries,
             [tabId]: { ...state.queries[tabId], parsedQuery },
+          },
+        })),
+
+      setQuerySObjectName: (tabId, querySObjectName) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], querySObjectName },
+          },
+        })),
+
+      setResultSObjectName: (tabId, resultSObjectName) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], resultSObjectName },
           },
         })),
 

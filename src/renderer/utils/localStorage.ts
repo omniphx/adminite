@@ -29,18 +29,6 @@ export const loadState = () => {
           selectedIds: []
         }
       }
-      if(!state.resultSobjectsState.byTabId[tabId].fieldSchema) {
-        state.resultSobjectsState.byTabId[tabId] = {
-          ...state.resultSobjectsState.byTabId[tabId],
-          fieldSchema: {}
-        }
-      }
-      if(!state.querySobjectsState.byTabId[tabId].fieldSchema) {
-        state.querySobjectsState.byTabId[tabId] = {
-          ...state.querySobjectsState.byTabId[tabId],
-          fieldSchema: {}
-        }
-      }
       if(!state.queriesState.byTabId[tabId].batchSize) {
         state.queriesState.byTabId[tabId] = {
           ...state.queriesState.byTabId[tabId],
@@ -48,6 +36,7 @@ export const loadState = () => {
         }
       }
       // userState is now managed by Zustand with its own persistence
+      // sobjectState (querySobjectsState, resultSobjectsState) is now managed by TanStack Query (Phase 6)
     })
 
     return state

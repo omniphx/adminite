@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux'
 import { ApplicationState } from '../../../store/index'
 import { Modal, Button, Select, Input, InputNumber, DatePicker, Checkbox } from 'antd'
 import { onQueryResultDataChange } from '../../../store/queryResults/actions'
+import { useTabStore } from '../../../stores/useTabStore'
+import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery'
 
 const { Option } = Select
 
@@ -16,10 +18,15 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
   const dispatch = useDispatch()
   const { tabId, showModal, setShowModal } = props
 
+  // Redux still needed for queryResults (until Phase 9)
   const data: any = useSelector((state: ApplicationState) => state.queryResultsState.byTabId[tabId].data)
   const selectedIds: any = useSelector((state: ApplicationState) => state.queryResultsState.byTabId[tabId].selectedIds)
-  const sobject: any = useSelector((state: ApplicationState) => state.resultSobjectsState.byTabId[tabId].sobject)
-  const fieldSchema: any = useSelector((state: ApplicationState) => state.resultSobjectsState.byTabId[tabId].fieldSchema)
+
+  // Zustand + TanStack Query for sObject describe (Phase 6)
+  const resultSObjectName = useTabStore((state) => state.queries[tabId]?.resultSObjectName)
+  const { data: sobjectData } = useResultSObjectDescribe(tabId, resultSObjectName)
+  const sobject = sobjectData?.sobject
+  const fieldSchema = sobjectData?.fieldSchema
 
   const [field, setField] = React.useState('')
   const [editValue, setEditValue] = React.useState<any>()

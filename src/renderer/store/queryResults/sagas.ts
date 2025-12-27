@@ -1,14 +1,20 @@
 import { put, select, takeLatest, all, fork, take, cancel } from 'redux-saga/effects'
 import { QueryResultActionTypes } from './types'
-import { getFilter, getData, getToolingMode, getResultSObject, getSelectedIds, getFilteredIds, getBatchSize } from '../index'
+import { getFilter, getData, getToolingMode, getSelectedIds, getFilteredIds, getBatchSize } from '../index'
 import { ipcRenderer } from 'electron'
 import { dataReducer, filterIds, getRecordId, chunk } from '../../../helpers/utils'
 import { notification } from 'antd'
 import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
+import { useTabStore } from '../../stores/useTabStore'
 
 // Helper to get active connection from Zustand store (Phase 4)
 function getConnectionFromZustand() {
   return getActiveConnection(useConnectionStore.getState())
+}
+
+// Helper to get result sObject name from Zustand store (Phase 6)
+function getResultSObjectNameFromZustand(tabId: string): string | undefined {
+  return useTabStore.getState().queries[tabId]?.resultSObjectName
 }
 
 export function* queryResultSagas() {
@@ -247,7 +253,7 @@ function* dmlDelete(action: any) {
   try {
     const connection = getConnectionFromZustand()
     const data: any = yield select(getData, tabId)
-    const sobject: any = yield select(getResultSObject, tabId)
+    const sobjectName = getResultSObjectNameFromZustand(tabId)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
     const selectedIds: any[] = yield select(getSelectedIds, tabId)
     const filteredIds: any[] = yield select(getFilteredIds, tabId)
@@ -261,7 +267,7 @@ function* dmlDelete(action: any) {
       idsToDeleteChunked.map(async (idsToDelete) => {
         const apiResult = await ipcRenderer.invoke('salesforce:delete', {
           ...connection,
-          sobjectType: sobject.name,
+          sobjectType: sobjectName,
           ids: idsToDelete,
           toolingMode
         })

@@ -7,10 +7,6 @@ const { Group: ButtonGroup } = Button
 import { useSelector, useDispatch } from 'react-redux'
 import { ApplicationState } from '../../../store/index'
 import { Query as ParsedQuery, isQueryValid, parseQuery } from 'soql-parser-js'
-import {
-  onResultSObjectChange,
-  onQuerySObjectChange
-} from '../../../store/sobject/actions'
 import { useTabStore } from '../../../stores/useTabStore'
 import { useQueryHistoryStore } from '../../../stores/useQueryHistoryStore'
 
@@ -27,6 +23,8 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
   const queryState = useTabStore((state) => state.queries[tabId])
   const setParsedQuery = useTabStore((state) => state.setParsedQuery)
   const renameTab = useTabStore((state) => state.renameTab)
+  const setQuerySObjectName = useTabStore((state) => state.setQuerySObjectName)
+  const setResultSObjectName = useTabStore((state) => state.setResultSObjectName)
   const query = queryState?.query ?? { body: '' }
   const includeDeleted = queryState?.includeDeleted ?? false
 
@@ -43,9 +41,9 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
       const parsedQuery: ParsedQuery = parseQuery(query.body)
       setParsedQuery(tabId, parsedQuery)
       renameTab(tabId, parsedQuery.sObject)
-      // Redux dispatch for sobject (until Phase 6)
-      dispatch(onResultSObjectChange(tabId, parsedQuery.sObject))
-      dispatch(onQuerySObjectChange(tabId, parsedQuery.sObject))
+      // Zustand for sObject names (Phase 6)
+      setResultSObjectName(tabId, parsedQuery.sObject)
+      setQuerySObjectName(tabId, parsedQuery.sObject)
     }
     // Redux dispatch for query execution (until Phase 9)
     dispatch(onQuery(tabId, query.body, includeDeleted))

@@ -1,8 +1,6 @@
 import * as React from 'react'
 import { Button, Modal, Table, Input } from 'antd'
-import { useSelector } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
-import { DescribeSObjectResult, Field } from 'jsforce'
+import { Field } from 'jsforce'
 import {
   isQueryValid,
   parseQuery,
@@ -11,6 +9,7 @@ import {
 } from 'soql-parser-js'
 import { sort } from '../../../../helpers/utils'
 import { useTabStore, SoqlQuery } from '../../../stores/useTabStore'
+import { useQuerySObjectDescribe } from '../../../queries/useSObjectQuery'
 
 const { confirm } = Modal
 
@@ -24,11 +23,11 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
   // Zustand store
   const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' }
   const setQueryBody = useTabStore((state) => state.setQueryBody)
+  const querySObjectName = useTabStore((state) => state.queries[tabId]?.querySObjectName)
 
-  // Redux still needed for sobject (until Phase 6)
-  const sobject: DescribeSObjectResult = useSelector(
-    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
-  )
+  // TanStack Query for sObject describe (Phase 6)
+  const { data: sobjectData } = useQuerySObjectDescribe(tabId, querySObjectName)
+  const sobject = sobjectData?.sobject
 
   const [showModal, setShowModal] = React.useState(false)
   const [searchFilter, setSearchFilter] = React.useState('')

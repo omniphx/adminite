@@ -1,22 +1,17 @@
 import * as React from 'react'
 import SelectContext from '../SelectContext'
-import { saveFieldPermissions } from '../../store/fieldPermission/actions'
-import { Button, Row, Col, Radio, Select, Input } from 'antd'
+import { Button, Row, Col, Radio, Select, Input, message } from 'antd'
 import type { RadioChangeEvent } from 'antd'
 import FieldLevelSecurity from './FieldLevelSecurity'
 
 const { Option } = Select
 
-import { useDispatch, useSelector } from 'react-redux'
-import { ApplicationState } from '../../store/index'
-
-// Zustand + TanStack Query (Phase 7)
+// Zustand + TanStack Query (Phase 7 & 8)
 import { usePermissionUIStore, PermissionType } from '../../stores/usePermissionUIStore'
 import { useProfilesQuery, usePermissionSetsQuery, useFlsSObjectsQuery } from '../../queries/usePermissionQuery'
+import { useFieldPermissionMutation } from '../../queries/useFieldPermissionQuery'
 
 const Permissions: React.FC = (props: any) => {
-  const dispatch = useDispatch()
-
   // Zustand store for UI state
   const permissionType = usePermissionUIStore((state) => state.permissionType)
   const permissionIds = usePermissionUIStore((state) => state.permissionIds)
@@ -26,14 +21,16 @@ const Permissions: React.FC = (props: any) => {
   const setPermissionIds = usePermissionUIStore((state) => state.setPermissionIds)
   const setSObjectName = usePermissionUIStore((state) => state.setSObjectName)
   const setFilter = usePermissionUIStore((state) => state.setFilter)
+  const fieldPermissionsToSave = usePermissionUIStore((state) => state.fieldPermissionsToSave)
+  const clearFieldPermissionsToSave = usePermissionUIStore((state) => state.clearFieldPermissionsToSave)
 
   // TanStack Query for data
   const { data: sobjects = [] } = useFlsSObjectsQuery()
   const { data: profiles = [] } = useProfilesQuery()
   const { data: permissionSets = [] } = usePermissionSetsQuery()
 
-  // Redux still needed for fieldPermissions (until Phase 8)
-  const savePending: any = useSelector((state: ApplicationState) => state.fieldPermissionState.savePending)
+  // TanStack Query mutation for saving (Phase 8)
+  const savePermissionMutation = useFieldPermissionMutation()
 
   // Get permissions based on type
   const rawPermissions = permissionType === 'profile' ? profiles : permissionSets
@@ -54,6 +51,22 @@ const Permissions: React.FC = (props: any) => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(event.currentTarget.value)
+  }
+
+  const handleSave = async () => {
+    const permissionsToSave = Object.values(fieldPermissionsToSave)
+    if (permissionsToSave.length === 0) {
+      message.info('No changes to save')
+      return
+    }
+
+    try {
+      await savePermissionMutation.mutateAsync(permissionsToSave)
+      clearFieldPermissionsToSave()
+      message.success('Field permissions saved successfully')
+    } catch (error) {
+      message.error(`Failed to save: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   function renderPermissionOptions() {
@@ -111,7 +124,7 @@ const Permissions: React.FC = (props: any) => {
           </Select>
         </Col>
         <Col sm={24} md={12} style={{textAlign:'right'}}>
-          <Button type='primary' onClick={() => dispatch(saveFieldPermissions())} loading={savePending}>
+          <Button type='primary' onClick={handleSave} loading={savePermissionMutation.isPending}>
             Save
           </Button>
         </Col>

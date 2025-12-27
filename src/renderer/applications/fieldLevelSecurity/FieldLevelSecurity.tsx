@@ -1,29 +1,35 @@
 import * as React from 'react';
-import { onFieldPermissionChange } from '../../store/fieldPermission/actions';
 import { Table, Checkbox, Tooltip } from 'antd';
 
 const { Column } = Table;
 
-import { useDispatch, useSelector } from 'react-redux';
-import { ApplicationState } from '../../store/index';
-
-// Zustand + TanStack Query (Phase 7)
-import { usePermissionUIStore } from '../../stores/usePermissionUIStore';
+// Zustand + TanStack Query (Phase 7 & 8)
+import { usePermissionUIStore, FieldPermissionChange } from '../../stores/usePermissionUIStore';
 import { useProfilesQuery, usePermissionSetsQuery, useFlsFieldsQuery } from '../../queries/usePermissionQuery';
+import { useFieldPermissionsQuery } from '../../queries/useFieldPermissionQuery';
 
 const FieldLevelSecurity: React.FC = () => {
-  const dispatch = useDispatch();
-
   // Zustand store for UI state
   const sobjectName = usePermissionUIStore((state) => state.sobjectName);
   const permissionIds = usePermissionUIStore((state) => state.permissionIds);
   const permissionType = usePermissionUIStore((state) => state.permissionType);
   const filter = usePermissionUIStore((state) => state.filter);
+  const fieldPermissionsToSave = usePermissionUIStore((state) => state.fieldPermissionsToSave);
+  const updateFieldPermission = usePermissionUIStore((state) => state.updateFieldPermission);
 
   // TanStack Query for data
   const { data: fields = [] } = useFlsFieldsQuery(sobjectName);
   const { data: profiles = [] } = useProfilesQuery();
   const { data: permissionSets = [] } = usePermissionSetsQuery();
+  const { data: fieldPermissionsFromServer = {} } = useFieldPermissionsQuery();
+
+  // Merge server field permissions with unsaved changes
+  const fieldPermissions = React.useMemo(() => {
+    return {
+      ...fieldPermissionsFromServer,
+      ...fieldPermissionsToSave,
+    };
+  }, [fieldPermissionsFromServer, fieldPermissionsToSave]);
 
   // Get permissions based on type
   const rawPermissions = permissionType === 'profile' ? profiles : permissionSets;
@@ -32,11 +38,6 @@ const FieldLevelSecurity: React.FC = () => {
     name: p.IsOwnedByProfile ? p.Profile?.Name : (p.Label || p.Name),
     key: p.Id,
   }));
-
-  // Redux still needed for fieldPermissions (until Phase 8)
-  const fieldPermissions = useSelector(
-    (state: ApplicationState) => state.fieldPermissionState.fieldPermissions
-  );
 
   const filteredPermissions = permissions
     .filter(permission => permissionIds.includes(permission.key));
@@ -124,7 +125,7 @@ const FieldLevelSecurity: React.FC = () => {
   };
 
   const handleFieldPermissionChange = (record, permissionKey) => {
-    const fieldLevelPermission = {
+    const fieldLevelPermission: FieldPermissionChange = {
       Field: `${sobjectName}.${record.key.replace('__r', '__c')}`,
       PermissionsRead: record[`read_${permissionKey}`],
       PermissionsEdit: record[`edit_${permissionKey}`],
@@ -135,20 +136,12 @@ const FieldLevelSecurity: React.FC = () => {
     const salesforceId = record[`id_${permissionKey}`];
 
     if (salesforceId) {
-      fieldLevelPermission['Id'] = salesforceId;
-      dispatch(
-        onFieldPermissionChange({
-          [salesforceId]: fieldLevelPermission
-        })
-      );
+      fieldLevelPermission.Id = salesforceId;
+      updateFieldPermission(salesforceId, fieldLevelPermission);
     } else {
       const { Field } = fieldLevelPermission;
       const fieldPermissionKey = `${Field}${permissionKey}`;
-      dispatch(
-        onFieldPermissionChange({
-          [fieldPermissionKey]: fieldLevelPermission
-        })
-      );
+      updateFieldPermission(fieldPermissionKey, fieldLevelPermission);
     }
   };
 

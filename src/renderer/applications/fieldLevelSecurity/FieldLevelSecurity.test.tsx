@@ -1,25 +1,25 @@
 import * as React from 'react';
 import FieldLevelSecurity from './FieldLevelSecurity';
 
-import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
-import { stubInterface } from 'ts-sinon';
-import { ApplicationState } from '../../store/index';
-import { FieldPermissionState } from '../../store/fieldPermission/types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// Mock Zustand permission UI store (Phase 7)
+// Mock Zustand permission UI store (Phase 7 & 8)
 const mockPermissionUIState = {
   sobjectName: '',
   permissionIds: [] as string[],
   permissionType: 'profile' as const,
   filter: '',
+  fieldPermissionsToSave: {} as Record<string, any>,
+  saveErrors: null as string | null,
   setPermissionType: jest.fn(),
   setPermissionIds: jest.fn(),
   setSObjectName: jest.fn(),
   setFilter: jest.fn(),
   reset: jest.fn(),
+  updateFieldPermission: jest.fn(),
+  clearFieldPermissionsToSave: jest.fn(),
+  setSaveErrors: jest.fn(),
 };
 
 jest.mock('../../stores/usePermissionUIStore', () => ({
@@ -37,17 +37,12 @@ jest.mock('../../queries/usePermissionQuery', () => ({
   useFlsFieldsQuery: () => ({ data: mockFields, isLoading: false }),
 }));
 
-const mockStore: any = configureMockStore();
+// Mock field permissions query (Phase 8)
+const mockFieldPermissions: Record<string, any> = {};
 
-const stubbedState: ApplicationState = stubInterface<ApplicationState>();
-const stubbedFieldPermissionState: FieldPermissionState = stubInterface<
-  FieldPermissionState
->();
-
-const state: ApplicationState = {
-  ...stubbedState,
-  fieldPermissionState: stubbedFieldPermissionState,
-};
+jest.mock('../../queries/useFieldPermissionQuery', () => ({
+  useFieldPermissionsQuery: () => ({ data: mockFieldPermissions, isLoading: false }),
+}));
 
 describe('<FieldLevelSecurity/>', () => {
   beforeEach(() => {
@@ -56,21 +51,20 @@ describe('<FieldLevelSecurity/>', () => {
     mockPermissionUIState.permissionIds = [];
     mockPermissionUIState.permissionType = 'profile';
     mockPermissionUIState.filter = '';
+    mockPermissionUIState.fieldPermissionsToSave = {};
+    mockPermissionUIState.updateFieldPermission.mockClear();
     mockProfiles.length = 0;
     mockPermissionSets.length = 0;
     mockFields.length = 0;
+    // Clear field permissions mock
+    Object.keys(mockFieldPermissions).forEach(key => delete mockFieldPermissions[key]);
   });
 
   it('should render', () => {
-    const store = mockStore(state);
-    render(
-      <Provider store={store}>
-        <FieldLevelSecurity />
-      </Provider>
-    );
+    render(<FieldLevelSecurity />);
   });
 
-  it('should select all', () => {
+  it('should select all', async () => {
     // Set up mocks for this test
     mockPermissionUIState.sobjectName = 'Account';
     mockPermissionUIState.permissionIds = ['123'];
@@ -120,20 +114,16 @@ describe('<FieldLevelSecurity/>', () => {
       }
     );
 
-    const store = mockStore(state);
-    render(
-      <Provider store={store}>
-        <FieldLevelSecurity />
-      </Provider>
-    );
+    render(<FieldLevelSecurity />);
 
     const checkbox = document.querySelector('input#edit_123_all');
-    userEvent.click(checkbox);
+    await userEvent.click(checkbox!);
 
-    expect(store.getActions()).toHaveLength(3);
+    // Now uses Zustand updateFieldPermission instead of Redux dispatch
+    expect(mockPermissionUIState.updateFieldPermission).toHaveBeenCalledTimes(3);
   });
 
-  it.only('should ignore IsUpdate checkbox for edit all rendering', () => {
+  it('should ignore IsUpdate checkbox for edit all rendering', async () => {
     // Set up mocks for this test
     mockPermissionUIState.sobjectName = 'Account';
     mockPermissionUIState.permissionIds = ['123'];
@@ -173,42 +163,30 @@ describe('<FieldLevelSecurity/>', () => {
       }
     );
 
-    const newState = {
-      ...state,
-      fieldPermissionState: {
-        ...state.fieldPermissionState,
-        fieldPermissions: {
-          fp1: {
-            Id: 'fp1',
-            Field: 'Account.Id',
-            ParentId: '123',
-            PermissionsEdit: true,
-            PermissionsRead: true
-          },
-          fp2: {
-            Id: 'fp2',
-            Field: 'Account.ReadOnly',
-            ParentId: '123',
-            PermissionsEdit: false,
-            PermissionsRead: true
-          }
-        }
-      }
+    // Set up field permissions via TanStack Query mock
+    mockFieldPermissions['fp1'] = {
+      Id: 'fp1',
+      Field: 'Account.Id',
+      ParentId: '123',
+      PermissionsEdit: true,
+      PermissionsRead: true
+    };
+    mockFieldPermissions['fp2'] = {
+      Id: 'fp2',
+      Field: 'Account.ReadOnly',
+      ParentId: '123',
+      PermissionsEdit: false,
+      PermissionsRead: true
     };
 
-    const store = mockStore(newState);
-    render(
-      <Provider store={store}>
-        <FieldLevelSecurity />
-      </Provider>
-    );
+    render(<FieldLevelSecurity />);
 
-    let checkbox: HTMLInputElement = document.querySelector(
+    let checkbox: HTMLInputElement | null = document.querySelector(
       'input#edit_123_all'
     );
-    userEvent.click(checkbox);
+    await userEvent.click(checkbox!);
 
     checkbox = document.querySelector('input#edit_123_all');
-    expect(checkbox.checked).toBe(true);
+    expect(checkbox?.checked).toBe(true);
   });
 });

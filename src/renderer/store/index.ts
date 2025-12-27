@@ -7,15 +7,13 @@ import paginationReducer from './pagination/reducers'
 // PermissionState removed - now managed by usePermissionUIStore (Zustand) and TanStack Query (Phase 7)
 // ConnectionsState removed - now managed by useConnectionStore (Zustand)
 // ConnectionState removed - now managed by useConnectionStore (Zustand) and TanStack Query
-
-import { FieldPermissionState } from './fieldPermission/types'
-import fieldPermissionReducer from './fieldPermission/reducers'
-import { fieldPermissionSagas } from './fieldPermission/sagas'
+// FieldPermissionState removed - now managed by usePermissionUIStore (Zustand) and TanStack Query (Phase 8)
 
 // Feature, User, Connections, Connection, and Permission state are now managed by Zustand stores
 // Schema state (sobjects, toolingObjects, namespace) is now managed by TanStack Query
 // SObject describe state is now managed by TanStack Query (Phase 6)
 // Permission data (profiles, permission sets, FLS sObjects, fields) is now managed by TanStack Query (Phase 7)
+// Field permission data is now managed by TanStack Query mutations + Zustand (Phase 8)
 
 import { QueryHistoryState } from './queryHistory/types'
 import queryHistoryReducer from './queryHistory/reducers'
@@ -34,7 +32,7 @@ import { queriesSagas } from './queries/sagas'
 // getConnection removed - use useConnectionStore.getState() + getActiveConnection instead
 // getConnections removed - use useConnectionStore.getState().connections instead
 // getPermissionState removed - use usePermissionUIStore from Zustand instead (Phase 7)
-export const getFieldPermissionState = (state: ApplicationState) => state.fieldPermissionState
+// getFieldPermissionState removed - use usePermissionUIStore from Zustand + TanStack Query hooks (Phase 8)
 // getSchemaState removed - use TanStack Query hooks (useGlobalDescribeQuery, useNamespaceQuery) instead
 // getFeatureState removed - use useFeatureStore from Zustand instead
 // getResultSObject removed - use TanStack Query hooks (useResultSObjectDescribe) instead
@@ -52,22 +50,20 @@ export const getIncludeDeleted = (state: ApplicationState, tabId: string) => sta
 export const getActiveTabId = (state: ApplicationState) => state.queryTabsState.activeId
 export interface ApplicationState {
   paginationState: PaginationState
-  fieldPermissionState: FieldPermissionState
   queryHistoryState: QueryHistoryState
   queryTabsState: QueryTabsState
   queryResultsState: QueryResultsState
   queriesState: QueriesState
-  // featureState, userState, connectionsState, connectionState, schemaState, sobjectState, and permissionState are now managed by Zustand/TanStack Query
+  // featureState, userState, connectionsState, connectionState, schemaState, sobjectState, permissionState, and fieldPermissionState are now managed by Zustand/TanStack Query
 }
 
 export const rootReducer = combineReducers<ApplicationState>({
   paginationState: paginationReducer,
-  fieldPermissionState: fieldPermissionReducer,
   queryHistoryState: queryHistoryReducer,
   queryTabsState: queryTabsReducer,
   queryResultsState: queryResultReducer,
   queriesState: queriesReducer,
-  // featureState, userState, connectionsState, connectionState, schemaState, sobjectState, and permissionState removed - now managed by Zustand/TanStack Query
+  // featureState, userState, connectionsState, connectionState, schemaState, sobjectState, permissionState, and fieldPermissionState removed - now managed by Zustand/TanStack Query
 })
 
 export function* rootSaga() {
@@ -75,7 +71,7 @@ export function* rootSaga() {
     // connectionsSagas removed - connections now managed by Zustand
     // connectionSagas removed - connection identity now managed by TanStack Query
     // permissionSagas removed - permissions now managed by TanStack Query (Phase 7)
-    fork(fieldPermissionSagas),
+    // fieldPermissionSagas removed - field permissions now managed by TanStack Query mutations (Phase 8)
     // sObjectSagas removed - sObject describe now managed by TanStack Query
     fork(queryResultSagas),
     fork(queriesSagas),

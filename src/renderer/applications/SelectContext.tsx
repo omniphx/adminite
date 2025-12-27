@@ -29,10 +29,12 @@ const SelectContext: React.FC<ISelectContextProps> = React.memo((props: ISelectC
     <Select
       showSearch
       style={{ width: '100%' }}
-      value={props.sobject ? props.sobject : 'Search for an SObject'}
+      placeholder="Search for an SObject"
+      value={props.sobject || undefined}
       onChange={props.handleChange}
       onSearch={fetchOptions}
       loading={props.loading}
+      filterOption={false}
     >
       {options.slice(0,25).map(option => (
         <Select.Option key={option.name} value={option.name}>

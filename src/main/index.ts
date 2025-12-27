@@ -56,12 +56,28 @@ async function createWindow(): Promise<void> {
       minWidth: 800,
       webPreferences: {
         // devTools: isDevelopment,
-        nodeIntegration: true,
-        contextIsolation: false
+        preload: path.join(__dirname, 'preload.js'),
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true
       },
       icon: iconUrl,
       title: 'Adminite',
       titleBarStyle: 'hidden'
+    });
+
+    // Set Content Security Policy
+    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [
+            isDevelopment
+              ? "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* ws://localhost:*; img-src 'self' data: https:; font-src 'self' data:;"
+              : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+          ]
+        }
+      });
     });
 
     if (isDevelopment) {
@@ -213,8 +229,8 @@ function createAuthenticationWindow(url: string): void {
   shell.openExternal(url);
 }
 
-//Prevents issues with self-signed certificates
-if (app && app.commandLine) {
+//Prevents issues with self-signed certificates (development only)
+if (isDevelopment && app && app.commandLine) {
   app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 }
 

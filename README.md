@@ -11,27 +11,30 @@
 3. Build > Create > App
 4. Under Connected Apps, click "New"
 5. Create an app with the following settings:
-  * Connected App Name
-  * API Name
-  * Contact Email
-  * Enable OAuth Settings under the API dropdown
-  * Add the following scopes:
-    * Access and manage your data (api)
-    * Access your basic information (id, profile, email, phone)
-    * Perform requests on your behalf at any time (refresh_token, offline_access)
-    * Provide accesss to your data via the Web (web)
-  * Set callback URL to:
-    ```
-    adminite://oauth/callback
-    ```
-* Require Secret for Web Server Flow - checked
+
+- Connected App Name
+- API Name
+- Contact Email
+- Enable OAuth Settings under the API dropdown
+- Add the following scopes:
+  - Access and manage your data (api)
+  - Access your basic information (id, profile, email, phone)
+  - Perform requests on your behalf at any time (refresh_token, offline_access)
+  - Provide accesss to your data via the Web (web)
+- Set callback URL to:
+  ```
+  adminite://oauth/callback
+  ```
+- Require Secret for Web Server Flow - checked
 
 ### Run locally
 
 1. `yarn install`
 2. Copy `.env.example` to `.env` and add your consumer key/secret:
-  ```
-  ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID=<your-consumer-id>
-  ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET=<your-consumer-secret>
-  ```
+
+```
+ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID=<your-consumer-id>
+ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET=<your-consumer-secret>
+```
+
 3. `yarn dev`

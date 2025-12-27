@@ -2,11 +2,8 @@ import React from 'react';
 
 import { render, screen } from '@testing-library/react';
 
-import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
 import NumberCell from './NumberCell';
 import { Field as DescribeField, UserInfo } from 'jsforce';
-const mockStore = configureMockStore();
 
 import { stubInterface } from 'ts-sinon';
 const fieldSchema = stubInterface<DescribeField>();
@@ -29,23 +26,16 @@ jest.mock('../../../stores/useConnectionStore', () => ({
   },
 }));
 
-// Empty store since connectionState is now in Zustand
-const store = mockStore({});
-
 describe('<NumberCell/>', () => {
   it('should render', () => {
     render(
-      <Provider store={store}>
-        <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
-      </Provider>
+      <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
     );
   });
 
   it('should render zero', () => {
     render(
-      <Provider store={store}>
-        <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
-      </Provider>
+      <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
     );
     screen.getByText('0');
   });
@@ -54,11 +44,9 @@ describe('<NumberCell/>', () => {
     fieldSchema.type = 'percent';
     fieldSchema.scale = 3;
     render(
-      <Provider store={store}>
-        <NumberCell
-          {...{ tabId: 'test', value: 0.199444, record: {}, fieldSchema }}
-        />
-      </Provider>
+      <NumberCell
+        {...{ tabId: 'test', value: 0.199444, record: {}, fieldSchema }}
+      />
     );
     screen.getByText(/0\.199%/);
   });
@@ -66,9 +54,7 @@ describe('<NumberCell/>', () => {
     fieldSchema.type = 'percent';
     fieldSchema.scale = 2;
     render(
-      <Provider store={store}>
-        <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
-      </Provider>
+      <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
     );
     screen.getByText(/0\.00%/);
   });

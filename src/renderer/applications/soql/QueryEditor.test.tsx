@@ -1,11 +1,7 @@
 import * as React from 'react';
 import QueryEditor from './QueryEditor';
 
-import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
 import { render } from '@testing-library/react';
-
-const mockStore: any = configureMockStore();
 
 // Mock Zustand stores and TanStack Query hooks needed by QueryEditor components
 jest.mock('../../stores/useConnectionStore', () => ({
@@ -33,6 +29,9 @@ jest.mock('../../stores/useTabStore', () => ({
   useTabStore: Object.assign(
     (selector: any) => {
       const state = {
+        tabs: { test: { id: 'test', title: 'test' } },
+        tabOrder: ['test'],
+        activeTabId: 'test',
         queries: {
           test: {
             query: { body: 'SELECT Id FROM Account' },
@@ -51,6 +50,9 @@ jest.mock('../../stores/useTabStore', () => ({
     },
     {
       getState: () => ({
+        tabs: { test: { id: 'test', title: 'test' } },
+        tabOrder: ['test'],
+        activeTabId: 'test',
         queries: {
           test: {
             query: { body: 'SELECT Id FROM Account' },
@@ -142,24 +144,8 @@ jest.mock('../../queries/useDmlMutations', () => ({
   useDmlDelete: () => ({ mutate: jest.fn() }),
 }));
 
-// Redux store state for remaining Redux-dependent components
-const state = {
-  paginationState: {},
-  queryHistoryState: { queries: [] },
-  queryTabsState: {
-    allIds: ['test'],
-    byId: { test: { title: 'test' } },
-    activeId: 'test',
-  },
-};
-
 describe('<QueryEditor/>', () => {
   test('it should render', () => {
-    const store = mockStore(state);
-    render(
-      <Provider store={store}>
-        <QueryEditor {...{ tabId: 'test' }} />
-      </Provider>
-    );
+    render(<QueryEditor {...{ tabId: 'test' }} />);
   });
 });

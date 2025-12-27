@@ -15,7 +15,7 @@ import { onQueryChange } from '../../store/queries/actions'
 import { onQuerySObjectChange } from '../../store/sobject/actions'
 import { SoqlQuery } from '../../store/queries/types'
 import { SchemaState } from '../../store/schema/types'
-import { Input } from 'antd'
+import { Input, Select } from 'antd'
 import { Connection } from 'jsforce'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
 
@@ -432,7 +432,9 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   })
 
   return (
-    <div className='QueryEditor' ref={containerRef}>
+    <div className='QueryEditor' ref={containerRef} style={{ position: 'relative' }}>
+      {/* Hidden Select to force Ant Design to inject CSS-in-JS styles */}
+      <Select style={{ display: 'none' }} open={false} />
       <Input.TextArea
         ref={textAreaReference}
         id='queryTextArea'

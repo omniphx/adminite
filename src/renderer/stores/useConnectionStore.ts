@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 import { v4 as uuidv4 } from 'uuid'
 import { Connection, UserInfo } from 'jsforce'
 
@@ -287,3 +288,7 @@ export const getConnectionsArray = (state: ConnectionState) =>
 
 export const getActiveConnection = (state: ConnectionState) =>
   state.activeConnectionId ? state.connections[state.activeConnectionId] : null
+
+// Hook that uses shallow comparison for array selectors (prevents infinite re-renders)
+export const useConnectionsArray = () =>
+  useConnectionStore(useShallow(getConnectionsArray))

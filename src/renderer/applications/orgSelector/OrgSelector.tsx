@@ -8,7 +8,7 @@ import {
 import { Menu, Dropdown, Card, Tooltip } from 'antd'
 import {
   useConnectionStore,
-  getConnectionsArray,
+  useConnectionsArray,
   getActiveConnection
 } from '../../stores/useConnectionStore'
 
@@ -19,10 +19,11 @@ import IconWrapper from '../ui/IconWrapper'
 import UserSettings from './UserSettings'
 
 const OrgSelector: React.FC = React.memo((props: any) => {
-  // Zustand store
-  const connections = useConnectionStore(getConnectionsArray)
+  // Zustand store - select primitive values to avoid infinite re-render loops
+  const connections = useConnectionsArray()
   const activeConnection = useConnectionStore(getActiveConnection)
-  const { pending, error } = useConnectionStore((state) => state.activeConnection)
+  const pending = useConnectionStore((state) => state.activeConnection.pending)
+  const error = useConnectionStore((state) => state.activeConnection.error)
   const toggleModal = useConnectionStore((state) => state.toggleModal)
 
   const [showDropdown, setShowDropdown] = React.useState(false)

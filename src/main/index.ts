@@ -5,9 +5,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 import * as jsforce from 'jsforce';
-import * as express from 'express';
 import * as log from 'electron-log';
-import * as tcpPortUsed from 'tcp-port-used';
 // import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
 // import * as Sentry from '@sentry/electron';
 
@@ -23,6 +21,16 @@ declare const __static: string;
 let mainWindow: any;
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+
+// Register custom protocol scheme
+const PROTOCOL_NAME = 'adminite';
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(PROTOCOL_NAME, process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL_NAME);
+}
 
 // Only initialize auto-updater in production mode
 let autoUpdater: any;
@@ -98,100 +106,107 @@ async function createWindow(): Promise<void> {
   }
 }
 
-async function createServer(): Promise<void> {
+// Store OAuth state for callback handling
+let pendingOAuth: {
+  oauth2: any;
+  connectionName: string;
+} | null = null;
+
+async function handleOAuthCallback(callbackUrl: string): Promise<void> {
   try {
-    const app = express();
+    if (!pendingOAuth) {
+      console.error('No pending OAuth request');
+      return;
+    }
 
-    let listener;
-    let oauth2;
-    let connectionName;
+    const { oauth2, connectionName } = pendingOAuth;
 
-    ipcMain.on('create-new-connection', (event, arg) => {
-      connectionName = arg.name;
-      oauth2 = new jsforce.OAuth2({
-        loginUrl: arg.url,
-        clientId: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID,
-        clientSecret: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET,
-        redirectUri: `https://localhost:${listener.address().port}/callback`
-      });
-      createAuthenticationWindow(
-        oauth2.getAuthorizationUrl({ connectionName })
-      );
+    // Parse the callback URL to extract the authorization code
+    const urlObj = new URL(callbackUrl);
+    const code = urlObj.searchParams.get('code');
+
+    if (!code) {
+      console.error('No authorization code in callback URL');
+      return;
+    }
+
+    const connection = new jsforce.Connection({ oauth2 });
+    await connection.authorize(code);
+    const { accessToken, instanceUrl, refreshToken } = connection;
+
+    // Extra API call but gives us more information
+    const identity = await connection.identity();
+    const {
+      username,
+      first_name,
+      last_name,
+      email,
+      display_name,
+      timezone,
+      user_id,
+      user_type,
+      organization_id,
+      locale,
+      language
+    } = identity;
+    const { loginUrl, redirectUri } = oauth2;
+
+    mainWindow.webContents.send('new-connection', {
+      name: connectionName,
+      accessToken,
+      instanceUrl,
+      refreshToken,
+      loginUrl,
+      redirectUri,
+      username,
+      first_name,
+      last_name,
+      email,
+      display_name,
+      timezone,
+      user_id,
+      user_type,
+      organization_id,
+      locale,
+      language
     });
 
-    app.get('/callback', async (request, response) => {
-      try {
-        const connection = new jsforce.Connection({ oauth2: oauth2 });
-        const code = request.param('code');
-        await connection.authorize(code);
-        const { accessToken, instanceUrl, refreshToken } = connection;
+    // Clear pending OAuth
+    pendingOAuth = null;
 
-        //Extra API call but gives us more information
-        const identity = await connection.identity();
-        const {
-          username,
-          first_name,
-          last_name,
-          email,
-          display_name,
-          timezone,
-          user_id,
-          user_type,
-          organization_id,
-          locale,
-          language
-        } = identity;
-        const { loginUrl, redirectUri } = oauth2;
-
-        mainWindow.webContents.send('new-connection', {
-          name: connectionName,
-          accessToken,
-          instanceUrl,
-          refreshToken,
-          loginUrl,
-          redirectUri,
-          username,
-          first_name,
-          last_name,
-          email,
-          display_name,
-          timezone,
-          user_id,
-          user_type,
-          organization_id,
-          locale,
-          language
-        });
-
-        response.set(
-          'location',
-          `https://adminite.app/landing/${connectionName}`
-        );
-        response.status(301).send();
-      } catch (error) {
-        console.log(error);
-      }
-    });
-
-    const freePort = await getFreePort();
-    console.log(`Port: ${freePort}`);
-    listener = app.listen(freePort);
+    // Focus the main window
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
   } catch (error) {
-    console.error(error);
+    console.error('OAuth callback error:', error);
+    pendingOAuth = null;
   }
 }
 
-async function getFreePort() {
-  // https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
-  const ports = [42834, 29562, 38853, 40011, 44774, 47599];
+async function createServer(): Promise<void> {
+  try {
+    ipcMain.on('create-new-connection', (event, arg) => {
+      const oauth2 = new jsforce.OAuth2({
+        loginUrl: arg.url,
+        clientId: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID,
+        clientSecret: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET,
+        redirectUri: `${PROTOCOL_NAME}://oauth/callback`
+      });
 
-  for (let i = 0; i < ports.length; i++) {
-    const used = await tcpPortUsed.check(ports[i]);
-    if (used) continue;
-    return ports[i];
+      pendingOAuth = {
+        oauth2,
+        connectionName: arg.name
+      };
+
+      createAuthenticationWindow(
+        oauth2.getAuthorizationUrl({})
+      );
+    });
+  } catch (error) {
+    console.error(error);
   }
-
-  throw 'No ports are available';
 }
 
 function createAuthenticationWindow(url: string): void {
@@ -203,16 +218,23 @@ if (app && app.commandLine) {
   app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 }
 
-//Prevents multiple instances
+//Prevents multiple instances and handles protocol on Windows/Linux
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
+  // Handle protocol on Windows/Linux when app is already running
   app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // Someone tried to run a second instance, we should focus our window.
+    // Check if there's a protocol URL in the command line
+    const url = commandLine.find((arg) => arg.startsWith(`${PROTOCOL_NAME}://`));
+    if (url) {
+      handleOAuthCallback(url);
+    }
+
+    // Focus the main window
     if (mainWindow) {
-      // if (mainWindow.isMinimized()) mainWindow.restore()
-      // mainWindow.focus()
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
     }
   });
   // This method will be called when Electron has finished
@@ -235,6 +257,14 @@ if (!gotTheLock) {
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) {
       createWindow();
+    }
+  });
+
+  // Handle protocol on macOS
+  app.on('open-url', (event, url) => {
+    event.preventDefault();
+    if (url.startsWith(`${PROTOCOL_NAME}://`)) {
+      handleOAuthCallback(url);
     }
   });
 

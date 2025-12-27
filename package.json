@@ -36,6 +36,14 @@
         "appId": "adminite",
         "productName": "Adminite",
         "copyright": "Copyright © 2021 ${author}",
+        "protocols": [
+            {
+                "name": "Adminite OAuth",
+                "schemes": [
+                    "adminite"
+                ]
+            }
+        ],
         "publish": [
             {
                 "provider": "github",

@@ -22,12 +22,7 @@
     * Provide accesss to your data via the Web (web)
   * Set callback URL to:
     ```
-    http://localhost:42834/callback
-    http://localhost:29562/callback
-    http://localhost:38853/callback
-    http://localhost:40011/callback
-    http://localhost:44774/callback
-    http://localhost:47599/callback
+    adminite://oauth/callback
     ```
 * Require Secret for Web Server Flow - checked
 

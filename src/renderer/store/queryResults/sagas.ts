@@ -1,7 +1,7 @@
 import { put, select, takeLatest, all, fork, take, cancel } from 'redux-saga/effects'
 import { QueryResultActionTypes } from './types'
 import { getConnection, getFilter, getData, getToolingMode, getResultSObject, getSelectedIds, getFilteredIds, getBatchSize, getActiveTabId, getQueryString, getIncludeDeleted } from '../index'
-import { Connection } from 'jsforce'
+import { ipcRenderer } from 'electron'
 import { dataReducer, filterIds, getRecordId, chunk } from '../../../helpers/utils'
 import { notification } from 'antd'
 
@@ -66,7 +66,7 @@ export function* updateField(action: any) {
 export function* query(action: any) {
   try {
     const { tabId, queryString, includeDeleted } = action.payload
-    const salesforce: any = yield select(getConnection)
+    const connection: any = yield select(getConnection)
     const filter: string = yield select(getFilter, tabId)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
     yield put({
@@ -74,7 +74,21 @@ export function* query(action: any) {
       type: QueryResultActionTypes.PENDING
     })
     const queryHandler = getHandler(includeDeleted, queryString)
-    const result = yield toolingMode ? salesforce.tooling.query(queryString) : salesforce[queryHandler](queryString)
+
+    // Call appropriate IPC handler based on query type
+    let apiResult
+    if (queryHandler === 'search') {
+      apiResult = yield ipcRenderer.invoke('salesforce:search', { ...connection, queryString })
+    } else if (queryHandler === 'queryAll') {
+      apiResult = yield ipcRenderer.invoke('salesforce:queryAll', { ...connection, queryString })
+    } else {
+      apiResult = yield ipcRenderer.invoke('salesforce:query', { ...connection, queryString, toolingMode })
+    }
+
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const result = apiResult.data
 
     const records = queryHandler === 'search' ? result.searchRecords : result.records
     const data = dataReducer(records)
@@ -106,10 +120,15 @@ export function* query(action: any) {
 function* queryMore(tabId, result) {
   try {
     const { nextRecordsUrl } = result
-    const salesforce: Connection = yield select(getConnection)
+    const connection: any = yield select(getConnection)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
     const filter: string = yield select(getFilter, tabId)
-    const queryMoreResult = yield toolingMode ? salesforce.tooling.queryMore(nextRecordsUrl) : salesforce.queryMore(nextRecordsUrl)
+
+    const apiResult = yield ipcRenderer.invoke('salesforce:queryMore', { ...connection, nextRecordsUrl, toolingMode })
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const queryMoreResult = apiResult.data
     const data = dataReducer(queryMoreResult.records)
     const filteredIds = filterIds(data, filter)
 
@@ -138,7 +157,7 @@ function* dmlUpdate(action: any) {
       type: QueryResultActionTypes.SET
     })
 
-    const salesforce: Connection = yield select(getConnection)
+    const connection: any = yield select(getConnection)
     const data: any = yield select(getData, tabId)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
     const batchSize: number = yield select(getBatchSize, tabId)
@@ -172,9 +191,17 @@ function* dmlUpdate(action: any) {
         const recordsChunked = chunk(recordsToSaveWrapper[sObjectType], batchSize)
         await Promise.all(
           recordsChunked.map(async (recordsToSave) => {
-            const results: any = toolingMode
-              ? await salesforce.tooling.update(sObjectType, recordsToSave)
-              : await salesforce.update(sObjectType, recordsToSave)
+            const apiResult = await ipcRenderer.invoke('salesforce:update', {
+              ...connection,
+              sobjectType: sObjectType,
+              records: recordsToSave,
+              toolingMode
+            })
+
+            if (!apiResult.success) {
+              throw new Error(apiResult.error)
+            }
+            const results: any = apiResult.data
 
             for (let i = 0; i < results.length; i++) {
               const recordId = recordsToSave[i].Id
@@ -212,7 +239,7 @@ function* dmlUpdate(action: any) {
 function* dmlDelete(action: any) {
   const { tabId } = action.payload
   try {
-    const salesforce: Connection = yield select(getConnection)
+    const connection: any = yield select(getConnection)
     const data: any = yield select(getData, tabId)
     const sobject: any = yield select(getResultSObject, tabId)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
@@ -226,9 +253,17 @@ function* dmlDelete(action: any) {
 
     yield Promise.all(
       idsToDeleteChunked.map(async (idsToDelete) => {
-        const result: any = toolingMode
-          ? await salesforce.tooling.delete(sobject.name, idsToDelete)
-          : await salesforce.delete(sobject.name, idsToDelete)
+        const apiResult = await ipcRenderer.invoke('salesforce:delete', {
+          ...connection,
+          sobjectType: sobject.name,
+          ids: idsToDelete,
+          toolingMode
+        })
+
+        if (!apiResult.success) {
+          throw new Error(apiResult.error)
+        }
+        const result: any = apiResult.data
 
         result.filter(result => result.success).forEach(result => {
           delete data[result.id]

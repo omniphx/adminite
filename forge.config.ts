@@ -75,7 +75,7 @@ const config: ForgeConfig = {
       name: '@electron-forge/plugin-webpack',
       config: {
         mainConfig,
-        devContentSecurityPolicy: "default-src 'self' 'unsafe-inline' data:; script-src 'self' 'unsafe-eval' 'unsafe-inline' data:",
+        devContentSecurityPolicy: "default-src 'self' 'unsafe-inline' data:; script-src 'self' 'unsafe-eval' 'unsafe-inline' data:; connect-src 'self' https://*.salesforce.com https://*.force.com",
         renderer: {
           config: rendererConfig,
           nodeIntegration: true,

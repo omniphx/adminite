@@ -115,6 +115,9 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
       const relationships = parentRelationshipToken.split('.')
       if (parentRelationshipToken in parentRelationshipFields) return
 
+      // Check if sobject exists and has fields before accessing
+      if (!sobject || !sobject.fields) return
+
       let fields = sobject.fields
       for (let i = 0; i < relationships.length; i++) {
         if ((mounted = false)) return

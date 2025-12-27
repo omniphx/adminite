@@ -69,6 +69,7 @@
         "@sentry/tracing": "^6.15.0",
         "antd": "^4.15.4",
         "dnd-core-cjs": "^9.5.1",
+        "dotenv": "^17.2.3",
         "electron-log": "^4.4.6",
         "electron-updater": "^4.2.0",
         "file-saver": "^2.0.2",

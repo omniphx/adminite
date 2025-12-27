@@ -1,7 +1,8 @@
 import { put, select, takeLatest, all, call } from 'redux-saga/effects'
 import { SchemaActionTypes } from './types'
-import { DescribeGlobalResult, Connection, QueryResult } from 'jsforce'
+import { DescribeGlobalResult, QueryResult } from 'jsforce'
 import { getConnection } from '../index'
+import { ipcRenderer } from 'electron'
 
 export function* describe() {
   try {
@@ -17,8 +18,12 @@ export function* describe() {
 
 export function* describeGlobal() {
   try {
-    const salesforce: Connection = yield select(getConnection)
-    const result: DescribeGlobalResult = yield salesforce.describeGlobal()
+    const connection: any = yield select(getConnection)
+    const apiResult = yield ipcRenderer.invoke('salesforce:describeGlobal', connection)
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const result: DescribeGlobalResult = apiResult.data
     const { sobjects } = result
     yield put({
       payload: { sobjects },
@@ -31,8 +36,12 @@ export function* describeGlobal() {
 
 export function* describeToolingGlobal() {
   try {
-    const salesforce: Connection = yield select(getConnection)
-    const result: DescribeGlobalResult = yield salesforce.tooling.describeGlobal()
+    const connection: any = yield select(getConnection)
+    const apiResult = yield ipcRenderer.invoke('salesforce:toolingDescribeGlobal', connection)
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const result: DescribeGlobalResult = apiResult.data
     yield put({
       payload: { toolingObjects: result.sobjects },
       type: SchemaActionTypes.SET
@@ -44,10 +53,15 @@ export function* describeToolingGlobal() {
 
 export function* getNamespace() {
   try {
-    const salesforce: Connection = yield select(getConnection)
-    const result: QueryResult<{}> = yield salesforce.query(
-      `SELECT NamespacePrefix FROM Organization`
-    )
+    const connection: any = yield select(getConnection)
+    const apiResult = yield ipcRenderer.invoke('salesforce:query', {
+      ...connection,
+      queryString: `SELECT NamespacePrefix FROM Organization`
+    })
+    if (!apiResult.success) {
+      throw new Error(apiResult.error)
+    }
+    const result: QueryResult<{}> = apiResult.data
     yield put({
       payload: { namespace: result.records[0]['NamespacePrefix'] },
       type: SchemaActionTypes.SET

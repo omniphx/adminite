@@ -5,6 +5,10 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as jsforce from 'jsforce';
 import * as log from 'electron-log';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Handle Squirrel events on Windows
 if (require('electron-squirrel-startup')) {
@@ -16,16 +20,7 @@ log.info('App starting');
 let mainWindow: any;
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-
-// Register custom protocol scheme
 const PROTOCOL_NAME = 'adminite';
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(PROTOCOL_NAME, process.execPath, [path.resolve(process.argv[1])]);
-  }
-} else {
-  app.setAsDefaultProtocolClient(PROTOCOL_NAME);
-}
 
 // Only initialize auto-updater in production mode
 let autoUpdater: any;
@@ -97,8 +92,10 @@ let pendingOAuth: {
 
 async function handleOAuthCallback(callbackUrl: string): Promise<void> {
   try {
+    log.info('handleOAuthCallback called with URL:', callbackUrl);
+
     if (!pendingOAuth) {
-      console.error('No pending OAuth request');
+      log.error('No pending OAuth request');
       return;
     }
 
@@ -108,6 +105,8 @@ async function handleOAuthCallback(callbackUrl: string): Promise<void> {
     const urlObj = new URL(callbackUrl);
     const code = urlObj.searchParams.get('code');
 
+    log.info('Authorization code:', code ? 'received' : 'missing');
+
     if (!code) {
       console.error('No authorization code in callback URL');
       return;
@@ -116,6 +115,8 @@ async function handleOAuthCallback(callbackUrl: string): Promise<void> {
     const connection = new jsforce.Connection({ oauth2 });
     await connection.authorize(code);
     const { accessToken, instanceUrl, refreshToken } = connection;
+
+    log.info('OAuth successful:', { instanceUrl, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken });
 
     // Extra API call but gives us more information
     const identity = await connection.identity();
@@ -187,6 +188,166 @@ async function createServer(): Promise<void> {
         oauth2.getAuthorizationUrl({})
       );
     });
+
+    // IPC handler for Salesforce API calls (avoids CORS issues in renderer)
+    ipcMain.handle('salesforce:identity', async (event, { accessToken, instanceUrl, refreshToken }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const identity = await connection.identity();
+        return { success: true, data: identity };
+      } catch (error) {
+        log.error('salesforce:identity error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:getUserInfo', async (event, { accessToken, instanceUrl, refreshToken }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const userInfo = await connection.soap.getUserInfo();
+        return { success: true, data: userInfo };
+      } catch (error) {
+        log.error('salesforce:getUserInfo error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:describeGlobal', async (event, { accessToken, instanceUrl, refreshToken }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = await connection.describeGlobal();
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:describeGlobal error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:toolingDescribeGlobal', async (event, { accessToken, instanceUrl, refreshToken }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = await connection.tooling.describeGlobal();
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:toolingDescribeGlobal error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:query', async (event, { accessToken, instanceUrl, refreshToken, queryString, toolingMode }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = toolingMode
+          ? await connection.tooling.query(queryString)
+          : await connection.query(queryString);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:query error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:queryAll', async (event, { accessToken, instanceUrl, refreshToken, queryString }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        // queryAll is only available on standard connection, not tooling
+        const result = await connection.queryAll(queryString);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:queryAll error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:search', async (event, { accessToken, instanceUrl, refreshToken, queryString }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = await connection.search(queryString);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:search error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:queryMore', async (event, { accessToken, instanceUrl, refreshToken, nextRecordsUrl, toolingMode }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = toolingMode
+          ? await connection.tooling.queryMore(nextRecordsUrl)
+          : await connection.queryMore(nextRecordsUrl);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:queryMore error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:update', async (event, { accessToken, instanceUrl, refreshToken, sobjectType, records, toolingMode }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = toolingMode
+          ? await connection.tooling.sobject(sobjectType).update(records)
+          : await connection.sobject(sobjectType).update(records);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:update error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('salesforce:delete', async (event, { accessToken, instanceUrl, refreshToken, sobjectType, ids, toolingMode }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = toolingMode
+          ? await connection.tooling.sobject(sobjectType).del(ids)
+          : await connection.sobject(sobjectType).del(ids);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:delete error:', error);
+        return { success: false, error: error.message };
+      }
+    });
   } catch (error) {
     console.error(error);
   }
@@ -206,11 +367,20 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
+  // Register custom protocol - works for both dev and production
+  // Must be called after single-instance lock is established
+  app.setAsDefaultProtocolClient(PROTOCOL_NAME);
+  log.info(`Custom protocol '${PROTOCOL_NAME}' registered`);
+
   // Handle protocol on Windows/Linux when app is already running
   app.on('second-instance', (event, commandLine, workingDirectory) => {
+    log.info('second-instance event received');
+    log.info('Command line:', commandLine);
+
     // Check if there's a protocol URL in the command line
     const url = commandLine.find((arg) => arg.startsWith(`${PROTOCOL_NAME}://`));
     if (url) {
+      log.info('Protocol URL found in command line:', url);
       handleOAuthCallback(url);
     }
 
@@ -246,6 +416,7 @@ if (!gotTheLock) {
   // Handle protocol on macOS
   app.on('open-url', (event, url) => {
     event.preventDefault();
+    log.info('open-url event received:', url);
     if (url.startsWith(`${PROTOCOL_NAME}://`)) {
       handleOAuthCallback(url);
     }

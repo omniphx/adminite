@@ -1,7 +1,7 @@
 import { call, put, all, takeLatest, fork, select } from 'redux-saga/effects'
 import { ConnectionActionTypes } from './types'
 import { describe } from '../schema/sagas'
-import { Connection } from 'jsforce'
+import { ipcRenderer } from 'electron'
 // import { getPermissions } from '../permission/sagas'
 import { getConnections } from '../index'
 import { updateConnection } from '../../../helpers/local-store'
@@ -23,9 +23,20 @@ export function* setConnection(action: any) {
     })
 
     const connections: any = yield select(getConnections)
-    const connection: any = connect(connections[connectionId])
-    const identity = yield connection.identity()
-    const userInfo = yield connection.soap.getUserInfo()
+    const connectionInfo = connections[connectionId]
+
+    // Call Salesforce APIs via IPC to avoid CORS issues
+    const identityResult = yield ipcRenderer.invoke('salesforce:identity', connectionInfo)
+    if (!identityResult.success) {
+      throw new Error(identityResult.error)
+    }
+    const identity = identityResult.data
+
+    const userInfoResult = yield ipcRenderer.invoke('salesforce:getUserInfo', connectionInfo)
+    if (!userInfoResult.success) {
+      throw new Error(userInfoResult.error)
+    }
+    const userInfo = userInfoResult.data
 
     const {
       username,
@@ -40,6 +51,9 @@ export function* setConnection(action: any) {
       locale,
       language
     } = identity
+
+    // Store connection info for later use (will be used by other sagas via IPC)
+    const connection = connectionInfo
 
     yield all([
       put({
@@ -71,26 +85,5 @@ export function* setConnection(action: any) {
   }
 }
 
-function connect(connectionInfo: any) {
-  //Might even be able to pass this straight through
-  const {
-    accessToken,
-    instanceUrl,
-    refreshToken,
-    loginUrl,
-    redirectUri
-  } = connectionInfo
-
-  return new Connection({
-    // logLevel: process.env.NODE_ENV === 'production' ? 'INFO' : 'DEBUG',
-    accessToken,
-    instanceUrl,
-    refreshToken,
-    oauth2: {
-      clientId: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID,
-      clientSecret: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET,
-      loginUrl,
-      redirectUri
-    }
-  })
-}
+// No longer needed - we use IPC instead of creating connections in renderer
+// function connect(connectionInfo: any) { ... }

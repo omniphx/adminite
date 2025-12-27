@@ -3,6 +3,7 @@ import path from 'path';
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 export const rendererConfig: Configuration = {
+  target: 'electron-renderer',
   module: {
     rules: [
       {

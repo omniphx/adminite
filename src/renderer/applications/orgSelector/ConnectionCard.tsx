@@ -2,16 +2,12 @@ import * as React from 'react'
 import { DeleteTwoTone, EditOutlined } from '@ant-design/icons'
 import { Card, Row, Col, Modal, Input, Tooltip } from 'antd'
 import { useDispatch } from 'react-redux'
-import {
-  onConnectionDelete,
-  moveConnection
-} from '../../store/connections/actions'
+import { useConnectionStore } from '../../stores/useConnectionStore'
+import { onConnectionSelected } from '../../store/connection/actions'
 
 const { Meta } = Card
 import { useDrag, useDrop } from 'react-dnd'
 import { GoKebabVertical } from 'react-icons/go'
-import { onConnectionChange } from '../../store/connections/actions'
-import { onConnectionSelected } from '../../store/connection/actions'
 
 const { confirm } = Modal
 
@@ -25,6 +21,13 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
   (props: IConnectionCardProps) => {
     const { connection, setShowDropdown, index } = props
     const dispatch = useDispatch()
+
+    // Zustand store actions
+    const setActiveConnectionId = useConnectionStore((state) => state.setActiveConnectionId)
+    const updateConnection = useConnectionStore((state) => state.updateConnection)
+    const deleteConnection = useConnectionStore((state) => state.deleteConnection)
+    const moveConnection = useConnectionStore((state) => state.moveConnection)
+
     const cardRef = React.useRef()
 
     const [editMode, setEditMode] = React.useState(false)
@@ -41,7 +44,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
 
     const [{ canDrop, isOver, item }, dropRef] = useDrop(() => ({
       accept: 'connection',
-      drop: (item: any) => dispatch(moveConnection(item.index, index)),
+      drop: (item: any) => moveConnection(item.index, index),
       collect: monitor => ({
         isOver: monitor.isOver(),
         canDrop: monitor.canDrop(),
@@ -49,14 +52,16 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
       })
     }))
 
-    const handleConnectionSelection = connectionId => {
+    const handleConnectionSelection = (connectionId: string) => {
       setShowDropdown(false)
+      setActiveConnectionId(connectionId)
+      // Dispatch Redux action to trigger connection saga (until Phase 4 migration)
       dispatch(onConnectionSelected(connectionId))
     }
 
-    const handleDelete = connectionId => {
+    const handleDelete = (connectionId: string) => {
       setShowDropdown(false)
-      dispatch(onConnectionDelete(connectionId))
+      deleteConnection(connectionId)
     }
 
     const handleEdit = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -73,7 +78,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
     }
 
     const handleConfirmChange = () => {
-      dispatch(onConnectionChange({ ...connection, name: connectionName }))
+      updateConnection(connection.id, { name: connectionName })
       setEditMode(false)
     }
 

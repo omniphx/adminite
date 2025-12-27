@@ -6,9 +6,11 @@ import {
   LoadingOutlined
 } from '@ant-design/icons'
 import { Menu, Dropdown, Card, Tooltip } from 'antd'
-import { useDispatch, useSelector } from 'react-redux'
-import { toggleModal } from '../../store/connections/actions'
-import { ApplicationState } from '../../store/index'
+import {
+  useConnectionStore,
+  getConnectionsArray,
+  getActiveConnection
+} from '../../stores/useConnectionStore'
 
 const { Meta } = Card
 import ConnectionCard from './ConnectionCard'
@@ -17,30 +19,20 @@ import IconWrapper from '../ui/IconWrapper'
 import UserSettings from './UserSettings'
 
 const OrgSelector: React.FC = React.memo((props: any) => {
-  const dispatch = useDispatch()
+  // Zustand store
+  const connections = useConnectionStore(getConnectionsArray)
+  const activeConnection = useConnectionStore(getActiveConnection)
+  const { pending, error } = useConnectionStore((state) => state.activeConnection)
+  const toggleModal = useConnectionStore((state) => state.toggleModal)
 
-  const connectionId: string = useSelector(
-    (state: ApplicationState) => state.connectionState.connectionId
-  )
-  const pending: boolean = useSelector(
-    (state: ApplicationState) => state.connectionState.pending
-  )
-  const error: any = useSelector(
-    (state: ApplicationState) => state.connectionState.error
-  )
-  const connections: any[] = useSelector(
-    (state: ApplicationState) => state.connectionsState.connections
-  )
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [showUserSettingsModal, setShowUserSettingsModal] = React.useState(
     false
   )
 
-  const connectionInfo = connections[connectionId]
-
   const handleNewOrg = () => {
     setShowDropdown(false)
-    dispatch(toggleModal())
+    toggleModal()
   }
 
   const handleUserSettings = () => {
@@ -49,7 +41,7 @@ const OrgSelector: React.FC = React.memo((props: any) => {
   }
 
   const renderOrgOptions = () => {
-    return Object.values(connections).map((connection: any, index) => {
+    return connections.map((connection: any, index) => {
       return (
         <ConnectionCard
           {...{ connection, setShowDropdown, index }}
@@ -130,10 +122,10 @@ const OrgSelector: React.FC = React.memo((props: any) => {
   )
 
   function renderDropDown() {
-    return connectionInfo ? (
+    return activeConnection ? (
       //Has connection
       <span>
-        {renderIcon()} {connectionInfo['name']} {renderCaret()}
+        {renderIcon()} {activeConnection.name} {renderCaret()}
       </span>
     ) : (
       //Has no connection

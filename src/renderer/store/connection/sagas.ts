@@ -1,10 +1,9 @@
-import { call, put, all, takeLatest, fork, select } from 'redux-saga/effects'
+import { call, put, all, takeLatest, fork } from 'redux-saga/effects'
 import { ConnectionActionTypes } from './types'
 import { describe } from '../schema/sagas'
 import { ipcRenderer } from 'electron'
 // import { getPermissions } from '../permission/sagas'
-import { getConnections } from '../index'
-import { updateConnection } from '../../../helpers/local-store'
+import { useConnectionStore } from '../../stores/useConnectionStore'
 
 export function* connectionSagas() {
   yield all([fork(watchConnectionChange)])
@@ -22,7 +21,8 @@ export function* setConnection(action: any) {
       type: ConnectionActionTypes.SET
     })
 
-    const connections: any = yield select(getConnections)
+    // Get connection from Zustand store (Phase 3 migration)
+    const connections = useConnectionStore.getState().connections
     const connectionInfo = connections[connectionId]
 
     // Call Salesforce APIs via IPC to avoid CORS issues
@@ -55,26 +55,27 @@ export function* setConnection(action: any) {
     // Store connection info for later use (will be used by other sagas via IPC)
     const connection = connectionInfo
 
+    // Update connection in Zustand store with identity info
+    useConnectionStore.getState().updateConnection(connectionId, {
+      username,
+      first_name,
+      last_name,
+      email,
+      display_name,
+      timezone,
+      user_id,
+      user_type,
+      organization_id,
+      locale,
+      language
+    })
+
     yield all([
       put({
         payload: { connection, pending: false, userInfo },
         type: ConnectionActionTypes.SET
       }),
-      call(describe),
-      updateConnection({
-        id: connectionId,
-        username,
-        first_name,
-        last_name,
-        email,
-        display_name,
-        timezone,
-        user_id,
-        user_type,
-        organization_id,
-        locale,
-        language
-      })
+      call(describe)
     ])
   } catch (error) {
     console.error(error)

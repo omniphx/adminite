@@ -12,23 +12,29 @@ import OrgSelector from './applications/orgSelector/OrgSelector';
 import NewOrgModal from './applications/orgSelector/NewOrgModal';
 const { Sider, Content } = Layout;
 import { ipcRenderer, shell } from 'electron';
-import {
-  initializeConnection,
-  onConnectionCreate
-} from './store/connections/actions';
-import { toggleModal } from './store/connections/actions';
 import { useDispatch, useSelector } from 'react-redux';
+import { onConnectionSelected } from './store/connection/actions';
 import IconWrapper from './applications/ui/IconWrapper';
 import { FaDatabase, FaTools, FaUnlockAlt } from 'react-icons/fa';
 import UpdateNotification from './applications/UpdateNotification';
 import * as os from 'os';
 import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
 import { useFeatureStore, Feature } from './stores/useFeatureStore';
+import { useConnectionStore } from './stores/useConnectionStore';
 
 const App = (): ReactElement => {
   const dispatch = useDispatch();
   const feature = useFeatureStore((state) => state.feature);
   const setFeature = useFeatureStore((state) => state.setFeature);
+
+  // Zustand connection store
+  const addConnection = useConnectionStore((state) => state.addConnection);
+  const setActiveConnectionId = useConnectionStore((state) => state.setActiveConnectionId);
+  const toggleModal = useConnectionStore((state) => state.toggleModal);
+  const initializeFromLegacyStorage = useConnectionStore((state) => state.initializeFromLegacyStorage);
+  const connectionOrder = useConnectionStore((state) => state.connectionOrder);
+
+  // Redux still needed for active connection details (until Phase 4)
   const connection = useSelector(
     (state: ApplicationState) => state.connectionState.connection
   );
@@ -37,7 +43,17 @@ const App = (): ReactElement => {
   );
 
   useEffect(() => {
-    dispatch(initializeConnection());
+    // Migrate from legacy localStorage format if needed
+    initializeFromLegacyStorage();
+
+    // If we have connections but no active one selected, select the first
+    if (connectionOrder.length > 0) {
+      const firstConnectionId = connectionOrder[0];
+      setActiveConnectionId(firstConnectionId);
+      // Dispatch Redux action to trigger connection saga (until Phase 4 migration)
+      dispatch(onConnectionSelected(firstConnectionId));
+    }
+
     ipcRenderer.on('new-connection', handleNewConnection);
     return () => {
       ipcRenderer.removeListener('new-connection', handleNewConnection);
@@ -80,9 +96,12 @@ const App = (): ReactElement => {
     }
   }, []);
 
-  async function handleNewConnection(event, connection: any) {
-    await dispatch(onConnectionCreate(connection));
-    await dispatch(toggleModal());
+  async function handleNewConnection(event, connectionData: any) {
+    const newConnection = addConnection(connectionData);
+    setActiveConnectionId(newConnection.id);
+    // Dispatch Redux action to trigger connection saga (until Phase 4 migration)
+    dispatch(onConnectionSelected(newConnection.id));
+    toggleModal();
   }
 
   const handleOrgOpen = () => {

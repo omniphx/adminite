@@ -1,26 +1,24 @@
 import * as React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
 import { Modal, Input, Select, Button, Form } from 'antd'
 import { ipcRenderer } from 'electron'
-import { toggleModal } from '../../store/connections/actions'
-import { ApplicationState } from '../../store/index'
+import { useConnectionStore } from '../../stores/useConnectionStore'
 
 const NewOrgModal: React.FC<any> = React.memo((props: any) => {
-  const dispatch = useDispatch()
   const [form] = Form.useForm()
   const [customUrl, setCustomUrl] = React.useState('')
   const [showCustomUrl, setShowCustomUrl] = React.useState(false)
-  const modalVisiblity: boolean = useSelector(
-    (state: ApplicationState) => state.connectionsState.modalVisiblity
-  )
+
+  // Zustand store
+  const modalVisible = useConnectionStore((state) => state.modalVisible)
+  const toggleModal = useConnectionStore((state) => state.toggleModal)
 
   React.useEffect(() => {
-    if (modalVisiblity === true) {
+    if (modalVisible === true) {
       form.resetFields()
       setShowCustomUrl(false)
       setCustomUrl('')
     }
-  }, [modalVisiblity])
+  }, [modalVisible])
 
   const handleSubmit = async event => {
     event.preventDefault()
@@ -45,7 +43,7 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
   }
 
   const handleCancel = () => {
-    dispatch(toggleModal())
+    toggleModal()
   }
 
   const handleEnvironmentChange = value => {
@@ -72,7 +70,7 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
 
   return (
     <Modal
-      visible={modalVisiblity}
+      visible={modalVisible}
       onOk={handleSubmit}
       onCancel={handleCancel}
       footer={[

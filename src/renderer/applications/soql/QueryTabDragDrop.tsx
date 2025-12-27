@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { useDrag, useDrop } from 'react-dnd-cjs'
+import { useDrag, useDrop } from 'react-dnd'
 import { onQueryTabMove } from '../../store/queryTabs/actions'
 import { ApplicationState } from '../../store/index'
 
@@ -21,15 +21,16 @@ const QueryTabDragDrop: React.FC<IQueryTabDragDropProps> = React.memo(
     const index = allIds.indexOf(tabId)
     const tabRef: any = React.useRef()
 
-    const [{ opacity, isDragging }, dragRef] = useDrag({
-      item: { type: 'queryTab', index, tabId },
+    const [{ opacity, isDragging }, dragRef] = useDrag(() => ({
+      type: 'queryTab',
+      item: { index, tabId },
       collect: monitor => ({
         opacity: monitor.isDragging() ? 0.5 : 1,
         isDragging: monitor.isDragging()
       })
-    })
+    }))
 
-    const [{ canDrop, isOver, item }, dropRef] = useDrop({
+    const [{ canDrop, isOver, item }, dropRef] = useDrop(() => ({
       accept: 'queryTab',
       drop: (item: any) => {
         dispatch(onQueryTabMove(item.tabId, tabId))
@@ -39,7 +40,7 @@ const QueryTabDragDrop: React.FC<IQueryTabDragDropProps> = React.memo(
         canDrop: monitor.canDrop(),
         item: monitor.getItem()
       })
-    })
+    }))
 
     dragRef(dropRef(tabRef))
 

@@ -2,7 +2,8 @@ import * as React from 'react';
 import { ApplicationState } from '../../store/index';
 import { onFieldPermissionChange } from '../../store/fieldPermission/actions';
 import { Table, Checkbox, Tooltip } from 'antd';
-import Column from 'antd/lib/table/Column';
+
+const { Column } = Table;
 
 import { useDispatch, useSelector } from 'react-redux';
 

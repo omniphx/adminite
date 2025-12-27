@@ -9,7 +9,8 @@ import { Menu, Dropdown, Card, Tooltip } from 'antd'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleModal } from '../../store/connections/actions'
 import { ApplicationState } from '../../store/index'
-import Meta from 'antd/lib/card/Meta'
+
+const { Meta } = Card
 import ConnectionCard from './ConnectionCard'
 import { MdAddBox, MdSettings } from 'react-icons/md'
 import IconWrapper from '../ui/IconWrapper'

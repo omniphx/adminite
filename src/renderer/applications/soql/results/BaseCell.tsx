@@ -2,7 +2,7 @@ import * as React from 'react';
 import { EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { Field as DescribeField } from 'jsforce';
-import KeyboardEventHandler from 'react-keyboard-event-handler';
+import { useKeyboardShortcut } from '../../../hooks/useKeyboardShortcut';
 
 interface IBaseCellProps {
   value: any;
@@ -44,16 +44,13 @@ const BaseCell: React.FC<IBaseCellProps> = (props: IBaseCellProps) => {
     }
   };
 
-  return editMode ? (
-    <KeyboardEventHandler
-      handleKeys={['enter', 'esc', 'tab']}
-      onKeyEvent={onKeyPress}
-    >
-      {props.children}
-    </KeyboardEventHandler>
-  ) : (
-    renderNonEditMode()
-  );
+  useKeyboardShortcut({
+    keys: ['enter', 'esc', 'tab'],
+    onKeyEvent: onKeyPress,
+    enabled: editMode
+  });
+
+  return editMode ? props.children : renderNonEditMode();
 
   function renderNonEditMode() {
     return fieldSchema && fieldSchema.updateable ? (

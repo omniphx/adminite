@@ -32,6 +32,7 @@ yarn release                # Release for both platforms with auto-updater
 ## Environment Setup
 
 Create a `.env` file with Salesforce Connected App credentials:
+
 ```
 ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID=your_client_id
 ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET=your_client_secret
@@ -47,6 +48,7 @@ ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET=your_client_secret
 ### Redux Store Organization (`src/renderer/store/`)
 
 State is normalized using `byId`/`allIds` pattern. Key slices:
+
 - `connection` - Active Salesforce org connection
 - `connections` - All stored org connections
 - `queries` - SOQL query content per tab
@@ -58,6 +60,7 @@ State is normalized using `byId`/`allIds` pattern. Key slices:
 ### Feature Modules (`src/renderer/applications/`)
 
 Each feature is a self-contained module:
+
 - `soql/` - Main SOQL query editor with autocomplete, results table, cell renderers
 - `fieldLevelSecurity/` - FLS viewer
 - `schemaExplorer/` - Schema exploration tool
@@ -82,4 +85,4 @@ Tests use Jest with jsdom environment. The `jest.setup.js` configures matchMedia
 
 ### Library/API documentation
 
-Always use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library id and get library docs without me having to explicitly ask.
+IMPORTANT - ALWAYS use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means YOU MUST automatically use the Context7 MCP tools to resolve library id and get library docs without me having to explicitly ask.

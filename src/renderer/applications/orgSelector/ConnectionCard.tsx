@@ -6,8 +6,9 @@ import {
   onConnectionDelete,
   moveConnection
 } from '../../store/connections/actions'
-import Meta from 'antd/lib/card/Meta'
-import { useDrag, useDrop } from 'react-dnd-cjs'
+
+const { Meta } = Card
+import { useDrag, useDrop } from 'react-dnd'
 import { GoKebabVertical } from 'react-icons/go'
 import { onConnectionChange } from '../../store/connections/actions'
 import { onConnectionSelected } from '../../store/connection/actions'
@@ -29,15 +30,16 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
     const [editMode, setEditMode] = React.useState(false)
     const [connectionName, setConnectionName] = React.useState(connection.name)
 
-    const [{ opacity, isDragging }, dragRef] = useDrag({
-      item: { type: 'connection', id: connection.id, index },
+    const [{ opacity, isDragging }, dragRef] = useDrag(() => ({
+      type: 'connection',
+      item: { id: connection.id, index },
       collect: monitor => ({
         opacity: monitor.isDragging() ? 0.5 : 1,
         isDragging: monitor.isDragging()
       })
-    })
+    }))
 
-    const [{ canDrop, isOver, item }, dropRef] = useDrop({
+    const [{ canDrop, isOver, item }, dropRef] = useDrop(() => ({
       accept: 'connection',
       drop: (item: any) => dispatch(moveConnection(item.index, index)),
       collect: monitor => ({
@@ -45,7 +47,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
         canDrop: monitor.canDrop(),
         item: monitor.getItem()
       })
-    })
+    }))
 
     const handleConnectionSelection = connectionId => {
       setShowDropdown(false)

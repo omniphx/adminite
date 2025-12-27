@@ -8,7 +8,7 @@ import {
   Field
 } from 'jsforce'
 import { Caret, CaretLocator } from '../../utils/caretPosition'
-import KeyboardEventHandler from 'react-keyboard-event-handler'
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import AutoComplete from './Autocomplete'
 import { useSelector, useDispatch } from 'react-redux'
 import { onQueryChange } from '../../store/queries/actions'
@@ -17,7 +17,7 @@ import { SoqlQuery } from '../../store/queries/types'
 import { SchemaState } from '../../store/schema/types'
 import { Input } from 'antd'
 import { Connection } from 'jsforce'
-import { TextAreaRef } from 'antd/lib/input/TextArea'
+import type { TextAreaRef } from 'antd/es/input/TextArea'
 
 interface IQueryEditorProps {
   tabId: string
@@ -108,6 +108,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   >({})
 
   const [sobjects, setSobjects] = useState<DescribeGlobalSObjectResult[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let mounted = true
@@ -424,32 +425,33 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     }
   }
 
+  useKeyboardShortcut({
+    keys: ['down', 'up', 'enter', 'esc', 'tab', 'shift+tab'],
+    onKeyEvent: onKeyPress,
+    target: containerRef
+  })
+
   return (
-    <div className='QueryEditor'>
-      <KeyboardEventHandler
-        handleKeys={['down', 'up', 'enter', 'esc', 'tab', 'shift+tab']}
-        onKeyEvent={onKeyPress}
-      >
-        <Input.TextArea
-          ref={textAreaReference}
-          id='queryTextArea'
-          style={{ height: 200, tabSize: 2 }}
-          className='query-editor_text-area'
-          value={query.body}
-          onChange={handleChange}
-          onKeyDown={(event: React.KeyboardEvent) => {
-            if (disableInlineTabs) return
-            if (event.keyCode === 9) event.preventDefault()
-          }}
-        />
-        <AutoComplete
-          dataSource={dataSource}
-          onSelect={onItemSelect}
-          topPosition={topPosition}
-          leftPosition={leftPosition}
-          index={typeaheadIndex}
-        />
-      </KeyboardEventHandler>
+    <div className='QueryEditor' ref={containerRef}>
+      <Input.TextArea
+        ref={textAreaReference}
+        id='queryTextArea'
+        style={{ height: 200, tabSize: 2 }}
+        className='query-editor_text-area'
+        value={query.body}
+        onChange={handleChange}
+        onKeyDown={(event: React.KeyboardEvent) => {
+          if (disableInlineTabs) return
+          if (event.keyCode === 9) event.preventDefault()
+        }}
+      />
+      <AutoComplete
+        dataSource={dataSource}
+        onSelect={onItemSelect}
+        topPosition={topPosition}
+        leftPosition={leftPosition}
+        index={typeaheadIndex}
+      />
     </div>
   )
 

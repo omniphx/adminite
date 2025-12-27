@@ -2,7 +2,8 @@ import * as React from 'react'
 import { CloseCircleOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { onQuery, onCancel } from '../../../store/queryResults/actions'
-import ButtonGroup from 'antd/lib/button/button-group'
+
+const { Group: ButtonGroup } = Button
 import { useSelector, useDispatch } from 'react-redux'
 import { ApplicationState } from '../../../store/index'
 import { add as addToHistory } from '../../../store/queryHistory/actions'

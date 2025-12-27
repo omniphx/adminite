@@ -4,7 +4,7 @@ import SelectContext from '../SelectContext'
 import { onPermissionIdsChange, onPermissionTypeChange, onPermissionsInit, onPermissionChange, onSObjectChange } from '../../store/permission/actions';
 import { saveFieldPermissions } from '../../store/fieldPermission/actions'
 import { Button, Row, Col, Radio, Select, Input } from 'antd'
-import { RadioChangeEvent } from 'antd/lib/radio'
+import type { RadioChangeEvent } from 'antd'
 import FieldLevelSecurity from './FieldLevelSecurity'
 
 const { Option } = Select

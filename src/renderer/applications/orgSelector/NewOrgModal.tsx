@@ -4,11 +4,10 @@ import { Modal, Input, Select, Button, Form } from 'antd'
 import { ipcRenderer } from 'electron'
 import { toggleModal } from '../../store/connections/actions'
 import { ApplicationState } from '../../store/index'
-import { useForm } from 'antd/lib/form/Form'
 
 const NewOrgModal: React.FC<any> = React.memo((props: any) => {
   const dispatch = useDispatch()
-  const [form] = useForm()
+  const [form] = Form.useForm()
   const [customUrl, setCustomUrl] = React.useState('')
   const [showCustomUrl, setShowCustomUrl] = React.useState(false)
   const modalVisiblity: boolean = useSelector(

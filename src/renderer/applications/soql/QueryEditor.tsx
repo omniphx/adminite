@@ -16,8 +16,14 @@ import { onQuerySObjectChange } from '../../store/sobject/actions'
 import { SoqlQuery } from '../../store/queries/types'
 import { SchemaState } from '../../store/schema/types'
 import { Input, Select } from 'antd'
-import { Connection } from 'jsforce'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
+import { ipcRenderer } from 'electron'
+
+interface ConnectionInfo {
+  accessToken: string
+  instanceUrl: string
+  refreshToken?: string
+}
 
 interface IQueryEditorProps {
   tabId: string
@@ -58,7 +64,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     (state: ApplicationState) => state.userState.disableInlineTabs
   )
 
-  const salesforce: Connection = useSelector(
+  const connectionInfo: ConnectionInfo = useSelector(
     (state: ApplicationState) => state.connectionState.connection
   )
 
@@ -135,9 +141,20 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
         if (parentRelationship in objectDescriptions) {
           parentSobject = objectDescriptions[parentRelationship]
         } else {
-          parentSobject = toolingMode
-            ? await salesforce.tooling.describe(parentRelationship)
-            : await salesforce.describe(parentRelationship)
+          const result = await ipcRenderer.invoke('salesforce:describe', {
+            accessToken: connectionInfo.accessToken,
+            instanceUrl: connectionInfo.instanceUrl,
+            refreshToken: connectionInfo.refreshToken,
+            sObjectName: parentRelationship,
+            toolingMode
+          })
+
+          if (!result.success) {
+            console.error('Failed to describe parent relationship:', result.error)
+            return
+          }
+
+          parentSobject = result.data
 
           if ((mounted = false)) return
           setObjectDescriptions({
@@ -161,7 +178,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     return () => {
       mounted = false
     }
-  }, [parentRelationshipToken, toolingMode, salesforce])
+  }, [parentRelationshipToken, toolingMode, connectionInfo])
 
   const textAreaReference = useRef<TextAreaRef>(null)
 
@@ -180,7 +197,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
 
   useEffect(() => {
     if (sobject) {
-      setFields(sobject.fields)
+      setFields(sobject.fields || [])
     }
   }, [sobject])
 

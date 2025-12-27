@@ -250,6 +250,23 @@ async function createServer(): Promise<void> {
       }
     });
 
+    ipcMain.handle('salesforce:describe', async (event, { accessToken, instanceUrl, refreshToken, sObjectName, toolingMode }) => {
+      try {
+        const connection = new jsforce.Connection({
+          instanceUrl,
+          accessToken,
+          refreshToken
+        });
+        const result = toolingMode
+          ? await connection.tooling.describe(sObjectName)
+          : await connection.describe(sObjectName);
+        return { success: true, data: result };
+      } catch (error) {
+        log.error('salesforce:describe error:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     ipcMain.handle('salesforce:query', async (event, { accessToken, instanceUrl, refreshToken, queryString, toolingMode }) => {
       try {
         const connection = new jsforce.Connection({

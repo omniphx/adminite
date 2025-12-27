@@ -1,7 +1,8 @@
 import { put, takeLatest, all, fork, select } from 'redux-saga/effects'
 import { SObjectActionTypes } from './types'
-import { DescribeSObjectResult, Connection } from 'jsforce'
+import { DescribeSObjectResult } from 'jsforce'
 import { getConnection, getToolingMode } from '../index'
+import { ipcRenderer } from 'electron'
 
 //Type is used to handle multiple saga instances
 export function* sObjectSagas(type: string) {
@@ -19,9 +20,22 @@ export function* describeSObject(action: any) {
   const type = words[words.length - 1]
   const { tabId, sObjectName } = action.payload
   try {
-    const salesforce: Connection = yield select(getConnection)
+    const connectionInfo: any = yield select(getConnection)
     const toolingMode: boolean = yield select(getToolingMode, tabId)
-    const sobject: DescribeSObjectResult = yield toolingMode ? salesforce.tooling.describe(sObjectName) : salesforce.describe(sObjectName)
+
+    const result = yield ipcRenderer.invoke('salesforce:describe', {
+      accessToken: connectionInfo.accessToken,
+      instanceUrl: connectionInfo.instanceUrl,
+      refreshToken: connectionInfo.refreshToken,
+      sObjectName,
+      toolingMode
+    })
+
+    if (!result.success) {
+      throw new Error(result.error)
+    }
+
+    const sobject: DescribeSObjectResult = result.data
     const fieldSchema = sobject.fields.reduce((accumulator, field: any) => {
       accumulator[field.name] = field
       return accumulator

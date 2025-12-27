@@ -19,6 +19,47 @@ log.info('App starting');
 
 let mainWindow: any;
 
+// Helper to create a Salesforce connection with OAuth2 for token refresh
+interface ConnectionParams {
+  accessToken: string;
+  instanceUrl: string;
+  refreshToken: string;
+  loginUrl: string;
+  connectionId?: string;
+}
+
+function createSalesforceConnection(params: ConnectionParams): jsforce.Connection {
+  const { accessToken, instanceUrl, refreshToken, loginUrl, connectionId } = params;
+
+  // Create OAuth2 object for token refresh capability
+  const oauth2 = new jsforce.OAuth2({
+    loginUrl,
+    clientId: process.env.SALESFORCE_CLIENT_ID,
+    clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
+    redirectUri: `${PROTOCOL_NAME}://oauth/callback`
+  });
+
+  const connection = new jsforce.Connection({
+    oauth2,
+    instanceUrl,
+    accessToken,
+    refreshToken
+  });
+
+  // Listen for token refresh events and notify the renderer
+  connection.on('refresh', (newAccessToken: string, res: any) => {
+    log.info('Token refreshed for connection:', connectionId);
+    if (mainWindow && connectionId) {
+      mainWindow.webContents.send('token-refreshed', {
+        connectionId,
+        accessToken: newAccessToken
+      });
+    }
+  });
+
+  return connection;
+}
+
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const PROTOCOL_NAME = 'adminite';
 
@@ -190,13 +231,9 @@ async function createServer(): Promise<void> {
     });
 
     // IPC handler for Salesforce API calls (avoids CORS issues in renderer)
-    ipcMain.handle('salesforce:identity', async (event, { accessToken, instanceUrl, refreshToken }) => {
+    ipcMain.handle('salesforce:identity', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const identity = await connection.identity();
         return { success: true, data: identity };
       } catch (error) {
@@ -205,13 +242,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:getUserInfo', async (event, { accessToken, instanceUrl, refreshToken }) => {
+    ipcMain.handle('salesforce:getUserInfo', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const userInfo = await connection.soap.getUserInfo();
         return { success: true, data: userInfo };
       } catch (error) {
@@ -220,13 +253,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:describeGlobal', async (event, { accessToken, instanceUrl, refreshToken }) => {
+    ipcMain.handle('salesforce:describeGlobal', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = await connection.describeGlobal();
         return { success: true, data: result };
       } catch (error) {
@@ -235,13 +264,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:toolingDescribeGlobal', async (event, { accessToken, instanceUrl, refreshToken }) => {
+    ipcMain.handle('salesforce:toolingDescribeGlobal', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = await connection.tooling.describeGlobal();
         return { success: true, data: result };
       } catch (error) {
@@ -250,13 +275,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:describe', async (event, { accessToken, instanceUrl, refreshToken, sObjectName, toolingMode }) => {
+    ipcMain.handle('salesforce:describe', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sObjectName, toolingMode }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = toolingMode
           ? await connection.tooling.describe(sObjectName)
           : await connection.describe(sObjectName);
@@ -267,13 +288,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:query', async (event, { accessToken, instanceUrl, refreshToken, queryString, toolingMode }) => {
+    ipcMain.handle('salesforce:query', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString, toolingMode }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = toolingMode
           ? await connection.tooling.query(queryString)
           : await connection.query(queryString);
@@ -284,13 +301,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:queryAll', async (event, { accessToken, instanceUrl, refreshToken, queryString }) => {
+    ipcMain.handle('salesforce:queryAll', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         // queryAll is only available on standard connection, not tooling
         const result = await connection.queryAll(queryString);
         return { success: true, data: result };
@@ -300,13 +313,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:search', async (event, { accessToken, instanceUrl, refreshToken, queryString }) => {
+    ipcMain.handle('salesforce:search', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = await connection.search(queryString);
         return { success: true, data: result };
       } catch (error) {
@@ -315,13 +324,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:queryMore', async (event, { accessToken, instanceUrl, refreshToken, nextRecordsUrl, toolingMode }) => {
+    ipcMain.handle('salesforce:queryMore', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, nextRecordsUrl, toolingMode }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = toolingMode
           ? await connection.tooling.queryMore(nextRecordsUrl)
           : await connection.queryMore(nextRecordsUrl);
@@ -332,13 +337,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:insert', async (event, { accessToken, instanceUrl, refreshToken, sobjectType, records, toolingMode }) => {
+    ipcMain.handle('salesforce:insert', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sobjectType, records, toolingMode }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = toolingMode
           ? await connection.tooling.sobject(sobjectType).insert(records)
           : await connection.sobject(sobjectType).insert(records);
@@ -349,13 +350,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:update', async (event, { accessToken, instanceUrl, refreshToken, sobjectType, records, toolingMode }) => {
+    ipcMain.handle('salesforce:update', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sobjectType, records, toolingMode }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = toolingMode
           ? await connection.tooling.sobject(sobjectType).update(records)
           : await connection.sobject(sobjectType).update(records);
@@ -366,13 +363,9 @@ async function createServer(): Promise<void> {
       }
     });
 
-    ipcMain.handle('salesforce:delete', async (event, { accessToken, instanceUrl, refreshToken, sobjectType, ids, toolingMode }) => {
+    ipcMain.handle('salesforce:delete', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sobjectType, ids, toolingMode }) => {
       try {
-        const connection = new jsforce.Connection({
-          instanceUrl,
-          accessToken,
-          refreshToken
-        });
+        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const result = toolingMode
           ? await connection.tooling.sobject(sobjectType).del(ids)
           : await connection.sobject(sobjectType).del(ids);

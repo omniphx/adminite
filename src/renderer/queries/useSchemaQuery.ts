@@ -1,11 +1,12 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { ipcRenderer } from 'electron'
 import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore'
 import { queryKeys } from './queryKeys'
-import { DescribeGlobalResult, DescribeGlobalSObjectResult } from 'jsforce'
+import { DescribeGlobalSObjectResult } from 'jsforce'
+import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery'
 
 // IPC fetch functions
-async function fetchDescribeGlobal(connectionInfo: any): Promise<DescribeGlobalSObjectResult[]> {
+async function fetchDescribeGlobal(connectionInfo: ConnectionInfo): Promise<DescribeGlobalSObjectResult[]> {
   const result = await ipcRenderer.invoke('salesforce:describeGlobal', connectionInfo)
   if (!result.success) {
     throw new Error(result.error)
@@ -13,7 +14,7 @@ async function fetchDescribeGlobal(connectionInfo: any): Promise<DescribeGlobalS
   return result.data.sobjects
 }
 
-async function fetchToolingDescribeGlobal(connectionInfo: any): Promise<DescribeGlobalSObjectResult[]> {
+async function fetchToolingDescribeGlobal(connectionInfo: ConnectionInfo): Promise<DescribeGlobalSObjectResult[]> {
   const result = await ipcRenderer.invoke('salesforce:toolingDescribeGlobal', connectionInfo)
   if (!result.success) {
     throw new Error(result.error)
@@ -21,7 +22,7 @@ async function fetchToolingDescribeGlobal(connectionInfo: any): Promise<Describe
   return result.data.sobjects
 }
 
-async function fetchNamespace(connectionInfo: any): Promise<string | null> {
+async function fetchNamespace(connectionInfo: ConnectionInfo): Promise<string | null> {
   const result = await ipcRenderer.invoke('salesforce:query', {
     ...connectionInfo,
     queryString: 'SELECT NamespacePrefix FROM Organization',
@@ -44,7 +45,10 @@ export function useGlobalDescribeQuery() {
 
   return useQuery({
     queryKey: queryKeys.schema.global(activeConnectionId ?? ''),
-    queryFn: () => fetchDescribeGlobal(activeConnection),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchDescribeGlobal(connectionInfo)
+    },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
@@ -62,7 +66,10 @@ export function useToolingDescribeQuery() {
 
   return useQuery({
     queryKey: queryKeys.schema.tooling(activeConnectionId ?? ''),
-    queryFn: () => fetchToolingDescribeGlobal(activeConnection),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchToolingDescribeGlobal(connectionInfo)
+    },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -80,7 +87,10 @@ export function useNamespaceQuery() {
 
   return useQuery({
     queryKey: queryKeys.schema.namespace(activeConnectionId ?? ''),
-    queryFn: () => fetchNamespace(activeConnection),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchNamespace(connectionInfo)
+    },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

@@ -5,6 +5,7 @@ import { useConnectionStore, getActiveConnection } from '../stores/useConnection
 import { useQueryResultStore } from '../stores/useQueryResultStore'
 import { useTabStore } from '../stores/useTabStore'
 import { getRecordId, chunk } from '../../helpers/utils'
+import { buildConnectionInfo } from './useConnectionQuery'
 
 /**
  * Hook for updating records via DML
@@ -13,10 +14,15 @@ import { getRecordId, chunk } from '../../helpers/utils'
 export function useDmlUpdate() {
   return useMutation({
     mutationFn: async (tabId: string) => {
-      const connection = getActiveConnection(useConnectionStore.getState())
-      if (!connection) {
+      const state = useConnectionStore.getState()
+      const connection = getActiveConnection(state)
+      const connectionId = state.activeConnectionId
+      if (!connection || !connectionId) {
         throw new Error('No active connection')
       }
+
+      // Build connection info with loginUrl for token refresh
+      const connectionInfo = buildConnectionInfo(connection, connectionId)
 
       const queryState = useTabStore.getState().queries[tabId]
       const toolingMode = queryState?.toolingMode ?? false
@@ -64,7 +70,7 @@ export function useDmlUpdate() {
           await Promise.all(
             recordsChunked.map(async (recordsToSave: any[]) => {
               const apiResult = await ipcRenderer.invoke('salesforce:update', {
-                ...connection,
+                ...connectionInfo,
                 sobjectType: sObjectType,
                 records: recordsToSave,
                 toolingMode,
@@ -119,10 +125,15 @@ export function useDmlUpdate() {
 export function useDmlDelete() {
   return useMutation({
     mutationFn: async (tabId: string) => {
-      const connection = getActiveConnection(useConnectionStore.getState())
-      if (!connection) {
+      const state = useConnectionStore.getState()
+      const connection = getActiveConnection(state)
+      const connectionId = state.activeConnectionId
+      if (!connection || !connectionId) {
         throw new Error('No active connection')
       }
+
+      // Build connection info with loginUrl for token refresh
+      const connectionInfo = buildConnectionInfo(connection, connectionId)
 
       const queryState = useTabStore.getState().queries[tabId]
       const toolingMode = queryState?.toolingMode ?? false
@@ -148,7 +159,7 @@ export function useDmlDelete() {
       await Promise.all(
         idsToDeleteChunked.map(async (idsToDelete: string[]) => {
           const apiResult = await ipcRenderer.invoke('salesforce:delete', {
-            ...connection,
+            ...connectionInfo,
             sobjectType: sobjectName,
             ids: idsToDelete,
             toolingMode,

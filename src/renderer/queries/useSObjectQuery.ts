@@ -4,6 +4,7 @@ import { DescribeSObjectResult, Field } from 'jsforce'
 import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore'
 import { useTabStore } from '../stores/useTabStore'
 import { queryKeys } from './queryKeys'
+import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery'
 
 // Field schema is fields indexed by name for quick lookup
 export interface FieldSchema {
@@ -19,18 +20,12 @@ export interface SObjectDescribeResult {
  * Fetch sObject describe via IPC
  */
 async function fetchSObjectDescribe(
-  connectionInfo: any,
+  connectionInfo: ConnectionInfo,
   sObjectName: string,
   toolingMode: boolean
 ): Promise<SObjectDescribeResult> {
-  if (!connectionInfo) {
-    throw new Error('No active connection')
-  }
-
   const result = await ipcRenderer.invoke('salesforce:describe', {
-    accessToken: connectionInfo.accessToken,
-    instanceUrl: connectionInfo.instanceUrl,
-    refreshToken: connectionInfo.refreshToken,
+    ...connectionInfo,
     sObjectName,
     toolingMode,
   })
@@ -64,7 +59,10 @@ export function useQuerySObjectDescribe(tabId: string, sObjectName: string | und
 
   return useQuery({
     queryKey: queryKeys.sobject.describe(activeConnectionId ?? '', tabId, sObjectName ?? '', 'QUERY'),
-    queryFn: () => fetchSObjectDescribe(activeConnection, sObjectName!, toolingMode),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode)
+    },
     enabled: !!activeConnectionId && !!activeConnection && !!sObjectName,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
@@ -85,7 +83,10 @@ export function useResultSObjectDescribe(tabId: string, sObjectName: string | un
 
   return useQuery({
     queryKey: queryKeys.sobject.describe(activeConnectionId ?? '', tabId, sObjectName ?? '', 'RESULT'),
-    queryFn: () => fetchSObjectDescribe(activeConnection, sObjectName!, toolingMode),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode)
+    },
     enabled: !!activeConnectionId && !!activeConnection && !!sObjectName,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
@@ -110,7 +111,10 @@ export function useSObjectDescribe(
 
   return useQuery({
     queryKey: queryKeys.sobject.describe(activeConnectionId ?? '', tabId, sObjectName ?? '', context),
-    queryFn: () => fetchSObjectDescribe(activeConnection, sObjectName!, toolingMode),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode)
+    },
     enabled: !!activeConnectionId && !!activeConnection && !!sObjectName,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,

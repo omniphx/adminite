@@ -26,12 +26,13 @@ const App = (): ReactElement => {
 
   // Zustand connection store
   const addConnection = useConnectionStore((state) => state.addConnection);
+  const updateConnection = useConnectionStore((state) => state.updateConnection);
   const setActiveConnectionId = useConnectionStore((state) => state.setActiveConnectionId);
   const toggleModal = useConnectionStore((state) => state.toggleModal);
   const initializeFromLegacyStorage = useConnectionStore((state) => state.initializeFromLegacyStorage);
   const connectionOrder = useConnectionStore((state) => state.connectionOrder);
   const activeConnection = useConnectionStore(getActiveConnection);
-  const { error } = useConnectionStore((state) => state.activeConnection);
+  const error = useConnectionStore((state) => state.activeConnection.error);
 
   // TanStack Query for connection identity/userInfo (Phase 4)
   useConnectionQuery();
@@ -48,8 +49,18 @@ const App = (): ReactElement => {
     }
 
     ipcRenderer.on('new-connection', handleNewConnection);
+
+    // Listen for token refresh events from the main process
+    // This happens when jsforce automatically refreshes an expired access token
+    const handleTokenRefresh = (_event: any, { connectionId, accessToken }: { connectionId: string, accessToken: string }) => {
+      console.log('Token refreshed for connection:', connectionId);
+      updateConnection(connectionId, { accessToken });
+    };
+    ipcRenderer.on('token-refreshed', handleTokenRefresh);
+
     return () => {
       ipcRenderer.removeListener('new-connection', handleNewConnection);
+      ipcRenderer.removeListener('token-refreshed', handleTokenRefresh);
     };
   }, []);
 

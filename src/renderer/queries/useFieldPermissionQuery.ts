@@ -5,6 +5,7 @@ import { useConnectionStore, getActiveConnection } from '../stores/useConnection
 import { usePermissionUIStore, PermissionType } from '../stores/usePermissionUIStore'
 import { queryKeys } from './queryKeys'
 import { getProfileFieldPermissions, getPermisionSetFieldPermissions } from '../utils/queryBuilder'
+import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery'
 
 // Types for field permission data
 export interface FieldPermission {
@@ -28,15 +29,11 @@ export interface FieldPermissionRecord {
 
 // Fetch field permissions via IPC
 async function fetchFieldPermissions(
-  connectionInfo: any,
+  connectionInfo: ConnectionInfo,
   sobjectName: string,
   permissionIds: string[],
   permissionType: PermissionType
 ): Promise<FieldPermissionRecord> {
-  if (!connectionInfo) {
-    throw new Error('No active connection')
-  }
-
   if (!sobjectName || !permissionIds || permissionIds.length === 0) {
     return {}
   }
@@ -71,7 +68,7 @@ async function fetchFieldPermissions(
 
 // Save field permissions (insert new, update existing)
 interface SaveFieldPermissionsParams {
-  connectionInfo: any
+  connectionInfo: ConnectionInfo
   permissionsToSave: FieldPermission[]
 }
 
@@ -85,10 +82,6 @@ async function saveFieldPermissions({
   connectionInfo,
   permissionsToSave,
 }: SaveFieldPermissionsParams): Promise<SaveResult[]> {
-  if (!connectionInfo) {
-    throw new Error('No active connection')
-  }
-
   const permissionsToInsert = permissionsToSave.filter(
     (permission) => !permission.Id
   )
@@ -153,8 +146,10 @@ export function useFieldPermissionsQuery() {
       permissionIds,
       permissionType
     ),
-    queryFn: () =>
-      fetchFieldPermissions(activeConnection, sobjectName, permissionIds, permissionType),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchFieldPermissions(connectionInfo, sobjectName, permissionIds, permissionType)
+    },
     enabled:
       !!activeConnectionId &&
       !!activeConnection &&
@@ -181,11 +176,13 @@ export function useFieldPermissionMutation() {
   const permissionType = usePermissionUIStore((state) => state.permissionType)
 
   return useMutation({
-    mutationFn: (permissionsToSave: FieldPermission[]) =>
-      saveFieldPermissions({
-        connectionInfo: activeConnection,
+    mutationFn: (permissionsToSave: FieldPermission[]) => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return saveFieldPermissions({
+        connectionInfo,
         permissionsToSave,
-      }),
+      })
+    },
     onSuccess: () => {
       // Invalidate the field permissions query to refetch fresh data
       queryClient.invalidateQueries({

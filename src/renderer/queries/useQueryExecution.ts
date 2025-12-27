@@ -5,6 +5,7 @@ import { useQueryResultStore } from '../stores/useQueryResultStore'
 import { useTabStore } from '../stores/useTabStore'
 import { dataReducer, filterIds } from '../../helpers/utils'
 import { queryKeys } from './queryKeys'
+import { buildConnectionInfo } from './useConnectionQuery'
 
 /**
  * Determines the appropriate query handler based on query type
@@ -38,10 +39,15 @@ export function useQueryExecution() {
       const { tabId, queryString, includeDeleted } = params
 
       // Get connection from Zustand
-      const connection = getActiveConnection(useConnectionStore.getState())
-      if (!connection) {
+      const state = useConnectionStore.getState()
+      const connection = getActiveConnection(state)
+      const connectionId = state.activeConnectionId
+      if (!connection || !connectionId) {
         throw new Error('No active connection')
       }
+
+      // Build connection info with loginUrl for token refresh
+      const connectionInfo = buildConnectionInfo(connection, connectionId)
 
       // Get filter and tooling mode from Zustand
       const queryState = useTabStore.getState().queries[tabId]
@@ -57,17 +63,17 @@ export function useQueryExecution() {
       let apiResult
       if (queryHandler === 'search') {
         apiResult = await ipcRenderer.invoke('salesforce:search', {
-          ...connection,
+          ...connectionInfo,
           queryString,
         })
       } else if (queryHandler === 'queryAll') {
         apiResult = await ipcRenderer.invoke('salesforce:queryAll', {
-          ...connection,
+          ...connectionInfo,
           queryString,
         })
       } else {
         apiResult = await ipcRenderer.invoke('salesforce:query', {
-          ...connection,
+          ...connectionInfo,
           queryString,
           toolingMode,
         })
@@ -91,7 +97,7 @@ export function useQueryExecution() {
 
       // Handle pagination if more records exist
       if (result.hasOwnProperty('done') && !result.done && result.nextRecordsUrl) {
-        await fetchRemainingRecords(tabId, result.nextRecordsUrl, filter, toolingMode, connection)
+        await fetchRemainingRecords(tabId, result.nextRecordsUrl, filter, toolingMode, connectionInfo)
       }
 
       return result
@@ -114,10 +120,10 @@ async function fetchRemainingRecords(
   nextRecordsUrl: string,
   filter: string,
   toolingMode: boolean,
-  connection: any
+  connectionInfo: ReturnType<typeof buildConnectionInfo>
 ): Promise<void> {
   const apiResult = await ipcRenderer.invoke('salesforce:queryMore', {
-    ...connection,
+    ...connectionInfo,
     nextRecordsUrl,
     toolingMode,
   })
@@ -138,7 +144,7 @@ async function fetchRemainingRecords(
 
   // Continue fetching if more records exist
   if (!result.done && result.nextRecordsUrl) {
-    await fetchRemainingRecords(tabId, result.nextRecordsUrl, filter, toolingMode, connection)
+    await fetchRemainingRecords(tabId, result.nextRecordsUrl, filter, toolingMode, connectionInfo)
   }
 }
 

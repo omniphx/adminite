@@ -19,8 +19,17 @@ export interface IdentityResponse {
   language: string
 }
 
+// Connection info interface for IPC calls - exported for use in other query files
+export interface ConnectionInfo {
+  accessToken: string
+  instanceUrl: string
+  refreshToken: string
+  loginUrl: string
+  connectionId: string
+}
+
 // IPC fetch functions
-async function fetchIdentity(connectionInfo: any): Promise<IdentityResponse> {
+async function fetchIdentity(connectionInfo: ConnectionInfo): Promise<IdentityResponse> {
   const result = await ipcRenderer.invoke('salesforce:identity', connectionInfo)
   if (!result.success) {
     throw new Error(result.error)
@@ -28,12 +37,24 @@ async function fetchIdentity(connectionInfo: any): Promise<IdentityResponse> {
   return result.data
 }
 
-async function fetchUserInfo(connectionInfo: any): Promise<any> {
+async function fetchUserInfo(connectionInfo: ConnectionInfo): Promise<any> {
   const result = await ipcRenderer.invoke('salesforce:getUserInfo', connectionInfo)
   if (!result.success) {
     throw new Error(result.error)
   }
   return result.data
+}
+
+// Helper to build ConnectionInfo from StoredConnection - exported for use in other query files
+export function buildConnectionInfo(connection: any, connectionId: string): ConnectionInfo {
+  return {
+    accessToken: connection.accessToken,
+    instanceUrl: connection.instanceUrl,
+    refreshToken: connection.refreshToken,
+    // Use 'url' field as loginUrl (the original login URL used for OAuth)
+    loginUrl: connection.url || connection.loginUrl || 'https://login.salesforce.com',
+    connectionId,
+  }
 }
 
 /**
@@ -46,8 +67,11 @@ export function useIdentityQuery() {
 
   return useQuery({
     queryKey: queryKeys.identity(activeConnectionId ?? ''),
-    queryFn: () => fetchIdentity(activeConnection),
-    enabled: !!activeConnectionId && !!activeConnection,
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchIdentity(connectionInfo)
+    },
+    enabled: !!activeConnectionId && !!activeConnection?.accessToken,
     staleTime: 5 * 60 * 1000, // 5 minutes - identity doesn't change often
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   })
@@ -63,8 +87,11 @@ export function useUserInfoQuery() {
 
   return useQuery({
     queryKey: queryKeys.userInfo(activeConnectionId ?? ''),
-    queryFn: () => fetchUserInfo(activeConnection),
-    enabled: !!activeConnectionId && !!activeConnection,
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchUserInfo(connectionInfo)
+    },
+    enabled: !!activeConnectionId && !!activeConnection?.accessToken,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   })

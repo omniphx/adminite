@@ -5,6 +5,7 @@ import { useConnectionStore, getActiveConnection } from '../stores/useConnection
 import { queryKeys } from './queryKeys'
 import { getProfiles, getPermissionSets } from '../utils/queryBuilder'
 import { useNamespaceQuery } from './useSchemaQuery'
+import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery'
 
 // Types for permission data
 export interface PermissionRecord {
@@ -43,13 +44,9 @@ export interface EntityParticle {
 
 // Fetch profiles via IPC
 async function fetchProfiles(
-  connectionInfo: any,
+  connectionInfo: ConnectionInfo,
   permissionIds: string[]
 ): Promise<PermissionRecord[]> {
-  if (!connectionInfo) {
-    throw new Error('No active connection')
-  }
-
   const queryString = getProfiles(permissionIds)
   const result = await ipcRenderer.invoke('salesforce:query', {
     ...connectionInfo,
@@ -66,14 +63,10 @@ async function fetchProfiles(
 
 // Fetch permission sets via IPC
 async function fetchPermissionSets(
-  connectionInfo: any,
+  connectionInfo: ConnectionInfo,
   namespace: string | null,
   permissionIds: string[]
 ): Promise<PermissionRecord[]> {
-  if (!connectionInfo) {
-    throw new Error('No active connection')
-  }
-
   const queryString = getPermissionSets(namespace, permissionIds)
   const result = await ipcRenderer.invoke('salesforce:query', {
     ...connectionInfo,
@@ -89,11 +82,7 @@ async function fetchPermissionSets(
 }
 
 // Fetch FLS-enabled sObjects with pagination
-async function fetchFlsSObjects(connectionInfo: any): Promise<EntityDefinition[]> {
-  if (!connectionInfo) {
-    throw new Error('No active connection')
-  }
-
+async function fetchFlsSObjects(connectionInfo: ConnectionInfo): Promise<EntityDefinition[]> {
   const allRecords: EntityDefinition[] = []
   let done = false
   let nextRecordsUrl: string | null = null
@@ -138,13 +127,9 @@ async function fetchFlsSObjects(connectionInfo: any): Promise<EntityDefinition[]
 
 // Fetch fields for an sObject with pagination
 async function fetchFlsFields(
-  connectionInfo: any,
+  connectionInfo: ConnectionInfo,
   sobjectName: string
 ): Promise<EntityParticle[]> {
-  if (!connectionInfo) {
-    throw new Error('No active connection')
-  }
-
   const allRecords: EntityParticle[] = []
   let done = false
   let nextRecordsUrl: string | null = null
@@ -197,7 +182,10 @@ export function useProfilesQuery(permissionIds: string[] = []) {
 
   return useQuery({
     queryKey: queryKeys.permissions.profiles(activeConnectionId ?? '', permissionIds),
-    queryFn: () => fetchProfiles(activeConnection, permissionIds),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchProfiles(connectionInfo, permissionIds)
+    },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
@@ -220,7 +208,10 @@ export function usePermissionSetsQuery(permissionIds: string[] = []) {
       namespace ?? undefined,
       permissionIds
     ),
-    queryFn: () => fetchPermissionSets(activeConnection, namespace ?? null, permissionIds),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchPermissionSets(connectionInfo, namespace ?? null, permissionIds)
+    },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -252,7 +243,10 @@ export function useFlsSObjectsQuery() {
 
   return useQuery({
     queryKey: queryKeys.permissions.sobjects(activeConnectionId ?? ''),
-    queryFn: () => fetchFlsSObjects(activeConnection),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchFlsSObjects(connectionInfo)
+    },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -270,7 +264,10 @@ export function useFlsFieldsQuery(sobjectName: string | undefined) {
 
   return useQuery({
     queryKey: queryKeys.permissions.fields(activeConnectionId ?? '', sobjectName ?? ''),
-    queryFn: () => fetchFlsFields(activeConnection, sobjectName!),
+    queryFn: () => {
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      return fetchFlsFields(connectionInfo, sobjectName!)
+    },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady && !!sobjectName,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

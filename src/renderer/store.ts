@@ -4,15 +4,10 @@ import { rootReducer, rootSaga } from './store/index'
 import createSagaMiddleware from 'redux-saga'
 import throttle from 'lodash/throttle'
 import { saveState, loadState } from './utils/localStorage'
-import * as Sentry from '@sentry/electron'
 
 // const composeEnhancers = composeWithDevTools({})
 const sagaMiddleware = createSagaMiddleware({
   onError: (error: any) => {
-    Sentry.withScope(scope => {
-      scope.setExtras(error)
-      Sentry.captureException(error.message)
-    })
     console.error(error)
   }
 })

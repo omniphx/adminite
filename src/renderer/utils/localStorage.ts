@@ -1,5 +1,4 @@
 import { ApplicationState } from '../store/index'
-import * as Sentry from '@sentry/electron';
 
 export const loadState = () => {
   try {
@@ -58,10 +57,6 @@ export const loadState = () => {
 
     return state
   } catch(error) {
-    Sentry.withScope((scope) => {
-      scope.setExtras(error)
-      Sentry.captureException(error.message)
-    })
     console.error(error)
     return undefined
   }
@@ -72,10 +67,6 @@ export const saveState = (currentState) => {
     const serializedState = JSON.stringify(currentState)
     localStorage.setItem('state', serializedState)
   } catch(error) {
-    Sentry.withScope((scope) => {
-      scope.setExtras(error)
-      Sentry.captureException(error.message)
-    })
     console.error(error)
   }
 }

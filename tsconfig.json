@@ -1,27 +1,27 @@
 {
-    "extends": "./node_modules/electron-webpack/tsconfig-base.json",
     "compilerOptions": {
-        //Overrides from electron react
-        "noImplicitAny": false,
-        "jsx": "react-jsx",
-        "resolveJsonModule":true,
-        "strict": false,
-        "noUnusedLocals": false,
+        "target": "ES2020",
+        "module": "commonjs",
         "lib": ["dom", "esnext"],
-        "module": "esnext",
+        "jsx": "react-jsx",
         "esModuleInterop": true,
         "skipLibCheck": true,
-    },
-    "awesomeTypescriptLoaderOptions": {
-        "useWebpackText": true,
-        "useTranspileModule": true,
-        "doTypeCheck": true,
-        "forkChecker": true
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "strict": false,
+        "noImplicitAny": false,
+        "noUnusedLocals": false,
+        "outDir": "./dist",
+        "sourceMap": true
     },
     "include": [
-        "./src/**/*"
+        "./src/**/*",
+        "./forge.config.ts",
+        "./webpack.main.config.ts",
+        "./webpack.renderer.config.ts"
     ],
     "types": ["node", "jest", "@testing-library/jest-dom"],
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", ".webpack"]
 }
   

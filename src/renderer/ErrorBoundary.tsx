@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import * as Sentry from '@sentry/browser';
 import { ipcRenderer, shell } from 'electron';
 import { Result, Button } from 'antd';
 
@@ -7,7 +6,7 @@ class ExampleBoundary extends Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
-      eventId: null
+      hasError: false
     };
   }
 
@@ -18,13 +17,9 @@ class ExampleBoundary extends Component<any, any> {
   }
 
   componentDidCatch(error, errorInfo) {
-    Sentry.withScope(scope => {
-      scope.setExtras(errorInfo);
-      const eventId = Sentry.captureException(error);
-      this.setState({ eventId });
-    });
     console.error(error);
     console.error(error.message);
+    console.error(errorInfo);
     ipcRenderer.send('error', JSON.stringify(error));
   }
 

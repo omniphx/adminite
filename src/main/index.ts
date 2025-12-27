@@ -3,20 +3,15 @@
  */
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
-import * as url from 'url';
 import * as jsforce from 'jsforce';
 import * as log from 'electron-log';
-// import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
-// import * as Sentry from '@sentry/electron';
 
-// Sentry.init({
-//   dsn:
-//     'https://3bbc61260e4c425c8c3515afcc62d67f@o398570.ingest.sentry.io/5254517'
-// })
+// Handle Squirrel events on Windows
+if (require('electron-squirrel-startup')) {
+  app.quit();
+}
 
 log.info('App starting');
-
-declare const __static: string;
 
 let mainWindow: any;
 
@@ -42,13 +37,6 @@ if (!isDevelopment) {
 
 async function createWindow(): Promise<void> {
   try {
-    //Not that this is working
-    const iconUrl = url.format({
-      pathname: path.join(__static, 'AppIcon.icns'),
-      protocol: 'file:',
-      slashes: true
-    });
-
     // Create the browser window.
     mainWindow = new BrowserWindow({
       height: 800,
@@ -59,7 +47,6 @@ async function createWindow(): Promise<void> {
         nodeIntegration: true,
         contextIsolation: false
       },
-      icon: iconUrl,
       title: 'Adminite',
       titleBarStyle: 'hidden'
     });
@@ -69,14 +56,10 @@ async function createWindow(): Promise<void> {
       // mainWindow.webContents.on("devtools-opened", () => {
       //     mainWindow.webContents.closeDevTools();
       // });
-      mainWindow.loadURL(
-        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`
-      );
-    } else {
-      // Useful to debug compile issues
-      // mainWindow.webContents.openDevTools()
-      mainWindow.loadURL(`file://${__dirname}/../renderer/index.html`);
     }
+
+    // Load the app using Webpack magic constant
+    mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
     // Emitted when the window is closed.
     mainWindow.on('closed', () => {
@@ -190,8 +173,8 @@ async function createServer(): Promise<void> {
     ipcMain.on('create-new-connection', (event, arg) => {
       const oauth2 = new jsforce.OAuth2({
         loginUrl: arg.url,
-        clientId: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID,
-        clientSecret: process.env.ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET,
+        clientId: process.env.SALESFORCE_CLIENT_ID,
+        clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
         redirectUri: `${PROTOCOL_NAME}://oauth/callback`
       });
 

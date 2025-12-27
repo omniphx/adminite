@@ -34,7 +34,7 @@
 ### Run locally
 
 1. `yarn install`
-2. Create a `.env` file and your consumer key/secret:
+2. Copy `.env.example` to `.env` and add your consumer key/secret:
   ```
   ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID=<your-consumer-id>
   ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET=<your-consumer-secret>

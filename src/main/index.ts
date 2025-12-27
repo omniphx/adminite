@@ -6,7 +6,6 @@ import * as path from 'path';
 import * as url from 'url';
 import * as jsforce from 'jsforce';
 import * as express from 'express';
-import { autoUpdater } from 'electron-updater';
 import * as log from 'electron-log';
 import * as tcpPortUsed from 'tcp-port-used';
 // import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
@@ -17,10 +16,6 @@ import * as tcpPortUsed from 'tcp-port-used';
 //     'https://3bbc61260e4c425c8c3515afcc62d67f@o398570.ingest.sentry.io/5254517'
 // })
 
-autoUpdater.logger = log;
-log.info('App starting');
-
-autoUpdater.logger = log;
 log.info('App starting');
 
 declare const __static: string;
@@ -28,6 +23,14 @@ declare const __static: string;
 let mainWindow: any;
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+
+// Only initialize auto-updater in production mode
+let autoUpdater: any;
+if (!isDevelopment) {
+  const { autoUpdater: updater } = require('electron-updater');
+  autoUpdater = updater;
+  autoUpdater.logger = log;
+}
 
 async function createWindow(): Promise<void> {
   try {
@@ -196,7 +199,9 @@ function createAuthenticationWindow(url: string): void {
 }
 
 //Prevents issues with self-signed certificates
-app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
+if (app && app.commandLine) {
+  app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
+}
 
 //Prevents multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
@@ -233,46 +238,48 @@ if (!gotTheLock) {
     }
   });
 
-  // Auto-update features
-  app.on('ready', function() {
-    autoUpdater.checkForUpdatesAndNotify();
-
-    //Every 5 minutes
-    setInterval(() => {
+  // Auto-update features (production only)
+  if (!isDevelopment && autoUpdater) {
+    app.on('ready', function() {
       autoUpdater.checkForUpdatesAndNotify();
-    }, 300000);
-  });
 
-  autoUpdater.on('checking-for-update', function() {
-    sendStatusToWindow('Checking for update...');
-  });
+      //Every 5 minutes
+      setInterval(() => {
+        autoUpdater.checkForUpdatesAndNotify();
+      }, 300000);
+    });
 
-  autoUpdater.on('update-available', function(info) {
-    sendStatusToWindow('Update available.');
-  });
+    autoUpdater.on('checking-for-update', function() {
+      sendStatusToWindow('Checking for update...');
+    });
 
-  autoUpdater.on('update-not-available', function(info) {
-    sendStatusToWindow('Update not available.');
-  });
+    autoUpdater.on('update-available', function(info) {
+      sendStatusToWindow('Update available.');
+    });
 
-  autoUpdater.on('error', function(err) {
-    sendStatusToWindow('Error in auto-updater. ' + err);
-  });
+    autoUpdater.on('update-not-available', function(info) {
+      sendStatusToWindow('Update not available.');
+    });
 
-  autoUpdater.on('download-progress', function(progressObj) {
-    const log_message = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`;
-    sendStatusToWindow(log_message);
-  });
+    autoUpdater.on('error', function(err) {
+      sendStatusToWindow('Error in auto-updater. ' + err);
+    });
 
-  autoUpdater.on('update-downloaded', function(info) {
-    sendStatusToWindow('Update downloaded');
-    mainWindow.webContents.send('update-downloaded');
-  });
+    autoUpdater.on('download-progress', function(progressObj) {
+      const log_message = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`;
+      sendStatusToWindow(log_message);
+    });
 
-  ipcMain.on('start-update', function(event, arg) {
-    sendStatusToWindow('Quit and install');
-    autoUpdater.quitAndInstall();
-  });
+    autoUpdater.on('update-downloaded', function(info) {
+      sendStatusToWindow('Update downloaded');
+      mainWindow.webContents.send('update-downloaded');
+    });
+
+    ipcMain.on('start-update', function(event, arg) {
+      sendStatusToWindow('Quit and install');
+      autoUpdater.quitAndInstall();
+    });
+  }
 
   ipcMain.on('refresh', function(event, arg) {
     mainWindow.reload();

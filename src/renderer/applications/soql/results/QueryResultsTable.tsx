@@ -18,9 +18,9 @@ import DateCell from './DateCell';
 import DateTimeCell from './DateTimeCell';
 import MultiPicklistCell from './MultiPicklistCell';
 import BooleanCell from './BooleanCell';
-import { onQueryChange } from '../../../store/queries/actions';
 import { onQueryResultChange } from '../../../store/queryResults/actions';
 import { flattenData } from '../../../utils/queryResultsHandler';
+import { useTabStore } from '../../../stores/useTabStore';
 
 interface IQueryResultsTableProps {
   tabId: string;
@@ -49,13 +49,9 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const queryResultsData = useSelector(
       (state: ApplicationState) => state.queryResultsState.byTabId[tabId].data
     );
-    const paginationConfig = useSelector(
-      (state: ApplicationState) =>
-        state.queriesState.byTabId[tabId].paginationConfig
-    );
-    const parsedQuery = useSelector(
-      (state: ApplicationState) => state.queriesState.byTabId[tabId].parsedQuery
-    );
+    // Zustand store for query state
+    const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? { current: 1, pageSize: 25 };
+    const parsedQuery = useTabStore((state) => state.queries[tabId]?.parsedQuery);
     const fieldSchema = useSelector(
       (state: ApplicationState) =>
         state.resultSobjectsState.byTabId[tabId].fieldSchema
@@ -83,7 +79,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
       filters: any,
       sorter: any
     ) => {
-      dispatch(onQueryChange({ tabId, paginationConfig: pagination }));
+      useTabStore.getState().setPaginationConfig(tabId, pagination);
       setSortedInfo(sorter);
     };
 

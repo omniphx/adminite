@@ -2,15 +2,12 @@ import * as React from 'react'
 import { DeleteTwoTone } from '@ant-design/icons'
 import { Button, Modal, Table, Input } from 'antd'
 import { formatQuery, isQueryValid } from 'soql-parser-js'
-import { useDispatch, useSelector } from 'react-redux'
-import { onQueryChange } from '../../../store/queries/actions'
-import { ApplicationState } from '../../../store/index'
-import { SoqlQuery } from '../../../store/queries/types'
 import { sort } from '../../../../helpers/utils'
 import {
   getSoqlQueries,
   deleteSoqlQuery
 } from '../../../../helpers/local-store'
+import { useTabStore, SoqlQuery } from '../../../stores/useTabStore'
 const { confirm } = Modal
 
 interface ILoadQueryProps {
@@ -18,12 +15,11 @@ interface ILoadQueryProps {
 }
 
 const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
 
-  const query: SoqlQuery = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].query
-  )
+  // Zustand store
+  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' }
+  const setQuery = useTabStore((state) => state.setQuery)
 
   const [showModal, setShowModal] = React.useState(false)
   const [searchFilter, setSearchFilter] = React.useState('')
@@ -46,7 +42,7 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
   }
 
   const handleSelect = () => {
-    dispatch(onQueryChange({ tabId, query: queryPreview }))
+    setQuery(tabId, { query: queryPreview })
     setShowModal(false)
   }
 
@@ -64,12 +60,7 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
       await deleteSoqlQuery(queryRecordId)
       if (query.id === queryRecordId) {
         //Unset query Id
-        dispatch(
-          onQueryChange({
-            tabId,
-            query: { ...query, id: undefined, name: undefined }
-          })
-        )
+        setQuery(tabId, { query: { ...query, id: undefined, name: undefined } })
       }
       const filterOutQueries = queries.filter(
         query => query.id !== queryRecordId

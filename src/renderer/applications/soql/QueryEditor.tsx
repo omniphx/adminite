@@ -11,14 +11,13 @@ import { Caret, CaretLocator } from '../../utils/caretPosition'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import AutoComplete from './Autocomplete'
 import { useSelector, useDispatch } from 'react-redux'
-import { onQueryChange } from '../../store/queries/actions'
 import { onQuerySObjectChange } from '../../store/sobject/actions'
-import { SoqlQuery } from '../../store/queries/types'
 import { SchemaState } from '../../store/schema/types'
 import { Input, Select } from 'antd'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { ipcRenderer } from 'electron'
 import { useUserStore } from '../../stores/useUserStore'
+import { useTabStore, SoqlQuery } from '../../stores/useTabStore'
 
 interface ConnectionInfo {
   accessToken: string
@@ -42,22 +41,21 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   const dispatch = useDispatch()
   const { tabId } = props
 
-  //Global State
-  const toolingMode: boolean = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].toolingMode
-  )
+  // Zustand stores
+  const queryState = useTabStore((state) => state.queries[tabId])
+  const activeTabId = useTabStore((state) => state.activeTabId)
+  const setQueryBody = useTabStore((state) => state.setQueryBody)
+  const toolingMode = queryState?.toolingMode ?? false
+  const query: SoqlQuery = queryState?.query ?? { body: '' }
+
+  // Redux still needed for schema and sobject (until Phase 5 & 6)
   const schemaState: SchemaState = useSelector(
     (state: ApplicationState) => state.schemaState
   )
   const sobject: DescribeSObjectResult = useSelector(
-    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId].sobject
+    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
   )
-  const query: SoqlQuery = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].query
-  )
-  const activeId: string = useSelector(
-    (state: ApplicationState) => state.queryTabsState.activeId
-  )
+
   const disableAutoComplete = useUserStore((state) => state.disableAutoComplete)
   const disableInlineTabs = useUserStore((state) => state.disableInlineTabs)
 
@@ -187,10 +185,10 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   }, [])
 
   useEffect(() => {
-    if (tabId === activeId && textAreaReference) {
+    if (tabId === activeTabId && textAreaReference) {
       textAreaReference.current.focus()
     }
-  }, [activeId])
+  }, [activeTabId])
 
   useEffect(() => {
     if (sobject) {
@@ -210,9 +208,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
   }, [toolingMode, schemaState])
 
   const handleChange = (event: any) => {
-    dispatch(
-      onQueryChange({ tabId, query: { ...query, body: event.target.value } })
-    )
+    setQueryBody(tabId, event.target.value)
     setMatches(event.target)
   }
 
@@ -384,7 +380,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     // if no first word exists, the pattern will only match with 1 result
     const afterMatch = matches[2] || matches[0]
     const newQuery = beforeMatch + value.name + afterMatch
-    dispatch(onQueryChange({ tabId, query: { ...query, body: newQuery } }))
+    setQueryBody(tabId, newQuery)
     caret.setPosition(beforeMatch.length + value.name.length)
 
     setDataSource([])
@@ -480,7 +476,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     const end = query.body.substring(selectionEnd, query.body.length)
     if (selectionStart === selectionEnd) {
       const newQuery = `${beginning}\t${end}`
-      dispatch(onQueryChange({ tabId, query: { ...query, body: newQuery } }))
+      setQueryBody(tabId, newQuery)
       caret.setPosition(selectionStart + 1)
     } else {
       const queryLines = query.body.split('\n')
@@ -507,7 +503,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
         }
       })
       const newQuery = newQueryLines.join('\n')
-      dispatch(onQueryChange({ tabId, query: { ...query, body: newQuery } }))
+      setQueryBody(tabId, newQuery)
       caret.setPosition(
         selectionStart + tabsAddedBeforeStart,
         selectionEnd + tabsAdded
@@ -550,7 +546,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
         }
       })
       const newQuery = newQueryLines.join('\n')
-      dispatch(onQueryChange({ tabId, query: { ...query, body: newQuery } }))
+      setQueryBody(tabId, newQuery)
       caret.setPosition(
         selectionStart - tabsRemovedBeforeSelection,
         selectionEnd - tabsRemoved

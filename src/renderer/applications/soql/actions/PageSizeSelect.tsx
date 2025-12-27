@@ -1,8 +1,6 @@
 import * as React from 'react'
-import { Select, TablePaginationConfig } from 'antd'
-import { useDispatch, useSelector } from 'react-redux'
-import { onQueryChange } from '../../../store/queries/actions'
-import { ApplicationState } from '../../../store/index'
+import { Select } from 'antd'
+import { useTabStore } from '../../../stores/useTabStore'
 
 interface IPageSizeSelectProps {
   tabId: string
@@ -11,20 +9,14 @@ interface IPageSizeSelectProps {
 const PageSizeSelect: React.FC<IPageSizeSelectProps> = (
   props: IPageSizeSelectProps
 ) => {
-  const dispatch = useDispatch()
   const { tabId } = props
-  const paginationConfig: TablePaginationConfig = useSelector(
-    (state: ApplicationState) =>
-      state.queriesState.byTabId[tabId].paginationConfig
-  )
+
+  // Zustand store
+  const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? { current: 1, pageSize: 25 }
+  const setPaginationConfig = useTabStore((state) => state.setPaginationConfig)
 
   const handleChange = (value: number) => {
-    dispatch(
-      onQueryChange({
-        tabId,
-        paginationConfig: { ...paginationConfig, pageSize: value }
-      })
-    )
+    setPaginationConfig(tabId, { ...paginationConfig, pageSize: value })
   }
 
   return (

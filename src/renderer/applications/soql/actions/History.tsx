@@ -1,21 +1,19 @@
 import * as React from 'react'
 import { Button, Modal, Table } from 'antd'
-import { ApplicationState } from '../../../store/index'
-import { useSelector, useDispatch } from 'react-redux'
 import { formatQuery, isQueryValid } from 'soql-parser-js'
-import { onQueryChange } from '../../../store/queries/actions'
+import { useTabStore } from '../../../stores/useTabStore'
+import { useQueryHistoryStore } from '../../../stores/useQueryHistoryStore'
 
 interface IHistoryProps {
   tabId: string
 }
 
 const History: React.FC<IHistoryProps> = (props: IHistoryProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
-  // Global state
-  const previousQueries: string[] = useSelector(
-    (state: ApplicationState) => state.queryHistoryState.queries
-  )
+
+  // Zustand stores
+  const setQueryBody = useTabStore((state) => state.setQueryBody)
+  const previousQueries = useQueryHistoryStore((state) => state.queries)
 
   const [visible, setVisible] = React.useState(false)
   const [queryPreview, setQueryPreview] = React.useState<string>(null)
@@ -25,7 +23,7 @@ const History: React.FC<IHistoryProps> = (props: IHistoryProps) => {
   }
 
   const handleSelect = () => {
-    dispatch(onQueryChange({ tabId, query: { body: queryPreview } }))
+    setQueryBody(tabId, queryPreview)
     setVisible(false)
   }
 

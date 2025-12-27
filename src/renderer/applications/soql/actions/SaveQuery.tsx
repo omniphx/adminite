@@ -1,26 +1,22 @@
 import * as React from 'react'
 import { Button, Modal, Input, Form } from 'antd'
-import { useDispatch, useSelector } from 'react-redux'
-import { ApplicationState } from '../../../store/index'
-import { onQueryChange } from '../../../store/queries/actions'
-import { SoqlQuery } from '../../../store/queries/types'
 import {
   createSoqlQuery,
   updateSoqlQuery
 } from '../../../../helpers/local-store'
 import { isQueryValid, parseQuery } from 'soql-parser-js'
+import { useTabStore, SoqlQuery } from '../../../stores/useTabStore'
 
 interface ISaveQueryProps {
   tabId: string
 }
 
 const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
 
-  const query: SoqlQuery = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].query
-  )
+  // Zustand store
+  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' }
+  const setQuery = useTabStore((state) => state.setQuery)
 
   const [visible, setVisible] = React.useState(false)
   const [saveError, setSaveError] = React.useState('')
@@ -35,7 +31,7 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
       const sobject = isQueryValid(body) ? parseQuery(body).sObject : 'Invalid'
       const result: any = await createSoqlQuery({ name, body, sobject })
       setVisible(false)
-      dispatch(onQueryChange({ tabId, query: result }))
+      setQuery(tabId, { query: result })
     } catch (error) {
       console.error(error)
       setSaveError(error)
@@ -48,7 +44,7 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
       const sobject = isQueryValid(body) ? parseQuery(body).sObject : 'Invalid'
       const result: any = await updateSoqlQuery({ id, name, body, sobject })
       setVisible(false)
-      dispatch(onQueryChange({ tabId, query: result }))
+      setQuery(tabId, { query: result })
     } catch (error) {
       console.error(error)
       setSaveError(error)
@@ -60,9 +56,7 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
   }
 
   const handleNameChange = (event: any) => {
-    dispatch(
-      onQueryChange({ tabId, query: { ...query, name: event.target.value } })
-    )
+    setQuery(tabId, { query: { ...query, name: event.target.value } })
   }
 
   let saveActions = [

@@ -1,21 +1,33 @@
 import * as React from 'react'
 import { Input } from 'antd'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { ApplicationState } from '../../../store/index'
-import { onFilterChange } from '../../../store/queries/actions'
+import { useTabStore } from '../../../stores/useTabStore'
+import { filterIds } from '../../../../helpers/utils'
 
 interface ISearchFilterProps {
   tabId: string
 }
 
 const SearchFilter: React.FC<ISearchFilterProps> = (props: ISearchFilterProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
 
-  const searchFilter: string = useSelector((state: ApplicationState) => state.queriesState.byTabId[tabId].searchFilter)
+  // Zustand store
+  const searchFilter = useTabStore((state) => state.queries[tabId]?.searchFilter ?? '')
+  const setSearchFilter = useTabStore((state) => state.setSearchFilter)
+  const setFilteredIds = useTabStore((state) => state.setFilteredIds)
+
+  // Redux still needed for query result data (until Phase 9)
+  const data = useSelector((state: ApplicationState) => state.queryResultsState.byTabId[tabId]?.data)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(onFilterChange(tabId, event.currentTarget.value))
+    const filter = event.currentTarget.value
+    setSearchFilter(tabId, filter)
+    // Apply filter to data and update filteredIds
+    if (data) {
+      const filteredIds = filterIds(data, filter)
+      setFilteredIds(tabId, filteredIds)
+    }
   }
 
   return (

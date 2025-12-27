@@ -1,10 +1,8 @@
 import * as React from 'react'
 import { Button, Modal, Table, Input } from 'antd'
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { ApplicationState } from '../../../store/index'
 import { DescribeSObjectResult, Field } from 'jsforce'
-import { SoqlQuery } from '../../../store/queries/types'
-import { onQueryChange } from '../../../store/queries/actions'
 import {
   isQueryValid,
   parseQuery,
@@ -12,6 +10,7 @@ import {
   composeQuery
 } from 'soql-parser-js'
 import { sort } from '../../../../helpers/utils'
+import { useTabStore, SoqlQuery } from '../../../stores/useTabStore'
 
 const { confirm } = Modal
 
@@ -20,13 +19,15 @@ interface IFillFieldsProps {
 }
 
 const FillFields = React.memo((props: IFillFieldsProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
+
+  // Zustand store
+  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' }
+  const setQueryBody = useTabStore((state) => state.setQueryBody)
+
+  // Redux still needed for sobject (until Phase 6)
   const sobject: DescribeSObjectResult = useSelector(
-    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId].sobject
-  )
-  const query: SoqlQuery = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].query
+    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
   )
 
   const [showModal, setShowModal] = React.useState(false)
@@ -84,7 +85,7 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
 
   const buildQuery = () => {
     const body: string = composeQuery(parsedQuery)
-    dispatch(onQueryChange({ tabId, query: { ...query, body } }))
+    setQueryBody(tabId, body)
     setShowModal(false)
   }
 

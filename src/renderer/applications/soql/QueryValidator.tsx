@@ -1,9 +1,7 @@
 import * as React from 'react'
 import { isQueryValid } from 'soql-parser-js'
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons'
-import { useSelector } from 'react-redux'
-import { ApplicationState } from '../../store/index'
-import { SoqlQuery } from '../../store/queries/types'
+import { useTabStore, SoqlQuery } from '../../stores/useTabStore'
 
 interface IQueryValidatorProps {
   tabId: string
@@ -11,7 +9,7 @@ interface IQueryValidatorProps {
 
 const QueryValidator: React.FC<IQueryValidatorProps> = (props: IQueryValidatorProps) => {
   const { tabId } = props
-  const query: SoqlQuery = useSelector((state: ApplicationState) => state.queriesState.byTabId[tabId].query)
+  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' }
 
   const icon = isQueryValid(query.body)
     ? <CheckCircleTwoTone twoToneColor='#52c41a' />

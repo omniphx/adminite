@@ -1,8 +1,6 @@
 import * as React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
 import { useDrag, useDrop } from 'react-dnd'
-import { onQueryTabMove } from '../../store/queryTabs/actions'
-import { ApplicationState } from '../../store/index'
+import { useTabStore } from '../../stores/useTabStore'
 
 interface IQueryTabDragDropProps {
   tabId: string
@@ -11,14 +9,12 @@ interface IQueryTabDragDropProps {
 
 const QueryTabDragDrop: React.FC<IQueryTabDragDropProps> = React.memo(
   (props: IQueryTabDragDropProps) => {
-    const dispatch = useDispatch()
     const { tabId, children } = props
 
-    const allIds: string[] = useSelector(
-      (state: ApplicationState) => state.queryTabsState.allIds
-    )
+    const tabOrder = useTabStore((state) => state.tabOrder)
+    const moveTab = useTabStore((state) => state.moveTab)
 
-    const index = allIds.indexOf(tabId)
+    const index = tabOrder.indexOf(tabId)
     const tabRef: any = React.useRef()
 
     const [{ opacity, isDragging }, dragRef] = useDrag(() => ({
@@ -33,7 +29,7 @@ const QueryTabDragDrop: React.FC<IQueryTabDragDropProps> = React.memo(
     const [{ canDrop, isOver, item }, dropRef] = useDrop(() => ({
       accept: 'queryTab',
       drop: (item: any) => {
-        dispatch(onQueryTabMove(item.tabId, tabId))
+        moveTab(item.tabId, tabId)
       },
       collect: monitor => ({
         isOver: monitor.isOver(),

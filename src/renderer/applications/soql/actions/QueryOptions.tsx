@@ -1,32 +1,36 @@
 import * as React from 'react'
 import { Checkbox, Button, Modal, InputNumber, Row, Col } from 'antd'
-import { ApplicationState } from '../../../store/index'
-import { useSelector, useDispatch } from 'react-redux'
-import { onQueryChange } from '../../../store/queries/actions'
+import { useTabStore } from '../../../stores/useTabStore'
 
 interface IQueryOptionsProps {
   tabId: string
 }
 
 const QueryOptions: React.FC<IQueryOptionsProps> = (props: IQueryOptionsProps) => {
-  const dispatch = useDispatch()
   const { tabId } = props
-  const includeDeleted: boolean = useSelector((state: ApplicationState) => state.queriesState.byTabId[tabId].includeDeleted)
-  const toolingMode: boolean = useSelector((state: ApplicationState) => state.queriesState.byTabId[tabId].toolingMode)
-  const batchSize: number = useSelector((state: ApplicationState) => state.queriesState.byTabId[tabId].batchSize)
+
+  // Zustand store
+  const queryState = useTabStore((state) => state.queries[tabId])
+  const setIncludeDeleted = useTabStore((state) => state.setIncludeDeleted)
+  const setToolingMode = useTabStore((state) => state.setToolingMode)
+  const setBatchSize = useTabStore((state) => state.setBatchSize)
+
+  const includeDeleted = queryState?.includeDeleted ?? false
+  const toolingMode = queryState?.toolingMode ?? false
+  const batchSize = queryState?.batchSize ?? 200
 
   const [showModal, setShowModal] = React.useState(false)
 
   const onIncludeDeletedChange = (event: any) => {
-    dispatch(onQueryChange({ tabId, includeDeleted: event.target.checked }))
+    setIncludeDeleted(tabId, event.target.checked)
   }
 
   const onToolingModeChange = (event: any) => {
-    dispatch(onQueryChange({ tabId, toolingMode: event.target.checked }))
+    setToolingMode(tabId, event.target.checked)
   }
 
   const onBatchSizeChange = (value: number) => {
-    dispatch(onQueryChange({ tabId, batchSize: value }))
+    setBatchSize(tabId, value)
   }
 
   const showOptionsModal = () => {

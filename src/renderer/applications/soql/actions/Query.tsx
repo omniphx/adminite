@@ -6,15 +6,13 @@ import { onQuery, onCancel } from '../../../store/queryResults/actions'
 const { Group: ButtonGroup } = Button
 import { useSelector, useDispatch } from 'react-redux'
 import { ApplicationState } from '../../../store/index'
-import { add as addToHistory } from '../../../store/queryHistory/actions'
 import { Query as ParsedQuery, isQueryValid, parseQuery } from 'soql-parser-js'
 import {
   onResultSObjectChange,
   onQuerySObjectChange
 } from '../../../store/sobject/actions'
-import { SoqlQuery } from '../../../store/queries/types'
-import { onQueryTabChange } from '../../../store/queryTabs/actions'
-import { onQueryChange } from '../../../store/queries/actions'
+import { useTabStore } from '../../../stores/useTabStore'
+import { useQueryHistoryStore } from '../../../stores/useQueryHistoryStore'
 
 interface IQueryProps {
   tabId: string
@@ -25,31 +23,34 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
   const dispatch = useDispatch()
   const { tabId } = props
 
-  const previousQueries: string[] = useSelector(
-    (state: ApplicationState) => state.queryHistoryState.queries
-  )
+  // Zustand stores
+  const queryState = useTabStore((state) => state.queries[tabId])
+  const setParsedQuery = useTabStore((state) => state.setParsedQuery)
+  const renameTab = useTabStore((state) => state.renameTab)
+  const query = queryState?.query ?? { body: '' }
+  const includeDeleted = queryState?.includeDeleted ?? false
+
+  const previousQueries = useQueryHistoryStore((state) => state.queries)
+  const addToHistory = useQueryHistoryStore((state) => state.addQuery)
+
+  // Redux still needed for queryResults pending state (until Phase 9)
   const pending: boolean = useSelector(
-    (state: ApplicationState) => state.queryResultsState.byTabId[tabId].pending
-  )
-  const query: SoqlQuery = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].query
-  )
-  const includeDeleted: boolean = useSelector(
-    (state: ApplicationState) =>
-      state.queriesState.byTabId[tabId].includeDeleted
+    (state: ApplicationState) => state.queryResultsState.byTabId[tabId]?.pending ?? false
   )
 
   const handleQuery = () => {
     if (isQueryValid(query.body)) {
       const parsedQuery: ParsedQuery = parseQuery(query.body)
-      dispatch(onQueryChange({ tabId, parsedQuery }))
+      setParsedQuery(tabId, parsedQuery)
+      renameTab(tabId, parsedQuery.sObject)
+      // Redux dispatch for sobject (until Phase 6)
       dispatch(onResultSObjectChange(tabId, parsedQuery.sObject))
-      dispatch(onQueryTabChange({ id: tabId, title: parsedQuery.sObject }))
       dispatch(onQuerySObjectChange(tabId, parsedQuery.sObject))
     }
+    // Redux dispatch for query execution (until Phase 9)
     dispatch(onQuery(tabId, query.body, includeDeleted))
     if (previousQueries[previousQueries.length - 1] !== query.body)
-      dispatch(addToHistory(query.body))
+      addToHistory(query.body)
   }
 
   return (

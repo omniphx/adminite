@@ -19,11 +19,10 @@ import History from './actions/History'
 import QueryValidator from './QueryValidator'
 import { formatQuery } from 'soql-parser-js'
 import SaveEdits from './actions/SaveEdits'
-import { onQueryChange } from '../../store/queries/actions'
-import { SoqlQuery } from '../../store/queries/types'
 import FillFields from './actions/FillFields'
 import BulkActions from './actions/BulkActions'
 import { SchemaState } from '../../store/schema/types'
+import { useTabStore } from '../../stores/useTabStore'
 
 interface IQueryTabProps {
   tabId: string
@@ -33,17 +32,18 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
   const dispatch = useDispatch()
   const { tabId } = props
 
-  const toolingMode: boolean = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].toolingMode
-  )
+  // Zustand store for query state
+  const queryState = useTabStore((state) => state.queries[tabId])
+  const setQuery = useTabStore((state) => state.setQuery)
+  const toolingMode = queryState?.toolingMode ?? false
+  const query = queryState?.query ?? { body: '' }
+
+  // Redux still needed for schema and sobject (until Phase 5 & 6)
   const schemaState: SchemaState = useSelector(
     (state: ApplicationState) => state.schemaState
   )
   const sobject: DescribeSObjectResult = useSelector(
-    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId].sobject
-  )
-  const query: SoqlQuery = useSelector(
-    (state: ApplicationState) => state.queriesState.byTabId[tabId].query
+    (state: ApplicationState) => state.querySobjectsState.byTabId[tabId]?.sobject
   )
 
   const sobjects: DescribeGlobalSObjectResult[] = getQueryableSObjects(
@@ -55,7 +55,7 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
   const childProps = { tabId }
 
   const handleChange = (sobjectName: string) => {
-    //Pick up from here
+    // Still dispatch to Redux for sobject (until Phase 6)
     dispatch(onQuerySObjectChange(tabId, sobjectName))
   }
 
@@ -67,12 +67,9 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
   }
 
   const handleFormat = () => {
-    dispatch(
-      onQueryChange({
-        tabId,
-        query: { ...query, body: formatQuery(query.body, formatConfig) }
-      })
-    )
+    setQuery(tabId, {
+      query: { ...query, body: formatQuery(query.body, formatConfig) }
+    })
   }
 
   return (

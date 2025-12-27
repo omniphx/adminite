@@ -1,7 +1,5 @@
 import * as React from 'react'
-import { ApplicationState } from '../../store/index'
 import SelectContext from '../SelectContext'
-import { onPermissionIdsChange, onPermissionTypeChange, onPermissionsInit, onPermissionChange, onSObjectChange } from '../../store/permission/actions';
 import { saveFieldPermissions } from '../../store/fieldPermission/actions'
 import { Button, Row, Col, Radio, Select, Input } from 'antd'
 import type { RadioChangeEvent } from 'antd'
@@ -10,37 +8,52 @@ import FieldLevelSecurity from './FieldLevelSecurity'
 const { Option } = Select
 
 import { useDispatch, useSelector } from 'react-redux'
+import { ApplicationState } from '../../store/index'
+
+// Zustand + TanStack Query (Phase 7)
+import { usePermissionUIStore, PermissionType } from '../../stores/usePermissionUIStore'
+import { useProfilesQuery, usePermissionSetsQuery, useFlsSObjectsQuery } from '../../queries/usePermissionQuery'
 
 const Permissions: React.FC = (props: any) => {
   const dispatch = useDispatch()
 
-  const sobjects: any = useSelector((state: ApplicationState) => state.permissionState.sobjects)
-  const sobjectName: any = useSelector((state: ApplicationState) => state.permissionState.sobjectName)
-  const savePending: any = useSelector((state: ApplicationState) => state.fieldPermissionState.savePending)
-  const permissionIds: any = useSelector((state: ApplicationState) => state.permissionState.permissionIds)
-  const permissions: any = getPermissions(useSelector((state: ApplicationState) => state.permissionState.permissions))
-  const permissionType: any = useSelector((state: ApplicationState) => state.permissionState.permissionType)
-  const filter: string = useSelector((state: ApplicationState) => state.permissionState.filter)
+  // Zustand store for UI state
+  const permissionType = usePermissionUIStore((state) => state.permissionType)
+  const permissionIds = usePermissionUIStore((state) => state.permissionIds)
+  const sobjectName = usePermissionUIStore((state) => state.sobjectName)
+  const filter = usePermissionUIStore((state) => state.filter)
+  const setPermissionType = usePermissionUIStore((state) => state.setPermissionType)
+  const setPermissionIds = usePermissionUIStore((state) => state.setPermissionIds)
+  const setSObjectName = usePermissionUIStore((state) => state.setSObjectName)
+  const setFilter = usePermissionUIStore((state) => state.setFilter)
 
-  React.useEffect(() => {
-    dispatch(onPermissionsInit())
-  }, [])
+  // TanStack Query for data
+  const { data: sobjects = [] } = useFlsSObjectsQuery()
+  const { data: profiles = [] } = useProfilesQuery()
+  const { data: permissionSets = [] } = usePermissionSetsQuery()
+
+  // Redux still needed for fieldPermissions (until Phase 8)
+  const savePending: any = useSelector((state: ApplicationState) => state.fieldPermissionState.savePending)
+
+  // Get permissions based on type
+  const rawPermissions = permissionType === 'profile' ? profiles : permissionSets
+  const permissions = getPermissions(rawPermissions)
 
   const handleSObjectChange = (sobjectName: any) => {
-    dispatch(onSObjectChange(sobjectName))
+    setSObjectName(sobjectName)
   }
 
   const handlePermissionTypeChange = (event: RadioChangeEvent) => {
-    dispatch(onPermissionTypeChange(event.target.value))
+    setPermissionType(event.target.value as PermissionType)
   }
 
-  const handlePermissionSelection = (value: any, permissions: any) => {
-    const permissionIds = permissions.map(permission => permission.key)
-    dispatch(onPermissionIdsChange(permissionIds))
+  const handlePermissionSelection = (value: any, selectedOptions: any) => {
+    const newPermissionIds = selectedOptions.map((option: any) => option.key)
+    setPermissionIds(newPermissionIds)
   }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(onPermissionChange({filter: event.currentTarget.value}))
+    setFilter(event.currentTarget.value)
   }
 
   function renderPermissionOptions() {
@@ -49,7 +62,7 @@ const Permissions: React.FC = (props: any) => {
     ))
   }
 
-  if (!sobjects) return <div />
+  if (!sobjects || sobjects.length === 0) return <div />
 
   return (
     <div>
@@ -70,6 +83,7 @@ const Permissions: React.FC = (props: any) => {
         <Col sm={24} md={12} style={{textAlign:'right'}}>
           <Radio.Group
             defaultValue={permissionType}
+            value={permissionType}
             buttonStyle='solid'
             onChange={handlePermissionTypeChange}
           >
@@ -120,14 +134,15 @@ const Permissions: React.FC = (props: any) => {
   )
 }
 
-function getPermissions(permissions) {
+function getPermissions(permissions: any[]) {
   if (!permissions) return []
   return permissions.map(permission => {
-    permission.name = permission.IsOwnedByProfile
-      ? permission.Profile.Name
+    const mapped = { ...permission }
+    mapped.name = permission.IsOwnedByProfile
+      ? permission.Profile?.Name
       : permission.Label
-    permission.key = permission.Id
-    return permission
+    mapped.key = permission.Id
+    return mapped
   })
 }
 

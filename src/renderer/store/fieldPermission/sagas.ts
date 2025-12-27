@@ -2,16 +2,24 @@ import { put, select, takeEvery, fork, all } from 'redux-saga/effects'
 import { QueryResult } from 'jsforce'
 import { getProfileFieldPermissions, getPermisionSetFieldPermissions } from '../../utils/queryBuilder'
 import { FieldPermissionActionTypes } from './types'
-import {
-  getFieldPermissionState,
-  getPermissionState
-} from '../index'
+import { getFieldPermissionState } from '../index'
 import { ipcRenderer } from 'electron'
 import { useConnectionStore, getActiveConnection } from '../../stores/useConnectionStore'
+import { usePermissionUIStore } from '../../stores/usePermissionUIStore'
 
 // Helper to get active connection from Zustand store (Phase 4)
 function getConnectionFromZustand() {
   return getActiveConnection(useConnectionStore.getState())
+}
+
+// Helper to get permission UI state from Zustand store (Phase 7)
+function getPermissionUIStateFromZustand() {
+  const state = usePermissionUIStore.getState()
+  return {
+    permissionIds: state.permissionIds,
+    permissionType: state.permissionType,
+    sobjectName: state.sobjectName,
+  }
 }
 
 export function* fieldPermissionSagas() {
@@ -27,10 +35,10 @@ function* watchFieldPermissionChanges() {
 export function* getFieldPermissions() {
   try {
     const connection = getConnectionFromZustand()
-    const { permissionIds, permissionType, sobjectName } = yield select(getPermissionState)
+    const { permissionIds, permissionType, sobjectName } = getPermissionUIStateFromZustand()
 
     if (!sobjectName) return
-    if (!permissionIds) return
+    if (!permissionIds || permissionIds.length === 0) return
     if (!connection) return
 
     const queryString: string =

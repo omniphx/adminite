@@ -1,44 +1,45 @@
 import * as React from 'react';
-import { ApplicationState } from '../../store/index';
 import { onFieldPermissionChange } from '../../store/fieldPermission/actions';
 import { Table, Checkbox, Tooltip } from 'antd';
 
 const { Column } = Table;
 
 import { useDispatch, useSelector } from 'react-redux';
+import { ApplicationState } from '../../store/index';
+
+// Zustand + TanStack Query (Phase 7)
+import { usePermissionUIStore } from '../../stores/usePermissionUIStore';
+import { useProfilesQuery, usePermissionSetsQuery, useFlsFieldsQuery } from '../../queries/usePermissionQuery';
 
 const FieldLevelSecurity: React.FC = () => {
   const dispatch = useDispatch();
 
-  const sobjectName = useSelector(
-    (state: ApplicationState) => state.permissionState.sobjectName
-  );
-  const fields = useSelector(
-    (state: ApplicationState) => state.permissionState.fields
-  );
+  // Zustand store for UI state
+  const sobjectName = usePermissionUIStore((state) => state.sobjectName);
+  const permissionIds = usePermissionUIStore((state) => state.permissionIds);
+  const permissionType = usePermissionUIStore((state) => state.permissionType);
+  const filter = usePermissionUIStore((state) => state.filter);
+
+  // TanStack Query for data
+  const { data: fields = [] } = useFlsFieldsQuery(sobjectName);
+  const { data: profiles = [] } = useProfilesQuery();
+  const { data: permissionSets = [] } = usePermissionSetsQuery();
+
+  // Get permissions based on type
+  const rawPermissions = permissionType === 'profile' ? profiles : permissionSets;
+  const permissions = rawPermissions.map(p => ({
+    ...p,
+    name: p.IsOwnedByProfile ? p.Profile?.Name : (p.Label || p.Name),
+    key: p.Id,
+  }));
+
+  // Redux still needed for fieldPermissions (until Phase 8)
   const fieldPermissions = useSelector(
     (state: ApplicationState) => state.fieldPermissionState.fieldPermissions
   );
-  const permissionIds = useSelector(
-    (state: ApplicationState) => state.permissionState.permissionIds
-  );
-  const permissions = useSelector(
-    (state: ApplicationState) => state.permissionState.permissions
-  );
-  const filter = useSelector(
-    (state: ApplicationState) => state.permissionState.filter
-  );
 
   const filteredPermissions = permissions
-    .filter(permission => permissionIds.includes(permission.key))
-    .map(permission => {
-      permission.name = permission.IsOwnedByProfile
-        ? permission.Profile.Name
-        : permission.Name;
-      permission.key = permission.Id;
-
-      return permission;
-    });
+    .filter(permission => permissionIds.includes(permission.key));
 
   const filteredFields = fields
     .filter(field => {

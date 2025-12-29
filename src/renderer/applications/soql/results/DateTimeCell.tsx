@@ -3,7 +3,7 @@ import { DatePicker, Button } from 'antd'
 import { Field as DescribeField } from 'jsforce'
 import BaseCell from './BaseCell'
 import moment from 'moment'
-import { useConnectionStore, getActiveConnection } from '../../../stores/useConnectionStore'
+import { useConnectionStore } from '../../../stores/useConnectionStore'
 import { useFieldUpdate } from '../../../queries/useQueryExecution'
 
 interface IDateTimeCellProps {
@@ -17,9 +17,11 @@ const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) =
   const { updateField } = useFieldUpdate()
   const {tabId, fieldSchema, record} = props
 
-  // Get locale from active connection identity (Phase 4)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const locale = activeConnection?.locale ? activeConnection.locale.substring(0,2) : 'us'
+  // Get locale from active connection identity (using primitive selector to avoid reference instability)
+  const locale = useConnectionStore((state) => {
+    const conn = state.activeConnectionId ? state.connections[state.activeConnectionId] : null
+    return conn?.locale ? conn.locale.substring(0, 2) : 'us'
+  })
   moment.locale(locale)
 
   const [editMode, setEditMode] = React.useState(false)

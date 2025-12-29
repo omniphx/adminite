@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Input } from 'antd'
+import { useShallow } from 'zustand/react/shallow'
 import { useTabStore } from '../../../stores/useTabStore'
 import { useQueryResultStore, selectTabData } from '../../../stores/useQueryResultStore'
 import { filterIds } from '../../../../helpers/utils'
@@ -15,8 +16,9 @@ const SearchFilter: React.FC<ISearchFilterProps> = (props: ISearchFilterProps) =
   const searchFilter = useTabStore((state) => state.queries[tabId]?.searchFilter ?? '')
   const setSearchFilter = useTabStore((state) => state.setSearchFilter)
 
-  // Zustand for query result data (Phase 9)
-  const data = useQueryResultStore(selectTabData(tabId))
+  // Zustand for query result data (Phase 9) - memoize selector to avoid infinite loop
+  const dataSelector = React.useCallback(selectTabData(tabId), [tabId])
+  const data = useQueryResultStore(useShallow(dataSelector))
   const setFilteredIds = useQueryResultStore((state) => state.setFilteredIds)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {

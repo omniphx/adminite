@@ -9,8 +9,9 @@ interface IErrorAlertProps {
 
 const ErrorAlert: React.FC<IErrorAlertProps> = React.memo((props: IErrorAlertProps) => {
   const { tabId } = props
-  // Zustand for query results errors (Phase 9)
-  const errors = useQueryResultStore(selectTabErrors(tabId))
+  // Zustand for query results errors (Phase 9) - memoize selector to avoid infinite loop
+  const errorsSelector = React.useCallback(selectTabErrors(tabId), [tabId])
+  const errors = useQueryResultStore(errorsSelector)
 
   const errorComponent = <pre className='mono-font'>{errors}</pre>
 

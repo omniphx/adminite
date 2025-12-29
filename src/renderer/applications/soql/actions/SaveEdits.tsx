@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Button } from 'antd'
+import { useShallow } from 'zustand/react/shallow'
 import { useQueryResultStore, selectTabData, selectTabDmlPending } from '../../../stores/useQueryResultStore'
 import { useDmlUpdate } from '../../../queries/useDmlMutations'
 
@@ -10,9 +11,11 @@ interface ISaveEditsProps {
 const SaveEdits: React.FC<ISaveEditsProps> = (props: ISaveEditsProps) => {
   const { tabId } = props
 
-  // Zustand for query results data (Phase 9)
-  const data = useQueryResultStore(selectTabData(tabId))
-  const pending = useQueryResultStore(selectTabDmlPending(tabId))
+  // Zustand for query results data (Phase 9) - memoize selectors to avoid infinite loop
+  const dataSelector = React.useCallback(selectTabData(tabId), [tabId])
+  const pendingSelector = React.useCallback(selectTabDmlPending(tabId), [tabId])
+  const data = useQueryResultStore(useShallow(dataSelector))
+  const pending = useQueryResultStore(pendingSelector)
 
   // TanStack Query mutation for DML updates (Phase 9)
   const dmlUpdate = useDmlUpdate()

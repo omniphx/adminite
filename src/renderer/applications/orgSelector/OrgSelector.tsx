@@ -6,6 +6,7 @@ import {
   LoadingOutlined
 } from '@ant-design/icons'
 import { Menu, Dropdown, Card, Tooltip } from 'antd'
+import { useShallow } from 'zustand/react/shallow'
 import {
   useConnectionStore,
   useConnectionsArray,
@@ -19,9 +20,9 @@ import IconWrapper from '../ui/IconWrapper'
 import UserSettings from './UserSettings'
 
 const OrgSelector: React.FC = React.memo((props: any) => {
-  // Zustand store - select primitive values to avoid infinite re-render loops
+  // Zustand store - use useShallow to avoid infinite re-render loops from object references
   const connections = useConnectionsArray()
-  const activeConnection = useConnectionStore(getActiveConnection)
+  const activeConnection = useConnectionStore(useShallow(getActiveConnection))
   const pending = useConnectionStore((state) => state.activeConnection.pending)
   const error = useConnectionStore((state) => state.activeConnection.error)
   const toggleModal = useConnectionStore((state) => state.toggleModal)

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { DownOutlined } from '@ant-design/icons'
 import { Menu, Dropdown, Modal } from 'antd'
+import { useShallow } from 'zustand/react/shallow'
 import BulkUpdate from './BulkUpdate'
 import { useQueryResultStore, selectTabSelectedIds } from '../../../stores/useQueryResultStore'
 import { useDmlDelete } from '../../../queries/useDmlMutations'
@@ -12,8 +13,9 @@ interface IBulkActionsProps {
 const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
   const { tabId } = props
 
-  // Zustand for selected IDs (Phase 9)
-  const selectedIds = useQueryResultStore(selectTabSelectedIds(tabId))
+  // Zustand for selected IDs (Phase 9) - memoize selector to avoid infinite loop
+  const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId])
+  const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector))
 
   // TanStack Query mutation for DML delete (Phase 9)
   const dmlDelete = useDmlDelete()

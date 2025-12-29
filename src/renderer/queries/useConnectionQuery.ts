@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ipcRenderer } from 'electron'
 import { useEffect } from 'react'
-import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore'
+import { useConnectionStore } from '../stores/useConnectionStore'
 import { queryKeys } from './queryKeys'
 
 // Identity response from Salesforce
@@ -63,15 +63,35 @@ export function buildConnectionInfo(connection: any, connectionId: string): Conn
  */
 export function useIdentityQuery() {
   const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
+  // Select only primitive values to avoid reference instability
+  const accessToken = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.accessToken : undefined
+  )
+  const instanceUrl = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.instanceUrl : undefined
+  )
+  const refreshToken = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.refreshToken : undefined
+  )
+  const loginUrl = useConnectionStore((state) => {
+    if (!state.activeConnectionId) return undefined
+    const conn = state.connections[state.activeConnectionId]
+    return conn?.url || conn?.loginUrl || 'https://login.salesforce.com'
+  })
 
   return useQuery({
     queryKey: queryKeys.identity(activeConnectionId ?? ''),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      const connectionInfo: ConnectionInfo = {
+        accessToken: accessToken!,
+        instanceUrl: instanceUrl!,
+        refreshToken: refreshToken!,
+        loginUrl: loginUrl!,
+        connectionId: activeConnectionId!,
+      }
       return fetchIdentity(connectionInfo)
     },
-    enabled: !!activeConnectionId && !!activeConnection?.accessToken,
+    enabled: !!activeConnectionId && !!accessToken,
     staleTime: 5 * 60 * 1000, // 5 minutes - identity doesn't change often
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   })
@@ -83,15 +103,35 @@ export function useIdentityQuery() {
  */
 export function useUserInfoQuery() {
   const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
+  // Select only primitive values to avoid reference instability
+  const accessToken = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.accessToken : undefined
+  )
+  const instanceUrl = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.instanceUrl : undefined
+  )
+  const refreshToken = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.refreshToken : undefined
+  )
+  const loginUrl = useConnectionStore((state) => {
+    if (!state.activeConnectionId) return undefined
+    const conn = state.connections[state.activeConnectionId]
+    return conn?.url || conn?.loginUrl || 'https://login.salesforce.com'
+  })
 
   return useQuery({
     queryKey: queryKeys.userInfo(activeConnectionId ?? ''),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
+      const connectionInfo: ConnectionInfo = {
+        accessToken: accessToken!,
+        instanceUrl: instanceUrl!,
+        refreshToken: refreshToken!,
+        loginUrl: loginUrl!,
+        connectionId: activeConnectionId!,
+      }
       return fetchUserInfo(connectionInfo)
     },
-    enabled: !!activeConnectionId && !!activeConnection?.accessToken,
+    enabled: !!activeConnectionId && !!accessToken,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   })
@@ -107,28 +147,43 @@ export function useUserInfoQuery() {
  * Use this hook in App.tsx to manage the connection lifecycle.
  */
 export function useConnectionQuery() {
-  const queryClient = useQueryClient()
   const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
   const updateConnection = useConnectionStore((state) => state.updateConnection)
   const setActiveConnectionPending = useConnectionStore((state) => state.setActiveConnectionPending)
   const setActiveConnectionError = useConnectionStore((state) => state.setActiveConnectionError)
   const setActiveConnectionData = useConnectionStore((state) => state.setActiveConnectionData)
+  const activeConnectionPending = useConnectionStore((state) => state.activeConnection.pending)
+  const activeConnectionError = useConnectionStore((state) => state.activeConnection.error)
+  const hasActiveConnectionData = useConnectionStore((state) => !!state.activeConnection.userInfo)
 
   const identityQuery = useIdentityQuery()
   const userInfoQuery = useUserInfoQuery()
 
   // Update Zustand store based on query states
+  // Use separate effects to prevent cascading updates
+
+  // Handle pending state
   useEffect(() => {
     const isPending = identityQuery.isLoading || userInfoQuery.isLoading
-    const error = identityQuery.error || userInfoQuery.error
-
-    if (isPending) {
+    // Only update if the state actually changed
+    if (isPending && !activeConnectionPending) {
       setActiveConnectionPending(true)
-    } else if (error) {
-      setActiveConnectionError((error as Error).message)
-    } else if (identityQuery.data && userInfoQuery.data && activeConnectionId) {
-      // Both queries succeeded - update the connection store with identity info
+    }
+  }, [identityQuery.isLoading, userInfoQuery.isLoading, activeConnectionPending, setActiveConnectionPending])
+
+  // Handle error state
+  useEffect(() => {
+    const error = identityQuery.error || userInfoQuery.error
+    const errorMessage = error ? (error as Error).message : null
+    // Only update if there's an error and it's different from current
+    if (errorMessage && activeConnectionError !== errorMessage) {
+      setActiveConnectionError(errorMessage)
+    }
+  }, [identityQuery.error, userInfoQuery.error, activeConnectionError, setActiveConnectionError])
+
+  // Handle success state - update connection with identity info
+  useEffect(() => {
+    if (identityQuery.data && activeConnectionId) {
       const identity = identityQuery.data
       updateConnection(activeConnectionId, {
         username: identity.username,
@@ -143,21 +198,17 @@ export function useConnectionQuery() {
         locale: identity.locale,
         language: identity.language,
       })
-
-      // Set active connection data (using stored connection as the connection object)
-      // Note: The actual jsforce Connection is not serializable for Zustand,
-      // so we store the connection info which is used via IPC
-      setActiveConnectionData(activeConnection as any, userInfoQuery.data)
     }
-  }, [
-    identityQuery.isLoading,
-    identityQuery.data,
-    identityQuery.error,
-    userInfoQuery.isLoading,
-    userInfoQuery.data,
-    userInfoQuery.error,
-    activeConnectionId,
-  ])
+  }, [identityQuery.data, activeConnectionId, updateConnection])
+
+  // Handle success state - set active connection data
+  useEffect(() => {
+    // Only set if we have data and haven't already set it
+    if (identityQuery.data && userInfoQuery.data && activeConnectionId && !hasActiveConnectionData) {
+      // Pass null for connection since we use IPC, userInfo is what matters
+      setActiveConnectionData(null as any, userInfoQuery.data)
+    }
+  }, [identityQuery.data, userInfoQuery.data, activeConnectionId, hasActiveConnectionData, setActiveConnectionData])
 
   // Invalidate all cached data when switching connections
   useEffect(() => {

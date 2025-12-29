@@ -15,15 +15,13 @@ interface INumberCellProps {
 const NumberCell: React.FC<INumberCellProps> = (props: INumberCellProps) => {
   const { updateField } = useFieldUpdate()
   const { tabId, fieldSchema, value, record } = props
-  // Get userInfo from active connection (Phase 4)
-  const userInfo: any = useConnectionStore((state) => state.activeConnection.userInfo)
+  // Get userInfo primitives from active connection (using primitive selectors to avoid reference instability)
+  const locale = useConnectionStore((state) => (state.activeConnection.userInfo as any)?.userLocale ?? 'us_EN')
+  const currencyLocale = useConnectionStore((state) => (state.activeConnection.userInfo as any)?.orgDefaultCurrencyLocale ?? 'us_EN')
+  const currency = useConnectionStore((state) => (state.activeConnection.userInfo as any)?.orgDefaultCurrencyIsoCode ?? 'USD')
 
   const [editMode, setEditMode] = React.useState(false)
   const [editValue, setEditValue] = React.useState(value)
-
-  const locale = userInfo ? userInfo.userLocale : 'us_EN'
-  const currencyLocale = userInfo ? userInfo.orgDefaultCurrencyLocale : 'us_EN'
-  const currency = userInfo ? userInfo.orgDefaultCurrencyIsoCode : 'USD'
 
   React.useEffect(() => {
     setEditValue(value)

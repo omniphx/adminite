@@ -28,8 +28,9 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
   const previousQueries = useQueryHistoryStore((state) => state.queries)
   const addToHistory = useQueryHistoryStore((state) => state.addQuery)
 
-  // Zustand for query results pending state (Phase 9)
-  const pending = useQueryResultStore(selectTabPending(tabId))
+  // Zustand for query results pending state (Phase 9) - memoize selector to avoid infinite loop
+  const pendingSelector = React.useCallback(selectTabPending(tabId), [tabId])
+  const pending = useQueryResultStore(pendingSelector)
 
   // TanStack Query mutation for query execution (Phase 9)
   const queryExecution = useQueryExecution()

@@ -4,6 +4,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 export const rendererConfig: Configuration = {
   target: 'electron-renderer',
+  devtool: 'source-map',
   module: {
     rules: [
       {

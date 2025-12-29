@@ -3,6 +3,7 @@ import path from 'path';
 
 export const mainConfig: Configuration = {
   entry: './src/main/index.ts',
+  devtool: 'source-map',
   module: {
     rules: [
       {

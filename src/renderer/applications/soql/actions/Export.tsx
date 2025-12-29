@@ -3,6 +3,7 @@ import { Input, Button, Modal, Select, Row, Col, Table } from 'antd'
 import * as XLSX from 'xlsx'
 import FileSaver from 'file-saver'
 import { ipcRenderer, shell } from 'electron'
+import { useShallow } from 'zustand/react/shallow'
 import { useQueryResultStore, selectTabData, selectTabPending } from '../../../stores/useQueryResultStore'
 
 const { Option } = Select
@@ -14,9 +15,11 @@ interface IExportProps {
 const Export = React.memo((props: IExportProps) => {
   const { tabId } = props
 
-  // Zustand for query results (Phase 9)
-  const data = useQueryResultStore(selectTabData(tabId))
-  const pending = useQueryResultStore(selectTabPending(tabId))
+  // Zustand for query results (Phase 9) - memoize selector to avoid infinite loop
+  const dataSelector = React.useCallback(selectTabData(tabId), [tabId])
+  const pendingSelector = React.useCallback(selectTabPending(tabId), [tabId])
+  const data = useQueryResultStore(useShallow(dataSelector))
+  const pending = useQueryResultStore(pendingSelector)
 
   const [showModal, setShowModal] = React.useState(false)
   const [fileName, setFileName] = React.useState<string>('')

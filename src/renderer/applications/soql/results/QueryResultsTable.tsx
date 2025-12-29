@@ -9,6 +9,7 @@ import {
 } from '../../../../helpers/utils';
 import { shell } from 'electron';
 import moment from 'moment';
+import { useShallow } from 'zustand/react/shallow';
 import TextCell from './TextCell';
 import NumberCell from './NumberCell';
 import PicklistCell from './PicklistCell';
@@ -18,7 +19,7 @@ import MultiPicklistCell from './MultiPicklistCell';
 import BooleanCell from './BooleanCell';
 import { flattenData } from '../../../utils/queryResultsHandler';
 import { useTabStore } from '../../../stores/useTabStore';
-import { useConnectionStore, getActiveConnection } from '../../../stores/useConnectionStore';
+import { useConnectionStore } from '../../../stores/useConnectionStore';
 import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery';
 import { useQueryResultStore, selectTabData, selectTabFilteredIds, selectTabSelectedIds } from '../../../stores/useQueryResultStore';
 
@@ -30,13 +31,19 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
   (props: IQueryResultsTableProps) => {
     const { tabId } = props;
 
-    //Global state - Zustand connection store (Phase 4)
-    const activeConnection = useConnectionStore(getActiveConnection);
+    //Global state - Zustand connection store (Phase 4) - use primitive selector
+    const instanceUrl = useConnectionStore((state) => {
+      const conn = state.activeConnectionId ? state.connections[state.activeConnectionId] : null;
+      return conn?.instanceUrl ?? '';
+    });
 
-    // Zustand for query results (Phase 9)
-    const data = useQueryResultStore(selectTabData(tabId));
-    const filteredIds = useQueryResultStore(selectTabFilteredIds(tabId));
-    const selectedIds = useQueryResultStore(selectTabSelectedIds(tabId));
+    // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
+    const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
+    const filteredIdsSelector = React.useCallback(selectTabFilteredIds(tabId), [tabId]);
+    const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId]);
+    const data = useQueryResultStore(useShallow(dataSelector));
+    const filteredIds = useQueryResultStore(useShallow(filteredIdsSelector));
+    const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector));
     const setSelectedIds = useQueryResultStore((state) => state.setSelectedIds);
 
     // Zustand store for query state
@@ -48,7 +55,6 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const { data: sobjectData } = useResultSObjectDescribe(tabId, resultSObjectName);
     const fieldSchema = sobjectData?.fieldSchema;
 
-    const instanceUrl = activeConnection ? activeConnection.instanceUrl : '';
     const dataSource = filteredIds
       .filter(id => data.hasOwnProperty(id))
       .map(id => flattenData(data[id]));

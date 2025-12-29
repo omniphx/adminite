@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Modal, Button, Select, Input, InputNumber, DatePicker, Checkbox } from 'antd'
+import { useShallow } from 'zustand/react/shallow'
 import { useTabStore } from '../../../stores/useTabStore'
 import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery'
 import { useQueryResultStore, selectTabData, selectTabSelectedIds } from '../../../stores/useQueryResultStore'
@@ -15,9 +16,11 @@ interface IBulkUpdateProps {
 const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdateProps) => {
   const { tabId, showModal, setShowModal } = props
 
-  // Zustand for query results (Phase 9)
-  const data = useQueryResultStore(selectTabData(tabId))
-  const selectedIds = useQueryResultStore(selectTabSelectedIds(tabId))
+  // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
+  const dataSelector = React.useCallback(selectTabData(tabId), [tabId])
+  const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId])
+  const data = useQueryResultStore(useShallow(dataSelector))
+  const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector))
   const setData = useQueryResultStore((state) => state.setData)
 
   // Zustand + TanStack Query for sObject describe (Phase 6)

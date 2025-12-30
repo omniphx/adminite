@@ -1,5 +1,7 @@
 import { v4, v5 } from 'uuid';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
+import type { Locale } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 
 export function isSalesforceId(id: string) {
   const regex = /^[0-9a-zA-Z]{5}0{3}[0-9a-zA-Z]{7}([0-9A-Z]{3})?$/;
@@ -107,11 +109,11 @@ function isMatch(filter, key, value): boolean {
   return false;
 }
 
-function normalizeValue(value) {
+function normalizeValue(value: string, locale: Locale = enUS) {
   if (isDate(value)) {
-    return moment(value).format('MM/DD/YYYY');
+    return format(parseISO(value), 'P', { locale });
   } else if (isDatetime(value)) {
-    return moment(value).format('MM/DD/YYYY h:mma');
+    return format(parseISO(value), 'Pp', { locale });
   } else {
     return value.toLowerCase();
   }

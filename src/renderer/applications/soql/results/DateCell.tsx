@@ -2,9 +2,9 @@ import * as React from 'react'
 import { DatePicker, Button } from 'antd'
 import { Field as DescribeField } from 'jsforce'
 import BaseCell from './BaseCell'
-import moment from 'moment'
 import { useConnectionStore } from '../../../stores/useConnectionStore'
 import { useFieldUpdate } from '../../../queries/useQueryExecution'
+import { getDateFnsLocale, formatDate, formatDateForStorage } from '../../../utils/dateFormatting'
 
 interface IDateCellProps {
   tabId: string
@@ -19,19 +19,19 @@ const DateCell: React.FC<IDateCellProps> = (props: IDateCellProps) => {
   // Get locale from userInfo (SOAP getUserInfo call) - userLocale is in format like 'en_US'
   const locale = useConnectionStore((state) => {
     const userLocale = (state.activeConnection.userInfo as any)?.userLocale
-    return userLocale ? userLocale.substring(0, 2) : 'en'
+    return getDateFnsLocale(userLocale)
   })
-  moment.locale(locale)
 
   const [editMode, setEditMode] = React.useState(false)
-  const value = props.value ? moment(props.value).format('MM/DD/YYYY') : ''
+  const value = props.value ? formatDate(props.value, locale) : ''
   const [editValue, setEditValue] = React.useState(value)
 
-  const handleEditChange = (value) => {
-    const formattedValue = value ? value.format('YYYY-MM-DD') : value
-    setEditValue(formattedValue)
+  const handleEditChange = (dateValue: any) => {
+    const formattedValue = dateValue ? formatDateForStorage(dateValue.toDate()) : null
+    setEditValue(formattedValue || '')
     setEditMode(false)
-    if(moment(editValue).format() === moment(value).format()) return
+    // Compare the storage format values to detect actual changes
+    if (editValue === formattedValue) return
     record[fieldSchema.name] = formattedValue
     record.editFields = [...record.editFields, fieldSchema.name]
     updateField(tabId, record)

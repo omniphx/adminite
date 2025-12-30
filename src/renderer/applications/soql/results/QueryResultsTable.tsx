@@ -8,8 +8,8 @@ import {
   getRecordId
 } from '../../../../helpers/utils';
 import { shell } from 'electron';
-import moment from 'moment';
 import { useShallow } from 'zustand/react/shallow';
+import { getDateFnsLocale, formatDate, formatDateTime } from '../../../utils/dateFormatting';
 import TextCell from './TextCell';
 import NumberCell from './NumberCell';
 import PicklistCell from './PicklistCell';
@@ -35,6 +35,12 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const instanceUrl = useConnectionStore((state) => {
       const conn = state.activeConnectionId ? state.connections[state.activeConnectionId] : null;
       return conn?.instanceUrl ?? '';
+    });
+
+    // Get locale for date formatting
+    const locale = useConnectionStore((state) => {
+      const userLocale = (state.activeConnection.userInfo as any)?.userLocale;
+      return getDateFnsLocale(userLocale);
     });
 
     // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
@@ -327,9 +333,9 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
           </span>
         );
       } else if (isDate(value)) {
-        return moment(value).format('MM/DD/YYYY');
+        return formatDate(value, locale);
       } else if (isDatetime(value)) {
-        return moment(value).format('MM/DD/YYYY h:mma');
+        return formatDateTime(value, locale);
       } else if (typeof value === 'boolean') {
         return `${value}`;
       } else if (!value) {

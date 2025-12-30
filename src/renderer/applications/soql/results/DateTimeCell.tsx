@@ -2,9 +2,10 @@ import * as React from 'react'
 import { DatePicker, Button } from 'antd'
 import { Field as DescribeField } from 'jsforce'
 import BaseCell from './BaseCell'
-import moment from 'moment'
+import { parseISO } from 'date-fns'
 import { useConnectionStore } from '../../../stores/useConnectionStore'
 import { useFieldUpdate } from '../../../queries/useQueryExecution'
+import { getDateFnsLocale, formatDateTime } from '../../../utils/dateFormatting'
 
 interface IDateTimeCellProps {
   tabId: string
@@ -20,30 +21,35 @@ const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) =
   // Get locale from userInfo (SOAP getUserInfo call) - userLocale is in format like 'en_US'
   const locale = useConnectionStore((state) => {
     const userLocale = (state.activeConnection.userInfo as any)?.userLocale
-    return userLocale ? userLocale.substring(0, 2) : 'en'
+    return getDateFnsLocale(userLocale)
   })
-  moment.locale(locale)
 
   const [editMode, setEditMode] = React.useState(false)
-  const value = props.value ? moment(props.value).format('MM/DD/YYYY h:mma') : ''
-  const [editValue, setEditValue] = React.useState(value)
+  const displayValue = props.value ? formatDateTime(props.value, locale) : ''
+  // Store the ISO string for comparison and submission
+  const [editValue, setEditValue] = React.useState(props.value || '')
 
   React.useEffect(() => {
-    setEditValue(moment(value).toISOString())
-  }, [value])
+    setEditValue(props.value || '')
+  }, [props.value])
 
-  const handleEditChange = (value) => {
-    setEditValue(moment(value).toISOString())
+  const handleEditChange = (dateValue: any) => {
+    if (dateValue) {
+      setEditValue(dateValue.toDate().toISOString())
+    }
   }
 
   const handleCancelEditMode = () => {
     setEditMode(false)
-    setEditValue(moment(value).toISOString())
+    setEditValue(props.value || '')
   }
 
   const handleConfirmChange = () => {
     setEditMode(false)
-    if(moment(editValue).format() === moment(value).format()) return
+    // Compare ISO strings to detect actual changes
+    const originalDate = props.value ? parseISO(props.value).getTime() : null
+    const editDate = editValue ? parseISO(editValue).getTime() : null
+    if (originalDate === editDate) return
     record[fieldSchema.name] = editValue
     record.editFields = [...record.editFields, fieldSchema.name]
     updateField(tabId, record)
@@ -56,7 +62,7 @@ const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) =
     updateField(tabId, record)
   }
 
-  const combineProps = { ...props, handleCancelEditMode, handleConfirmChange, editMode, setEditMode, setEditValue, value}
+  const combineProps = { ...props, handleCancelEditMode, handleConfirmChange, editMode, setEditMode, setEditValue, value: displayValue}
 
   return (
     <BaseCell {...combineProps }>

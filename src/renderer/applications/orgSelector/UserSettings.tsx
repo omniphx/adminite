@@ -25,7 +25,7 @@ const UserSettings: React.FC<any> = React.memo((props: IUserSettingsProps) => {
   return (
     <Modal
       onCancel={() => setShowModal(false)}
-      visible={showModal}
+      open={showModal}
       footer={[
         <Button key='back' onClick={() => setShowModal(false)}>
           Close

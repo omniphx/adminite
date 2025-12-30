@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { DownOutlined } from '@ant-design/icons'
-import { Menu, Dropdown, Modal } from 'antd'
+import { Dropdown, Modal } from 'antd'
 import { useShallow } from 'zustand/react/shallow'
 import BulkUpdate from './BulkUpdate'
 import { useQueryResultStore, selectTabSelectedIds } from '../../../stores/useQueryResultStore'
@@ -30,11 +30,9 @@ const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
     }
   }
 
-  const options = (
-    <Menu onClick={handleMenuClick}>
-      <Menu.Item key='delete'>Bulk Delete</Menu.Item>
-    </Menu>
-  )
+  const menuItems = [
+    { key: 'delete', label: 'Bulk Delete' }
+  ]
 
   const bulkUpdateProps = {
     tabId,
@@ -48,7 +46,7 @@ const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
         icon={<DownOutlined />}
         onClick={() => setShowUpdateModal(true)}
         disabled={selectedIds.length <= 0}
-        overlay={options}
+        menu={{ items: menuItems, onClick: handleMenuClick }}
       >
         Bulk Update
       </Dropdown.Button>

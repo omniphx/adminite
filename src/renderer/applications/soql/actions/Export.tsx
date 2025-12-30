@@ -132,7 +132,7 @@ const Export = React.memo((props: IExportProps) => {
       <Modal
         title='Export'
         onCancel={handleClose}
-        visible={showModal}
+        open={showModal}
         footer={[
           <Button
             key='export'

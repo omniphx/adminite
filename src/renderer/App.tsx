@@ -166,30 +166,27 @@ const App = (): ReactElement => {
               onSelect={handleMenuItem}
               selectedKeys={[feature]}
               defaultSelectedKeys={[feature]}
-            >
-              <Menu.Item key='soql' className='hover'>
-                <IconWrapper>
-                  <FaDatabase />
-                </IconWrapper>
-                <span>SOQL Editor</span>
-              </Menu.Item>
-              <Menu.Item key='permissions' className='hover'>
-                <IconWrapper>
-                  <FaUnlockAlt />
-                </IconWrapper>
-                <span>Field Level Security</span>
-              </Menu.Item>
-              <Menu.Item key='schema' className='hover'>
-                <IconWrapper>
-                  <FaTools />
-                </IconWrapper>
-                <span>Schema</span>
-              </Menu.Item>
-              {/* <Menu.Item key='debugLogs' className='hover' disabled>
-                <Icon type='file-text' theme='filled' />
-                <span>Debug Logs</span>
-              </Menu.Item> */}
-            </Menu>
+              items={[
+                {
+                  key: 'soql',
+                  className: 'hover',
+                  icon: <IconWrapper><FaDatabase /></IconWrapper>,
+                  label: 'SOQL Editor'
+                },
+                {
+                  key: 'permissions',
+                  className: 'hover',
+                  icon: <IconWrapper><FaUnlockAlt /></IconWrapper>,
+                  label: 'Field Level Security'
+                },
+                {
+                  key: 'schema',
+                  className: 'hover',
+                  icon: <IconWrapper><FaTools /></IconWrapper>,
+                  label: 'Schema'
+                }
+              ]}
+            />
           </Sider>
           <Layout style={{ marginLeft: 200 }}>
             <Content style={{ padding: '.5em 2em', background: '#fff' }}>

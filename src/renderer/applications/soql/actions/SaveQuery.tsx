@@ -86,7 +86,7 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
       </Button>
       <Modal
         title='Save Query'
-        visible={visible}
+        open={visible}
         onCancel={handleCancel}
         footer={saveActions}
       >

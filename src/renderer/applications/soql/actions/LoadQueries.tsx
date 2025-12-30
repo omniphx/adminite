@@ -143,7 +143,7 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
         title='Choose Query'
         width='800px'
         onCancel={handleCancel}
-        visible={showModal}
+        open={showModal}
         footer={[
           <Button key='back' onClick={handleCancel}>
             Cancel

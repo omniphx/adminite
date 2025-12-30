@@ -49,7 +49,7 @@ const QueryOptions: React.FC<IQueryOptionsProps> = (props: IQueryOptionsProps) =
       <Modal
         title='Query options'
         onCancel={handleClose}
-        visible={showModal}
+        open={showModal}
         footer={[
           <Button key='back' onClick={handleClose}>
             Close

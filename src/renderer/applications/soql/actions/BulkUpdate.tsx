@@ -78,7 +78,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
     <Modal
       title={`${selectedIds.length} records selected`}
       onCancel={() => setShowModal(false)}
-      visible={showModal}
+      open={showModal}
       footer={[
         <Button key='apply' type='primary' onClick={handleApply}>
           Apply

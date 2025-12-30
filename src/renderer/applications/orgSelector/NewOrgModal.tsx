@@ -70,7 +70,7 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
 
   return (
     <Modal
-      visible={modalVisible}
+      open={modalVisible}
       onOk={handleSubmit}
       onCancel={handleCancel}
       footer={[

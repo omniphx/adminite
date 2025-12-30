@@ -47,6 +47,17 @@ const QueryTabs: React.FC = () => {
     closeTab(id)
   }
 
+  const tabItems = tabOrder
+    .filter(tabId => tabs[tabId])
+    .map(tabId => {
+      const { title } = tabs[tabId]
+      return {
+        key: tabId,
+        label: title,
+        children: <QueryTab tabId={tabId} />
+      }
+    })
+
   return (
     <div>
       <Tabs
@@ -63,18 +74,8 @@ const QueryTabs: React.FC = () => {
         )}
         type='editable-card'
         onEdit={onEdit}
-      >
-        {tabOrder.map(tabId => {
-          const queryTab = tabs[tabId]
-          if (!queryTab) return null
-          const { title } = queryTab
-          return (
-            <Tabs.TabPane tab={title} key={tabId}>
-              <QueryTab {...{ tabId, title }} />
-            </Tabs.TabPane>
-          )
-        })}
-      </Tabs>
+        items={tabItems}
+      />
     </div>
   )
 }

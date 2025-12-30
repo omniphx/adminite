@@ -142,7 +142,7 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
         title='Choose fields'
         width='800px'
         onCancel={handleClose}
-        visible={showModal}
+        open={showModal}
         footer={[
           <Button key='apply' type='primary' onClick={handleApply}>
             Apply

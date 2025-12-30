@@ -1,8 +1,6 @@
 import * as React from 'react'
 import { CloseCircleOutlined } from '@ant-design/icons'
-import { Button } from 'antd'
-
-const { Group: ButtonGroup } = Button
+import { Button, Space } from 'antd'
 import { Query as ParsedQuery, isQueryValid, parseQuery } from 'soql-parser-js'
 import { useTabStore } from '../../../stores/useTabStore'
 import { useQueryHistoryStore } from '../../../stores/useQueryHistoryStore'
@@ -52,7 +50,7 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
   }
 
   return (
-    <ButtonGroup className='button-style'>
+    <Space.Compact className='button-style'>
       <Button
         type='primary'
         style={{ borderRadius: pending ? 0 : 4 }}
@@ -67,7 +65,7 @@ const Query: React.FC<IQueryProps> = (props: IQueryProps) => {
         onClick={() => cancel(tabId)}
         icon={<CloseCircleOutlined />}
       />
-    </ButtonGroup>
+    </Space.Compact>
   )
 }
 

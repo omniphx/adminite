@@ -55,7 +55,7 @@ const History: React.FC<IHistoryProps> = (props: IHistoryProps) => {
         title='Choose Query'
         width='800px'
         onCancel={handleCancel}
-        visible={visible}
+        open={visible}
         footer={[
           <Button key='back' onClick={handleCancel}>
             Cancel

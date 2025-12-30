@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ipcRenderer } from 'electron'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useConnectionStore } from '../stores/useConnectionStore'
 import { queryKeys } from './queryKeys'
 
@@ -152,38 +152,42 @@ export function useConnectionQuery() {
   const setActiveConnectionPending = useConnectionStore((state) => state.setActiveConnectionPending)
   const setActiveConnectionError = useConnectionStore((state) => state.setActiveConnectionError)
   const setActiveConnectionData = useConnectionStore((state) => state.setActiveConnectionData)
-  const activeConnectionPending = useConnectionStore((state) => state.activeConnection.pending)
-  const activeConnectionError = useConnectionStore((state) => state.activeConnection.error)
-  const hasActiveConnectionData = useConnectionStore((state) => !!state.activeConnection.userInfo)
 
   const identityQuery = useIdentityQuery()
   const userInfoQuery = useUserInfoQuery()
 
-  // Update Zustand store based on query states
-  // Use separate effects to prevent cascading updates
+  // Use refs to track what we've already processed to prevent infinite loops
+  const lastPendingRef = useRef<boolean | null>(null)
+  const lastErrorRef = useRef<string | null>(null)
+  const lastIdentityDataRef = useRef<IdentityResponse | null>(null)
+  const lastUserInfoDataRef = useRef<any>(null)
 
-  // Handle pending state
+  // Handle pending state - only update when loading state actually changes
+  const isPending = identityQuery.isLoading || userInfoQuery.isLoading
   useEffect(() => {
-    const isPending = identityQuery.isLoading || userInfoQuery.isLoading
-    // Only update if the state actually changed
-    if (isPending && !activeConnectionPending) {
-      setActiveConnectionPending(true)
+    if (lastPendingRef.current !== isPending) {
+      lastPendingRef.current = isPending
+      if (isPending) {
+        setActiveConnectionPending(true)
+      }
     }
-  }, [identityQuery.isLoading, userInfoQuery.isLoading, activeConnectionPending, setActiveConnectionPending])
+  }, [isPending, setActiveConnectionPending])
 
-  // Handle error state
+  // Handle error state - use error message string to avoid reference comparison issues
+  const errorMessage = (identityQuery.error || userInfoQuery.error)
+    ? ((identityQuery.error || userInfoQuery.error) as Error).message
+    : null
   useEffect(() => {
-    const error = identityQuery.error || userInfoQuery.error
-    const errorMessage = error ? (error as Error).message : null
-    // Only update if there's an error and it's different from current
-    if (errorMessage && activeConnectionError !== errorMessage) {
+    if (lastErrorRef.current !== errorMessage && errorMessage !== null) {
+      lastErrorRef.current = errorMessage
       setActiveConnectionError(errorMessage)
     }
-  }, [identityQuery.error, userInfoQuery.error, activeConnectionError, setActiveConnectionError])
+  }, [errorMessage, setActiveConnectionError])
 
   // Handle success state - update connection with identity info
   useEffect(() => {
-    if (identityQuery.data && activeConnectionId) {
+    if (identityQuery.data && activeConnectionId && lastIdentityDataRef.current !== identityQuery.data) {
+      lastIdentityDataRef.current = identityQuery.data
       const identity = identityQuery.data
       updateConnection(activeConnectionId, {
         username: identity.username,
@@ -203,20 +207,19 @@ export function useConnectionQuery() {
 
   // Handle success state - set active connection data
   useEffect(() => {
-    // Only set if we have data and haven't already set it
-    if (identityQuery.data && userInfoQuery.data && activeConnectionId && !hasActiveConnectionData) {
+    if (identityQuery.data && userInfoQuery.data && activeConnectionId && lastUserInfoDataRef.current !== userInfoQuery.data) {
+      lastUserInfoDataRef.current = userInfoQuery.data
       // Pass null for connection since we use IPC, userInfo is what matters
       setActiveConnectionData(null as any, userInfoQuery.data)
     }
-  }, [identityQuery.data, userInfoQuery.data, activeConnectionId, hasActiveConnectionData, setActiveConnectionData])
+  }, [identityQuery.data, userInfoQuery.data, activeConnectionId, setActiveConnectionData])
 
-  // Invalidate all cached data when switching connections
+  // Reset refs when connection changes
   useEffect(() => {
-    return () => {
-      // This runs when activeConnectionId changes (cleanup of previous value)
-      // We don't need to do anything here since TanStack Query handles refetching
-      // when the query key changes
-    }
+    lastPendingRef.current = null
+    lastErrorRef.current = null
+    lastIdentityDataRef.current = null
+    lastUserInfoDataRef.current = null
   }, [activeConnectionId])
 
   return {

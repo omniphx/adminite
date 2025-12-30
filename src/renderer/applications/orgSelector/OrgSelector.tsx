@@ -5,12 +5,11 @@ import {
   InfoCircleOutlined,
   LoadingOutlined
 } from '@ant-design/icons'
-import { Menu, Dropdown, Card, Tooltip } from 'antd'
-import { useShallow } from 'zustand/react/shallow'
+import { Dropdown, Card, Tooltip } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   useConnectionStore,
-  useConnectionsArray,
-  getActiveConnection
+  useConnectionsArray
 } from '../../stores/useConnectionStore'
 
 const { Meta } = Card
@@ -19,10 +18,12 @@ import { MdAddBox, MdSettings } from 'react-icons/md'
 import IconWrapper from '../ui/IconWrapper'
 import UserSettings from './UserSettings'
 
-const OrgSelector: React.FC = React.memo((props: any) => {
-  // Zustand store - use useShallow to avoid infinite re-render loops from object references
+const OrgSelector: React.FC = React.memo(() => {
+  // Zustand store - select primitive values to avoid reference instability
   const connections = useConnectionsArray()
-  const activeConnection = useConnectionStore(useShallow(getActiveConnection))
+  const activeConnectionName = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.name : null
+  )
   const pending = useConnectionStore((state) => state.activeConnection.pending)
   const error = useConnectionStore((state) => state.activeConnection.error)
   const toggleModal = useConnectionStore((state) => state.toggleModal)
@@ -42,31 +43,22 @@ const OrgSelector: React.FC = React.memo((props: any) => {
     setShowUserSettingsModal(true)
   }
 
-  const renderOrgOptions = () => {
-    return connections.map((connection: any, index) => {
-      return (
+  const getMenuItems = (): MenuProps['items'] => {
+    const connectionItems = connections.map((connection: any, index) => ({
+      key: connection.id,
+      label: (
         <ConnectionCard
           {...{ connection, setShowDropdown, index }}
-          key={connection.id}
         />
       )
-    })
-  }
+    }))
 
-  const renderMenuDropDown = () => {
-    return (
-      <Menu
-        style={{
-          left: 100,
-          overflow: 'hidden',
-          overflowY: 'scroll',
-          maxHeight: 600,
-          display: !showDropdown ? 'none' : ''
-        }}
-        className='org-drop-down'
-      >
-        {renderOrgOptions()}
-        <Menu.Item onClick={handleNewOrg} key='create'>
+    return [
+      ...connectionItems,
+      {
+        key: 'create',
+        onClick: handleNewOrg,
+        label: (
           <Card bordered={false} style={{ background: 'transparent' }}>
             <Meta
               avatar={
@@ -77,8 +69,12 @@ const OrgSelector: React.FC = React.memo((props: any) => {
               description='New connection'
             />
           </Card>
-        </Menu.Item>
-        <Menu.Item onClick={handleUserSettings} key='settings'>
+        )
+      },
+      {
+        key: 'settings',
+        onClick: handleUserSettings,
+        label: (
           <Card bordered={false} style={{ background: 'transparent' }}>
             <Meta
               avatar={
@@ -89,17 +85,29 @@ const OrgSelector: React.FC = React.memo((props: any) => {
               description='Settings'
             />
           </Card>
-        </Menu.Item>
-      </Menu>
-    )
+        )
+      }
+    ]
+  }
+
+  const menuProps: MenuProps = {
+    items: getMenuItems(),
+    style: {
+      left: 100,
+      overflow: 'hidden',
+      overflowY: 'scroll',
+      maxHeight: 600,
+      display: !showDropdown ? 'none' : ''
+    },
+    className: 'org-drop-down'
   }
 
   return (
     <div>
       <Dropdown
-        overlay={renderMenuDropDown()}
+        menu={menuProps}
         trigger={['click']}
-        onVisibleChange={visible => setShowDropdown(visible)}
+        onOpenChange={visible => setShowDropdown(visible)}
       >
         <a className='ant-dropdown-link' href='#' style={{ color: 'inherit' }}>
           <div
@@ -124,10 +132,10 @@ const OrgSelector: React.FC = React.memo((props: any) => {
   )
 
   function renderDropDown() {
-    return activeConnection ? (
+    return activeConnectionName ? (
       //Has connection
       <span>
-        {renderIcon()} {activeConnection.name} {renderCaret()}
+        {renderIcon()} {activeConnectionName} {renderCaret()}
       </span>
     ) : (
       //Has no connection
@@ -140,7 +148,7 @@ const OrgSelector: React.FC = React.memo((props: any) => {
       return <LoadingOutlined />
     } else if (error) {
       return (
-        <Tooltip title={error} placement='bottomRight' arrowPointAtCenter>
+        <Tooltip title={error} placement='bottomRight' arrow={{ pointAtCenter: true }}>
           <InfoCircleOutlined className='icon-error' />
         </Tooltip>
       )

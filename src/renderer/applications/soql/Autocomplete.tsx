@@ -9,7 +9,7 @@ interface IAutoCompleteProps {
 }
 
 const AutoComplete = (props: IAutoCompleteProps) => {
-  const dropDownReference = useRef();
+  const dropDownReference = useRef<HTMLDivElement>(null);
   const { index, dataSource, onSelect } = props;
 
   const onItemSelect = (event, itemIndex) => {

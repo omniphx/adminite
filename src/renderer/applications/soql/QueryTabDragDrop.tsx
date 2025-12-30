@@ -15,7 +15,7 @@ const QueryTabDragDrop: React.FC<IQueryTabDragDropProps> = React.memo(
     const moveTab = useTabStore((state) => state.moveTab)
 
     const index = tabOrder.indexOf(tabId)
-    const tabRef: any = React.useRef()
+    const tabRef = React.useRef<HTMLSpanElement>(null)
 
     const [{ opacity, isDragging }, dragRef] = useDrag(() => ({
       type: 'queryTab',

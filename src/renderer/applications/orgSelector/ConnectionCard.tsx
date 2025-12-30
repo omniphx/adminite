@@ -25,7 +25,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
     const deleteConnection = useConnectionStore((state) => state.deleteConnection)
     const moveConnection = useConnectionStore((state) => state.moveConnection)
 
-    const cardRef = React.useRef()
+    const cardRef = React.useRef<HTMLDivElement>(null)
 
     const [editMode, setEditMode] = React.useState(false)
     const [connectionName, setConnectionName] = React.useState(connection.name)

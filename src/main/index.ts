@@ -174,15 +174,12 @@ async function handleOAuthCallback(callbackUrl: string): Promise<void> {
     const identity = await connection.identity();
     const {
       username,
-      first_name,
-      last_name,
       email,
       display_name,
-      timezone,
+      nick_name,
       user_id,
       user_type,
       organization_id,
-      locale,
       language
     } = identity;
     const { loginUrl, redirectUri } = oauth2;
@@ -195,15 +192,12 @@ async function handleOAuthCallback(callbackUrl: string): Promise<void> {
       loginUrl,
       redirectUri,
       username,
-      first_name,
-      last_name,
       email,
       display_name,
-      timezone,
+      nick_name,
       user_id,
       user_type,
       organization_id,
-      locale,
       language
     });
 
@@ -358,8 +352,8 @@ async function createServer(): Promise<void> {
     ipcMain.handle('salesforce:queryAll', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString }) => {
       try {
         const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        // queryAll is only available on standard connection, not tooling
-        const result = await connection.queryAll(queryString);
+        // In jsforce v3, queryAll is replaced with query() using scanAll option
+        const result = await connection.query(queryString, { scanAll: true });
         return { success: true, data: result };
       } catch (error) {
         log.error('salesforce:queryAll error:', error);

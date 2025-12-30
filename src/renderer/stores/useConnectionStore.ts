@@ -13,15 +13,12 @@ export interface StoredConnection {
   sortOrder: number
   // Identity fields (populated after successful connection)
   username?: string
-  first_name?: string
-  last_name?: string
   email?: string
   display_name?: string
-  timezone?: string
+  nick_name?: string
   user_id?: string
   user_type?: string
   organization_id?: string
-  locale?: string
   language?: string
   // OAuth tokens
   accessToken?: string

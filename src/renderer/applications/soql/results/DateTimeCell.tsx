@@ -17,10 +17,10 @@ const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) =
   const { updateField } = useFieldUpdate()
   const {tabId, fieldSchema, record} = props
 
-  // Get locale from active connection identity (using primitive selector to avoid reference instability)
+  // Get locale from userInfo (SOAP getUserInfo call) - userLocale is in format like 'en_US'
   const locale = useConnectionStore((state) => {
-    const conn = state.activeConnectionId ? state.connections[state.activeConnectionId] : null
-    return conn?.locale ? conn.locale.substring(0, 2) : 'us'
+    const userLocale = (state.activeConnection.userInfo as any)?.userLocale
+    return userLocale ? userLocale.substring(0, 2) : 'en'
   })
   moment.locale(locale)
 

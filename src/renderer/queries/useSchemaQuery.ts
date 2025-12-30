@@ -2,8 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { ipcRenderer } from 'electron'
 import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore'
 import { queryKeys } from './queryKeys'
-import { DescribeGlobalSObjectResult } from 'jsforce'
+import { DescribeGlobalResult } from 'jsforce'
 import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery'
+
+// Type alias for sObject describe result from global describe
+export type DescribeGlobalSObjectResult = DescribeGlobalResult['sobjects'][number]
 
 // IPC fetch functions
 async function fetchDescribeGlobal(connectionInfo: ConnectionInfo): Promise<DescribeGlobalSObjectResult[]> {

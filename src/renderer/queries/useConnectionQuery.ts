@@ -4,18 +4,15 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useConnectionStore } from '../stores/useConnectionStore'
 import { queryKeys } from './queryKeys'
 
-// Identity response from Salesforce
+// Identity response from Salesforce (jsforce v3 IdentityInfo)
 export interface IdentityResponse {
   username: string
-  first_name: string
-  last_name: string
   email: string
   display_name: string
-  timezone: string
+  nick_name: string
   user_id: string
   user_type: string
   organization_id: string
-  locale: string
   language: string
 }
 
@@ -211,15 +208,12 @@ export function useConnectionQuery() {
       const identity = identityQuery.data
       updateConnection(activeConnectionId, {
         username: identity.username,
-        first_name: identity.first_name,
-        last_name: identity.last_name,
         email: identity.email,
         display_name: identity.display_name,
-        timezone: identity.timezone,
+        nick_name: identity.nick_name,
         user_id: identity.user_id,
         user_type: identity.user_type,
         organization_id: identity.organization_id,
-        locale: identity.locale,
         language: identity.language,
       })
     }

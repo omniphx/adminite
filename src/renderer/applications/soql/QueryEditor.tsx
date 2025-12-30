@@ -2,10 +2,10 @@ import * as React from 'react'
 import { useEffect, useState, useRef } from 'react'
 
 import {
-  DescribeGlobalSObjectResult,
   DescribeSObjectResult,
   Field
 } from 'jsforce'
+import { DescribeGlobalSObjectResult } from '../../queries/useSchemaQuery'
 import { Caret, CaretLocator } from '../../utils/caretPosition'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import AutoComplete from './Autocomplete'

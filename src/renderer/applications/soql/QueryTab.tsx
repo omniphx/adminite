@@ -6,6 +6,7 @@ import SaveQuery from './actions/SaveQuery'
 import LoadQueries from './actions/LoadQueries'
 import Export from './actions/Export'
 import PageSizeSelect from './actions/PageSizeSelect'
+import DateFormatToggle from './actions/DateFormatToggle'
 import Pagination from './actions/Pagination'
 import QueryOptions from './actions/QueryOptions'
 import QueryResult from './results/QueryResult'
@@ -106,7 +107,10 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
           lg={12}
           style={{ textAlign: 'right' }}
         >
-          <PageSizeSelect {...childProps} />
+          <Row justify="end" align="middle">
+            <DateFormatToggle {...childProps} />
+            <PageSizeSelect {...childProps} />
+          </Row>
         </Col>
       </Row>
       <Row gutter={16} justify='space-between' align='middle'>

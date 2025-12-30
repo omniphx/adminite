@@ -6,17 +6,19 @@ import { parseISO } from 'date-fns'
 import { useConnectionStore } from '../../../stores/useConnectionStore'
 import { useFieldUpdate } from '../../../queries/useQueryExecution'
 import { getDateFnsLocale, formatDateTime } from '../../../utils/dateFormatting'
+import { DateFormatMode } from '../../../stores/useTabStore'
 
 interface IDateTimeCellProps {
   tabId: string
   value: string
   record: any
   fieldSchema: DescribeField
+  dateFormat?: DateFormatMode
 }
 
 const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) => {
   const { updateField } = useFieldUpdate()
-  const {tabId, fieldSchema, record} = props
+  const { tabId, fieldSchema, record, dateFormat = 'human' } = props
 
   // Get locale from userInfo (SOAP getUserInfo call) - userLocale is in format like 'en_US'
   const locale = useConnectionStore((state) => {
@@ -25,7 +27,9 @@ const DateTimeCell: React.FC<IDateTimeCellProps> = (props: IDateTimeCellProps) =
   })
 
   const [editMode, setEditMode] = React.useState(false)
-  const displayValue = props.value ? formatDateTime(props.value, locale) : ''
+  const displayValue = props.value
+    ? (dateFormat === 'iso' ? props.value : formatDateTime(props.value, locale))
+    : ''
   // Store the ISO string for comparison and submission
   const [editValue, setEditValue] = React.useState(props.value || '')
 

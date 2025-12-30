@@ -56,6 +56,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? { current: 1, pageSize: 25 };
     const parsedQuery = useTabStore((state) => state.queries[tabId]?.parsedQuery);
     const resultSObjectName = useTabStore((state) => state.queries[tabId]?.resultSObjectName);
+    const dateFormat = useTabStore((state) => state.queries[tabId]?.dateFormat) ?? 'human';
 
     // TanStack Query for sObject describe (Phase 6)
     const { data: sobjectData } = useResultSObjectDescribe(tabId, resultSObjectName);
@@ -277,7 +278,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
           },
           render: (value, record) => {
             const childProps = {
-              ...{ tabId, value, record, fieldSchema: fieldDescription }
+              ...{ tabId, value, record, fieldSchema: fieldDescription, dateFormat }
             };
             return record.attributes.type === 'AggregateResult'
               ? formatValue(value)
@@ -333,9 +334,9 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
           </span>
         );
       } else if (isDate(value)) {
-        return formatDate(value, locale);
+        return dateFormat === 'iso' ? value : formatDate(value, locale);
       } else if (isDatetime(value)) {
-        return formatDateTime(value, locale);
+        return dateFormat === 'iso' ? value : formatDateTime(value, locale);
       } else if (typeof value === 'boolean') {
         return `${value}`;
       } else if (!value) {

@@ -5,17 +5,19 @@ import BaseCell from './BaseCell'
 import { useConnectionStore } from '../../../stores/useConnectionStore'
 import { useFieldUpdate } from '../../../queries/useQueryExecution'
 import { getDateFnsLocale, formatDate, formatDateForStorage } from '../../../utils/dateFormatting'
+import { DateFormatMode } from '../../../stores/useTabStore'
 
 interface IDateCellProps {
   tabId: string
   value: string
   record: any
   fieldSchema: DescribeField
+  dateFormat?: DateFormatMode
 }
 
 const DateCell: React.FC<IDateCellProps> = (props: IDateCellProps) => {
   const { updateField } = useFieldUpdate()
-  const { tabId, fieldSchema, record } = props
+  const { tabId, fieldSchema, record, dateFormat = 'human' } = props
   // Get locale from userInfo (SOAP getUserInfo call) - userLocale is in format like 'en_US'
   const locale = useConnectionStore((state) => {
     const userLocale = (state.activeConnection.userInfo as any)?.userLocale
@@ -23,7 +25,9 @@ const DateCell: React.FC<IDateCellProps> = (props: IDateCellProps) => {
   })
 
   const [editMode, setEditMode] = React.useState(false)
-  const value = props.value ? formatDate(props.value, locale) : ''
+  const value = props.value
+    ? (dateFormat === 'iso' ? props.value : formatDate(props.value, locale))
+    : ''
   const [editValue, setEditValue] = React.useState(value)
 
   const handleEditChange = (dateValue: any) => {

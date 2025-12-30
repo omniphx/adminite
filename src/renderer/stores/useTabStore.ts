@@ -15,6 +15,8 @@ export interface SoqlQuery {
   body: string
 }
 
+export type DateFormatMode = 'human' | 'iso'
+
 export interface QueryState {
   tabId: string
   query: SoqlQuery
@@ -28,6 +30,8 @@ export interface QueryState {
   // SObject names for describe queries (Phase 6)
   querySObjectName?: string // For query editor autocomplete
   resultSObjectName?: string // For results table rendering
+  // Date display format preference
+  dateFormat: DateFormatMode
 }
 
 export interface QueryResultUIState {
@@ -72,6 +76,7 @@ interface TabActions {
   setParsedQuery: (tabId: string, parsedQuery: any) => void
   setQuerySObjectName: (tabId: string, sObjectName: string | undefined) => void
   setResultSObjectName: (tabId: string, sObjectName: string | undefined) => void
+  setDateFormat: (tabId: string, dateFormat: DateFormatMode) => void
 
   // Result UI state
   setSelectedIds: (tabId: string, ids: string[]) => void
@@ -96,6 +101,7 @@ const createDefaultQueryState = (tabId: string): QueryState => ({
   toolingMode: false,
   paginationConfig: { pageSize: 25, current: 1 },
   batchSize: 200,
+  dateFormat: 'human',
 })
 
 const createDefaultResultUIState = (): QueryResultUIState => ({
@@ -251,6 +257,14 @@ export const useTabStore = create<TabState & TabActions>()(
           queries: {
             ...state.queries,
             [tabId]: { ...state.queries[tabId], resultSObjectName },
+          },
+        })),
+
+      setDateFormat: (tabId, dateFormat) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], dateFormat },
           },
         })),
 

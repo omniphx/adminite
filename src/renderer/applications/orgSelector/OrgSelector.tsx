@@ -59,7 +59,7 @@ const OrgSelector: React.FC = React.memo(() => {
         key: 'create',
         onClick: handleNewOrg,
         label: (
-          <Card bordered={false} style={{ background: 'transparent' }}>
+          <Card variant="borderless" style={{ background: 'transparent' }}>
             <Meta
               avatar={
                 <IconWrapper>
@@ -75,7 +75,7 @@ const OrgSelector: React.FC = React.memo(() => {
         key: 'settings',
         onClick: handleUserSettings,
         label: (
-          <Card bordered={false} style={{ background: 'transparent' }}>
+          <Card variant="borderless" style={{ background: 'transparent' }}>
             <Meta
               avatar={
                 <IconWrapper>

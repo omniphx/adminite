@@ -100,7 +100,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
         }}
         onClick={() => handleConnectionSelection(connection.id)}
       >
-        <Card bordered={false} style={{ background: 'transparent' }}>
+        <Card variant="borderless" style={{ background: 'transparent' }}>
           <Row justify='space-between'>
             <Col span={3}>
               <div

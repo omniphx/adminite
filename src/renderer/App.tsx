@@ -17,22 +17,29 @@ import UpdateNotification from './applications/UpdateNotification';
 import * as os from 'os';
 import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
 import { useFeatureStore, Feature } from './stores/useFeatureStore';
-import { useConnectionStore, getActiveConnection } from './stores/useConnectionStore';
+import {
+  useConnectionStore,
+  getActiveConnection
+} from './stores/useConnectionStore';
 import { useConnectionQuery } from './queries/useConnectionQuery';
 
 const App = (): ReactElement => {
-  const feature = useFeatureStore((state) => state.feature);
-  const setFeature = useFeatureStore((state) => state.setFeature);
+  const feature = useFeatureStore(state => state.feature);
+  const setFeature = useFeatureStore(state => state.setFeature);
 
   // Zustand connection store
-  const addConnection = useConnectionStore((state) => state.addConnection);
-  const updateConnection = useConnectionStore((state) => state.updateConnection);
-  const setActiveConnectionId = useConnectionStore((state) => state.setActiveConnectionId);
-  const toggleModal = useConnectionStore((state) => state.toggleModal);
-  const initializeFromLegacyStorage = useConnectionStore((state) => state.initializeFromLegacyStorage);
-  const connectionOrder = useConnectionStore((state) => state.connectionOrder);
+  const addConnection = useConnectionStore(state => state.addConnection);
+  const updateConnection = useConnectionStore(state => state.updateConnection);
+  const setActiveConnectionId = useConnectionStore(
+    state => state.setActiveConnectionId
+  );
+  const toggleModal = useConnectionStore(state => state.toggleModal);
+  const initializeFromLegacyStorage = useConnectionStore(
+    state => state.initializeFromLegacyStorage
+  );
+  const connectionOrder = useConnectionStore(state => state.connectionOrder);
   const activeConnection = useConnectionStore(getActiveConnection);
-  const error = useConnectionStore((state) => state.activeConnection.error);
+  const error = useConnectionStore(state => state.activeConnection.error);
 
   // TanStack Query for connection identity/userInfo (Phase 4)
   useConnectionQuery();
@@ -52,7 +59,13 @@ const App = (): ReactElement => {
 
     // Listen for token refresh events from the main process
     // This happens when jsforce automatically refreshes an expired access token
-    const handleTokenRefresh = (_event: any, { connectionId, accessToken }: { connectionId: string, accessToken: string }) => {
+    const handleTokenRefresh = (
+      _event: any,
+      {
+        connectionId,
+        accessToken
+      }: { connectionId: string; accessToken: string }
+    ) => {
       console.log('Token refreshed for connection:', connectionId);
       updateConnection(connectionId, { accessToken });
     };
@@ -170,25 +183,37 @@ const App = (): ReactElement => {
                 {
                   key: 'soql',
                   className: 'hover',
-                  icon: <IconWrapper><FaDatabase /></IconWrapper>,
+                  icon: (
+                    <IconWrapper>
+                      <FaDatabase />
+                    </IconWrapper>
+                  ),
                   label: 'SOQL Editor'
                 },
                 {
                   key: 'permissions',
                   className: 'hover',
-                  icon: <IconWrapper><FaUnlockAlt /></IconWrapper>,
+                  icon: (
+                    <IconWrapper>
+                      <FaUnlockAlt />
+                    </IconWrapper>
+                  ),
                   label: 'Field Level Security'
                 },
                 {
                   key: 'schema',
                   className: 'hover',
-                  icon: <IconWrapper><FaTools /></IconWrapper>,
+                  icon: (
+                    <IconWrapper>
+                      <FaTools />
+                    </IconWrapper>
+                  ),
                   label: 'Schema'
                 }
               ]}
             />
           </Sider>
-          <Layout style={{ marginLeft: 200 }}>
+          <Layout style={{ marginLeft: 200, height: '100vh' }}>
             <Content style={{ padding: '.5em 2em', background: '#fff' }}>
               <Suspense
                 fallback={

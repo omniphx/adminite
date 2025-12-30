@@ -235,6 +235,14 @@ export const useConnectionStore = create<ConnectionState & ConnectionActions>()(
 
       // Initialize from legacy localStorage format
       initializeFromLegacyStorage: () => {
+        // Only migrate if we haven't already (new store is empty)
+        const currentConnections = get().connectionOrder
+        if (currentConnections.length > 0) {
+          // Already have data in new store, skip migration but clean up legacy
+          localStorage.removeItem('connections')
+          return
+        }
+
         const legacyData = localStorage.getItem('connections')
         if (!legacyData) return
 
@@ -260,8 +268,8 @@ export const useConnectionStore = create<ConnectionState & ConnectionActions>()(
             activeConnectionId: connectionOrder.length > 0 ? connectionOrder[0] : null,
           })
 
-          // Remove legacy storage after migration
-          // localStorage.removeItem('connections')
+          // Remove legacy storage after successful migration
+          localStorage.removeItem('connections')
         } catch (error) {
           console.error('Failed to migrate legacy connections:', error)
         }

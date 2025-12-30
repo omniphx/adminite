@@ -156,8 +156,8 @@ const FieldLevelSecurity: React.FC = () => {
     <Table
       className='fls-table'
       dataSource={dataSource}
-      variant="borderless"
-      pagination={{ position: ['topRight', 'bottomRight'], pageSize: 25 }}
+      bordered={false}
+      pagination={{ placement: ['topEnd', 'bottomEnd'], pageSize: 25 }}
       scroll={{ x: 'max-content' }}
       size='small'
     >

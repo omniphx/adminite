@@ -167,7 +167,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo(
       confirm({
         title: `Are you sure you want to delete ${connection.name}?`,
         okText: 'Yes',
-        okType: 'danger',
+        okButtonProps: { danger: true },
         cancelText: 'No',
         onOk() {
           handleDelete(connection.id)

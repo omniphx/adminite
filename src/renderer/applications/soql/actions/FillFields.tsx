@@ -197,7 +197,7 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
     confirm({
       title: `Since your query is not valid, this will overwrite your current query. Are you sure you want to proceed?`,
       okText: 'Yes',
-      okType: 'default',
+      okButtonProps: { type: 'default' },
       cancelText: 'No',
       style: { top: 150 },
       onOk() {

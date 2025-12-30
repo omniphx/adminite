@@ -17,7 +17,7 @@ const ErrorAlert: React.FC<IErrorAlertProps> = React.memo((props: IErrorAlertPro
 
   return (
     <Alert
-      message='Dang...'
+      title='Dang...'
       description={errorComponent}
       type='error'
       showIcon

@@ -117,7 +117,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
               columns={table.columns}
               dataSource={table.data}
               scroll={{ x: 'max-content' }}
-              pagination={{ position: ['bottomRight'] }}
+              pagination={{ placement: ['bottomEnd'] }}
               size='small'
             />
           </div>

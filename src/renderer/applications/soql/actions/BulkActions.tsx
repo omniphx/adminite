@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { DownOutlined } from '@ant-design/icons'
-import { Dropdown, Modal } from 'antd'
+import { Dropdown, Modal, Button, Space } from 'antd'
 import { useShallow } from 'zustand/react/shallow'
 import BulkUpdate from './BulkUpdate'
 import { useQueryResultStore, selectTabSelectedIds } from '../../../stores/useQueryResultStore'
@@ -42,14 +42,20 @@ const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
 
   return (
     <div style={{ display: 'inline-block' }}>
-      <Dropdown.Button
-        icon={<DownOutlined />}
-        onClick={() => setShowUpdateModal(true)}
-        disabled={selectedIds.length <= 0}
-        menu={{ items: menuItems, onClick: handleMenuClick }}
-      >
-        Bulk Update
-      </Dropdown.Button>
+      <Space.Compact>
+        <Button
+          onClick={() => setShowUpdateModal(true)}
+          disabled={selectedIds.length <= 0}
+        >
+          Bulk Update
+        </Button>
+        <Dropdown
+          menu={{ items: menuItems, onClick: handleMenuClick }}
+          disabled={selectedIds.length <= 0}
+        >
+          <Button disabled={selectedIds.length <= 0} icon={<DownOutlined />} />
+        </Dropdown>
+      </Space.Compact>
       <BulkUpdate {...bulkUpdateProps} />
     </div>
   )
@@ -58,7 +64,7 @@ const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
     Modal.confirm({
       title: `This will delete ${selectedIds.length} records. Are you sure you want to proceed?`,
       okText: 'Yes',
-      okType: 'default',
+      okButtonProps: { type: 'default' },
       cancelText: 'No',
       style: { top: 150 },
       onOk() {

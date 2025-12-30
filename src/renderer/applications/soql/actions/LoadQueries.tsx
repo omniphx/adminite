@@ -75,7 +75,7 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
     confirm({
       title: `Are you sure you want to delete ${queryRecord.name}?`,
       okText: 'Yes',
-      okType: 'danger',
+      okButtonProps: { danger: true },
       cancelText: 'No',
       onOk() {
         handleDelete(queryRecord.id)

@@ -48,7 +48,7 @@ function createSalesforceConnection(params: ConnectionParams): jsforce.Connectio
 
   // Listen for token refresh events and notify the renderer
   connection.on('refresh', (newAccessToken: string, res: any) => {
-    log.info('Token refreshed for connection:', connectionId);
+    log.info('Token refreshed automatically for connection:', connectionId);
     if (mainWindow && connectionId) {
       mainWindow.webContents.send('token-refreshed', {
         connectionId,
@@ -58,6 +58,17 @@ function createSalesforceConnection(params: ConnectionParams): jsforce.Connectio
   });
 
   return connection;
+}
+
+// Helper to check if an error indicates the refresh token itself is invalid/expired
+function isRefreshTokenInvalidError(error: any): boolean {
+  const message = error?.message || error?.toString() || '';
+  return (
+    message.includes('invalid_grant') ||
+    message.includes('expired access/refresh token') ||
+    message.includes('refresh token is expired') ||
+    message.includes('authentication failure')
+  );
 }
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -231,6 +242,49 @@ async function createServer(): Promise<void> {
     });
 
     // IPC handler for Salesforce API calls (avoids CORS issues in renderer)
+    // Explicit token refresh handler - manually refresh the access token using refresh token
+    ipcMain.handle('salesforce:refreshToken', async (event, { instanceUrl, refreshToken, loginUrl, connectionId }) => {
+      try {
+        log.info('Manual token refresh requested for connection:', connectionId);
+
+        const oauth2 = new jsforce.OAuth2({
+          loginUrl,
+          clientId: process.env.SALESFORCE_CLIENT_ID,
+          clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
+          redirectUri: `${PROTOCOL_NAME}://oauth/callback`
+        });
+
+        // Use the oauth2.refreshToken method as per jsforce documentation
+        const res = await oauth2.refreshToken(refreshToken);
+        const newAccessToken = res.access_token;
+
+        log.info('Manual token refresh successful for connection:', connectionId);
+
+        // Notify the renderer of the new token
+        if (mainWindow && connectionId && newAccessToken) {
+          mainWindow.webContents.send('token-refreshed', {
+            connectionId,
+            accessToken: newAccessToken
+          });
+        }
+
+        return { success: true, data: { accessToken: newAccessToken } };
+      } catch (error) {
+        log.error('salesforce:refreshToken error:', error);
+
+        // Check if this is a refresh token expiration (requires re-authentication)
+        if (isRefreshTokenInvalidError(error)) {
+          return {
+            success: false,
+            error: 'Your session has expired. Please reconnect to this org.',
+            requiresReauth: true
+          };
+        }
+
+        return { success: false, error: error.message };
+      }
+    });
+
     ipcMain.handle('salesforce:identity', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
       try {
         const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });

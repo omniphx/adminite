@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { ipcRenderer } from 'electron'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useConnectionStore } from '../stores/useConnectionStore'
 import { queryKeys } from './queryKeys'
 
@@ -41,6 +41,26 @@ async function fetchUserInfo(connectionInfo: ConnectionInfo): Promise<any> {
   const result = await ipcRenderer.invoke('salesforce:getUserInfo', connectionInfo)
   if (!result.success) {
     throw new Error(result.error)
+  }
+  return result.data
+}
+
+// Token refresh result interface
+interface TokenRefreshResult {
+  accessToken: string
+}
+
+interface TokenRefreshError extends Error {
+  requiresReauth?: boolean
+}
+
+// Refresh access token using the refresh token
+async function refreshAccessToken(connectionInfo: Omit<ConnectionInfo, 'accessToken'>): Promise<TokenRefreshResult> {
+  const result = await ipcRenderer.invoke('salesforce:refreshToken', connectionInfo)
+  if (!result.success) {
+    const error = new Error(result.error) as TokenRefreshError
+    error.requiresReauth = result.requiresReauth
+    throw error
   }
   return result.data
 }
@@ -249,5 +269,71 @@ export function useInvalidateConnection() {
         queryKey: queryKeys.all(activeConnectionId),
       })
     }
+  }
+}
+
+/**
+ * Hook to refresh the access token for the active connection.
+ * Use this when you encounter a session expiry error.
+ * Returns a mutation that can be triggered manually.
+ */
+export function useTokenRefresh() {
+  const queryClient = useQueryClient()
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
+  const updateConnection = useConnectionStore((state) => state.updateConnection)
+  const refreshToken = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.refreshToken : undefined
+  )
+  const instanceUrl = useConnectionStore((state) =>
+    state.activeConnectionId ? state.connections[state.activeConnectionId]?.instanceUrl : undefined
+  )
+  const loginUrl = useConnectionStore((state) => {
+    if (!state.activeConnectionId) return undefined
+    const conn = state.connections[state.activeConnectionId]
+    return conn?.url || conn?.loginUrl || 'https://login.salesforce.com'
+  })
+
+  const refreshMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeConnectionId || !refreshToken || !instanceUrl || !loginUrl) {
+        throw new Error('Missing connection info for token refresh')
+      }
+
+      return refreshAccessToken({
+        refreshToken,
+        instanceUrl,
+        loginUrl,
+        connectionId: activeConnectionId,
+      })
+    },
+    onSuccess: (data) => {
+      if (activeConnectionId && data.accessToken) {
+        // Update the stored access token
+        updateConnection(activeConnectionId, { accessToken: data.accessToken })
+
+        // Invalidate all queries to refetch with new token
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.all(activeConnectionId),
+        })
+      }
+    },
+    onError: (error: TokenRefreshError) => {
+      console.error('Token refresh failed:', error.message)
+      if (error.requiresReauth) {
+        // The refresh token itself is expired - user needs to re-authenticate
+        console.error('Refresh token expired - user must re-authenticate')
+      }
+    },
+  })
+
+  const refresh = useCallback(() => {
+    return refreshMutation.mutateAsync()
+  }, [refreshMutation])
+
+  return {
+    refresh,
+    isRefreshing: refreshMutation.isPending,
+    error: refreshMutation.error as TokenRefreshError | null,
+    requiresReauth: (refreshMutation.error as TokenRefreshError)?.requiresReauth ?? false,
   }
 }

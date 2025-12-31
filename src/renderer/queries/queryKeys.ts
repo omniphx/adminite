@@ -19,7 +19,8 @@ export const queryKeys = {
     all: (connectionId: string) => [...queryKeys.all(connectionId), 'schema'] as const,
     global: (connectionId: string) => [...queryKeys.schema.all(connectionId), 'global'] as const,
     tooling: (connectionId: string) => [...queryKeys.schema.all(connectionId), 'tooling'] as const,
-    namespace: (connectionId: string) => [...queryKeys.schema.all(connectionId), 'namespace'] as const,
+    namespace: (connectionId: string) =>
+      [...queryKeys.schema.all(connectionId), 'namespace'] as const,
   },
 
   // SObject describe - tab-scoped with context (QUERY for autocomplete, RESULT for table)
@@ -38,12 +39,8 @@ export const queryKeys = {
     all: (connectionId: string) => [...queryKeys.all(connectionId), 'queryResults'] as const,
     byTab: (connectionId: string, tabId: string) =>
       [...queryKeys.queryResults.all(connectionId), tabId] as const,
-    query: (
-      connectionId: string,
-      tabId: string,
-      queryString: string,
-      includeDeleted: boolean
-    ) => [...queryKeys.queryResults.byTab(connectionId, tabId), queryString, includeDeleted] as const,
+    query: (connectionId: string, tabId: string, queryString: string, includeDeleted: boolean) =>
+      [...queryKeys.queryResults.byTab(connectionId, tabId), queryString, includeDeleted] as const,
   },
 
   // Permissions - profiles and permission sets
@@ -52,7 +49,12 @@ export const queryKeys = {
     profiles: (connectionId: string, ids: string[]) =>
       [...queryKeys.permissions.all(connectionId), 'profiles', ...ids.sort()] as const,
     permissionSets: (connectionId: string, namespace: string | undefined, ids: string[]) =>
-      [...queryKeys.permissions.all(connectionId), 'permissionSets', namespace ?? '', ...ids.sort()] as const,
+      [
+        ...queryKeys.permissions.all(connectionId),
+        'permissionSets',
+        namespace ?? '',
+        ...ids.sort(),
+      ] as const,
     sobjects: (connectionId: string) =>
       [...queryKeys.permissions.all(connectionId), 'sobjects'] as const,
     fields: (connectionId: string, sobjectName: string) =>
@@ -67,18 +69,19 @@ export const queryKeys = {
       sobjectName: string,
       permissionIds: string[],
       permissionType: string
-    ) => [
-      ...queryKeys.fieldPermissions.all(connectionId),
-      sobjectName,
-      permissionType,
-      ...permissionIds.sort(),
-    ] as const,
+    ) =>
+      [
+        ...queryKeys.fieldPermissions.all(connectionId),
+        sobjectName,
+        permissionType,
+        ...permissionIds.sort(),
+      ] as const,
   },
 
   // User identity - connection-scoped
   identity: (connectionId: string) => [...queryKeys.all(connectionId), 'identity'] as const,
   userInfo: (connectionId: string) => [...queryKeys.all(connectionId), 'userInfo'] as const,
-} as const
+} as const;
 
 // Type helpers for query keys
-export type QueryKeys = typeof queryKeys
+export type QueryKeys = typeof queryKeys;

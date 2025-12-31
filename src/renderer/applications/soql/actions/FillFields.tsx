@@ -1,141 +1,124 @@
-import * as React from 'react'
-import { Button, Modal, Table, Input } from 'antd'
-import { Field } from 'jsforce'
-import {
-  isQueryValid,
-  parseQuery,
-  getField,
-  composeQuery
-} from 'soql-parser-js'
-import { sort } from '../../../../helpers/utils'
-import { useTabStore, SoqlQuery } from '../../../stores/useTabStore'
-import { useQuerySObjectDescribe } from '../../../queries/useSObjectQuery'
+import * as React from 'react';
+import { Button, Modal, Table, Input } from 'antd';
+import { Field } from 'jsforce';
+import { isQueryValid, parseQuery, getField, composeQuery } from 'soql-parser-js';
+import { sort } from '../../../../helpers/utils';
+import { useTabStore, SoqlQuery } from '../../../stores/useTabStore';
+import { useQuerySObjectDescribe } from '../../../queries/useSObjectQuery';
 
-const { confirm } = Modal
+const { confirm } = Modal;
 
 interface IFillFieldsProps {
-  tabId: string
+  tabId: string;
 }
 
 const FillFields = React.memo((props: IFillFieldsProps) => {
-  const { tabId } = props
+  const { tabId } = props;
 
   // Zustand store
-  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' }
-  const setQueryBody = useTabStore((state) => state.setQueryBody)
-  const querySObjectName = useTabStore((state) => state.queries[tabId]?.querySObjectName)
+  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' };
+  const setQueryBody = useTabStore((state) => state.setQueryBody);
+  const querySObjectName = useTabStore((state) => state.queries[tabId]?.querySObjectName);
 
   // TanStack Query for sObject describe (Phase 6)
-  const { data: sobjectData } = useQuerySObjectDescribe(tabId, querySObjectName)
-  const sobject = sobjectData?.sobject
+  const { data: sobjectData } = useQuerySObjectDescribe(tabId, querySObjectName);
+  const sobject = sobjectData?.sobject;
 
-  const [showModal, setShowModal] = React.useState(false)
-  const [searchFilter, setSearchFilter] = React.useState('')
-  const [selectedFields, setSelectedFields] = React.useState<string[]>([])
-  const [parsedQuery, setParsedQuery] = React.useState<any>({})
-  const [filteredFields, setFilteredFields] = React.useState<Field[]>([])
+  const [showModal, setShowModal] = React.useState(false);
+  const [searchFilter, setSearchFilter] = React.useState('');
+  const [selectedFields, setSelectedFields] = React.useState<string[]>([]);
+  const [parsedQuery, setParsedQuery] = React.useState<any>({});
+  const [filteredFields, setFilteredFields] = React.useState<Field[]>([]);
 
-  const sobjectName: string = sobject ? sobject.name : ''
+  const sobjectName: string = sobject ? sobject.name : '';
   const fields: Field[] = sobject
     ? sobject.fields
-        .map(field => {
-          return { ...field, key: field.name }
+        .map((field) => {
+          return { ...field, key: field.name };
         })
         .sort((a, b) => {
-          const nameA = a.name.toLowerCase()
-          const nameB = b.name.toLowerCase()
+          const nameA = a.name.toLowerCase();
+          const nameB = b.name.toLowerCase();
 
-          if (nameA < nameB) return -1
-          if (nameA > nameB) return 1
-          return 0
+          if (nameA < nameB) return -1;
+          if (nameA > nameB) return 1;
+          return 0;
         })
-    : []
+    : [];
 
   React.useEffect(() => {
-    setSearchFilter('')
-    setFilteredFields(fields)
+    setSearchFilter('');
+    setFilteredFields(fields);
     if (isQueryValid(query.body)) {
-      const newParsedQuery: any = parseQuery(query.body)
-      setParsedQuery(newParsedQuery)
-      setSelectedFields(newParsedQuery.fields.map(field => field.field))
+      const newParsedQuery: any = parseQuery(query.body);
+      setParsedQuery(newParsedQuery);
+      setSelectedFields(newParsedQuery.fields.map((field) => field.field));
     } else {
-      setParsedQuery({ sObject: sobjectName })
+      setParsedQuery({ sObject: sobjectName });
     }
-  }, [showModal])
+  }, [showModal]);
 
   React.useEffect(() => {
     setFilteredFields(
       fields.filter((field: Field) => {
-        if (searchFilter.length <= 0) return true
-        const nameMatch =
-          field.name.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0
-        const labelMatch =
-          field.label.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0
-        return nameMatch || labelMatch
+        if (searchFilter.length <= 0) return true;
+        const nameMatch = field.name.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0;
+        const labelMatch = field.label.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0;
+        return nameMatch || labelMatch;
       })
-    )
-  }, [searchFilter])
+    );
+  }, [searchFilter]);
 
   const handleApply = () => {
     return isQueryValid(query.body) || query.body.length === 0
       ? buildQuery()
-      : overwriteQueryConfirm()
-  }
+      : overwriteQueryConfirm();
+  };
 
   const buildQuery = () => {
-    const body: string = composeQuery(parsedQuery)
-    setQueryBody(tabId, body)
-    setShowModal(false)
-  }
+    const body: string = composeQuery(parsedQuery);
+    setQueryBody(tabId, body);
+    setShowModal(false);
+  };
 
   const handleClose = () => {
-    setShowModal(false)
-  }
+    setShowModal(false);
+  };
 
   const onSelectChange = (selectedRowKeys: string[]) => {
-    setSelectedFields(selectedRowKeys)
-    parsedQuery.fields = selectedRowKeys.map(fieldKey => getField(fieldKey))
-    setParsedQuery(parsedQuery)
-  }
+    setSelectedFields(selectedRowKeys);
+    parsedQuery.fields = selectedRowKeys.map((fieldKey) => getField(fieldKey));
+    setParsedQuery(parsedQuery);
+  };
 
-  const onSelectAll = (
-    selected: boolean,
-    selectedRows: any[],
-    changeRows: any[]
-  ) => {
+  const onSelectAll = (selected: boolean, selectedRows: any[], changeRows: any[]) => {
     if (selected) {
       const allFields = [
         ...selectedFields,
         ...filteredFields
-          .map(field => field.name)
-          .filter(fieldName => selectedFields.indexOf(fieldName) < 0)
-      ]
-      setSelectedFields(allFields)
-      parsedQuery.fields = allFields.map(fieldName => getField(fieldName))
-      setParsedQuery(parsedQuery)
+          .map((field) => field.name)
+          .filter((fieldName) => selectedFields.indexOf(fieldName) < 0),
+      ];
+      setSelectedFields(allFields);
+      parsedQuery.fields = allFields.map((fieldName) => getField(fieldName));
+      setParsedQuery(parsedQuery);
     } else {
       //In case user is using a filter and unchecks
       const fieldsWithoutUnselected = selectedFields.filter(
-        field => !filteredFields.map(field => field.name).includes(field)
-      )
+        (field) => !filteredFields.map((field) => field.name).includes(field)
+      );
       if (fieldsWithoutUnselected.length <= 0) {
-        fieldsWithoutUnselected.push('Id')
+        fieldsWithoutUnselected.push('Id');
       }
-      setSelectedFields(fieldsWithoutUnselected)
-      parsedQuery.fields = fieldsWithoutUnselected.map(fieldName =>
-        getField(fieldName)
-      )
-      setParsedQuery(parsedQuery)
+      setSelectedFields(fieldsWithoutUnselected);
+      parsedQuery.fields = fieldsWithoutUnselected.map((fieldName) => getField(fieldName));
+      setParsedQuery(parsedQuery);
     }
-  }
+  };
 
   return (
     <div className='button-style'>
-      <Button
-        type='link'
-        onClick={() => setShowModal(true)}
-        disabled={!sobjectName}
-      >
+      <Button type='link' onClick={() => setShowModal(true)} disabled={!sobjectName}>
         Add fields
       </Button>
       <Modal
@@ -149,7 +132,7 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
           </Button>,
           <Button key='back' onClick={handleClose}>
             Close
-          </Button>
+          </Button>,
         ]}
       >
         <Input.Search
@@ -166,32 +149,32 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
               title: 'Name',
               dataIndex: 'name',
               key: 'name',
-              sorter: (a: Field, b: Field) => sort(a, b, 'name')
+              sorter: (a: Field, b: Field) => sort(a, b, 'name'),
             },
             {
               title: 'Label',
               dataIndex: 'label',
               key: 'label',
-              sorter: (a: Field, b: Field) => sort(a, b, 'label')
+              sorter: (a: Field, b: Field) => sort(a, b, 'label'),
             },
             {
               title: 'Type',
               dataIndex: 'type',
               key: 'type',
-              sorter: (a: Field, b: Field) => sort(a, b, 'type')
-            }
+              sorter: (a: Field, b: Field) => sort(a, b, 'type'),
+            },
           ]}
           dataSource={filteredFields}
           rowSelection={{
             selectedRowKeys: selectedFields,
             onChange: onSelectChange,
-            onSelectAll: onSelectAll
+            onSelectAll: onSelectAll,
           }}
           size='small'
         />
       </Modal>
     </div>
-  )
+  );
 
   function overwriteQueryConfirm() {
     confirm({
@@ -201,10 +184,10 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
       cancelText: 'No',
       style: { top: 150 },
       onOk() {
-        buildQuery()
-      }
-    })
+        buildQuery();
+      },
+    });
   }
-})
+});
 
-export default FillFields
+export default FillFields;

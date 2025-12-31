@@ -5,7 +5,7 @@ interface IAutoCompleteProps {
   topPosition: any;
   leftPosition: any;
   index: number;
-  onSelect(value: String): void;
+  onSelect(value: string): void;
 }
 
 const AutoComplete = (props: IAutoCompleteProps) => {
@@ -30,16 +30,15 @@ const AutoComplete = (props: IAutoCompleteProps) => {
             padding: '5px 12px',
             cursor: 'pointer',
             transition: 'background 0.3s ease',
-            backgroundColor: isActive ? '#f5f5f5' : 'transparent'
+            backgroundColor: isActive ? '#f5f5f5' : 'transparent',
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             if (!isActive) e.currentTarget.style.backgroundColor = '#f5f5f5';
           }}
-          onMouseLeave={e => {
-            if (!isActive)
-              e.currentTarget.style.backgroundColor = 'transparent';
+          onMouseLeave={(e) => {
+            if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
           }}
-          onClick={event => onItemSelect(event, itemIndex)}
+          onClick={(event) => onItemSelect(event, itemIndex)}
           key={item.name}
         >
           {item.label ? `${item.name} (${item.label})` : `${item.name}`}
@@ -65,14 +64,12 @@ const AutoComplete = (props: IAutoCompleteProps) => {
           '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
         padding: '4px 0',
         maxHeight: '256px',
-        overflow: 'auto'
+        overflow: 'auto',
       }}
     >
       <div className='rc-virtual-list'>
         <div className='rc-virtual-list-holder'>
-          <div className='rc-virtual-list-holder-inner'>
-            {renderMenuItems()}
-          </div>
+          <div className='rc-virtual-list-holder-inner'>{renderMenuItems()}</div>
         </div>
       </div>
     </div>

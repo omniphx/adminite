@@ -1,78 +1,86 @@
-import * as React from 'react'
-import { Modal, Button, Select, Input, InputNumber, DatePicker, Checkbox } from 'antd'
-import { useShallow } from 'zustand/react/shallow'
-import { useTabStore } from '../../../stores/useTabStore'
-import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery'
-import { useQueryResultStore, selectTabData, selectTabSelectedIds } from '../../../stores/useQueryResultStore'
+import * as React from 'react';
+import { Modal, Button, Select, Input, InputNumber, DatePicker, Checkbox } from 'antd';
+import { useShallow } from 'zustand/react/shallow';
+import { useTabStore } from '../../../stores/useTabStore';
+import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery';
+import {
+  useQueryResultStore,
+  selectTabData,
+  selectTabSelectedIds,
+} from '../../../stores/useQueryResultStore';
 
-const { Option } = Select
+const { Option } = Select;
 
 interface IBulkUpdateProps {
-  tabId: string
-  showModal: boolean
-  setShowModal(showModal: boolean)
+  tabId: string;
+  showModal: boolean;
+  setShowModal(showModal: boolean);
 }
 
 const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdateProps) => {
-  const { tabId, showModal, setShowModal } = props
+  const { tabId, showModal, setShowModal } = props;
 
   // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
-  const dataSelector = React.useCallback(selectTabData(tabId), [tabId])
-  const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId])
-  const data = useQueryResultStore(useShallow(dataSelector))
-  const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector))
-  const setData = useQueryResultStore((state) => state.setData)
+  const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
+  const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId]);
+  const data = useQueryResultStore(useShallow(dataSelector));
+  const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector));
+  const setData = useQueryResultStore((state) => state.setData);
 
   // Zustand + TanStack Query for sObject describe (Phase 6)
-  const resultSObjectName = useTabStore((state) => state.queries[tabId]?.resultSObjectName)
-  const { data: sobjectData } = useResultSObjectDescribe(tabId, resultSObjectName)
-  const sobject = sobjectData?.sobject
-  const fieldSchema = sobjectData?.fieldSchema
+  const resultSObjectName = useTabStore((state) => state.queries[tabId]?.resultSObjectName);
+  const { data: sobjectData } = useResultSObjectDescribe(tabId, resultSObjectName);
+  const sobject = sobjectData?.sobject;
+  const fieldSchema = sobjectData?.fieldSchema;
 
-  const [field, setField] = React.useState('')
-  const [editValue, setEditValue] = React.useState<any>()
+  const [field, setField] = React.useState('');
+  const [editValue, setEditValue] = React.useState<any>();
 
-  const fields = sobject ? sobject.fields : []
-  const type = fieldSchema && fieldSchema[field] ? fieldSchema[field].type : ''
+  const fields = sobject ? sobject.fields : [];
+  const type = fieldSchema && fieldSchema[field] ? fieldSchema[field].type : '';
 
   React.useEffect(() => {
-    if(type === 'boolean') {
-      setEditValue(false)
+    if (type === 'boolean') {
+      setEditValue(false);
     } else {
-      setEditValue(null)
+      setEditValue(null);
     }
-  }, [field])
+  }, [field]);
 
   React.useEffect(() => {
-    setEditValue(null)
-    setField('')
-  }, [showModal])
+    setEditValue(null);
+    setField('');
+  }, [showModal]);
 
   const fieldOptions = fields
-    .filter(field => field.updateable)
+    .filter((field) => field.updateable)
     .sort((a, b) => {
-      const textA = a.label.toLowerCase()
-      const textB = b.label.toLowerCase()
-      return (textA < textB) ? -1 : (textA > textB) ? 1 : 0
+      const textA = a.label.toLowerCase();
+      const textB = b.label.toLowerCase();
+      return textA < textB ? -1 : textA > textB ? 1 : 0;
     })
-    .map(field => {
-      return <Option key={field.name} value={field.name}>{field.label} ({field.name})</Option>
-    })
+    .map((field) => {
+      return (
+        <Option key={field.name} value={field.name}>
+          {field.label} ({field.name})
+        </Option>
+      );
+    });
 
   const handleApply = () => {
-    const updatedData = { ...data }
+    const updatedData = { ...data };
     Object.values(updatedData).forEach((record: any) => {
-      if(selectedIds.includes(record.Id)) {
-        record[field] = editValue
-        record.editFields = [...new Set([...(record.editFields || []), field])]
+      if (selectedIds.includes(record.Id)) {
+        record[field] = editValue;
+        record.editFields = [...new Set([...(record.editFields || []), field])];
       } else {
         //Sets property if it doesn't exist
-        record[field] = record[field]
+        record[field] = record[field];
       }
-    })
-    setData(tabId, updatedData)
-    setShowModal(false)
-  }
+    });
+    setData(tabId, updatedData);
+    setShowModal(false);
+  };
 
   return (
     <Modal
@@ -98,114 +106,120 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
       >
         {fieldOptions}
       </Select>
-      <div style={{marginTop:'.5em'}}>{renderInput()}</div>
+      <div style={{ marginTop: '.5em' }}>{renderInput()}</div>
     </Modal>
-  )
+  );
 
   function renderTextInput() {
-    return <Input
-      value={editValue}
-      style={{ width: '100%' }}
-      onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditValue(event.target.value)}
-      disabled={field.length <= 0}
-    />
+    return (
+      <Input
+        value={editValue}
+        style={{ width: '100%' }}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditValue(event.target.value)}
+        disabled={field.length <= 0}
+      />
+    );
   }
 
   function renderNumberInput() {
-    return <InputNumber
-      value={editValue}
-      style={{ width: '100%' }}
-      step={1/(10**fieldSchema[field].scale)}
-      onChange={(value:any) => setEditValue(value)}
-      disabled={field.length <= 0}
-    />
+    return (
+      <InputNumber
+        value={editValue}
+        style={{ width: '100%' }}
+        step={1 / 10 ** fieldSchema[field].scale}
+        onChange={(value: any) => setEditValue(value)}
+        disabled={field.length <= 0}
+      />
+    );
   }
 
   function renderDateInput(showTime: boolean) {
-    return <DatePicker
-      showTime={showTime}
-      onChange={(value) => {
-        const formattedValue = value ? value.format('YYYY-MM-DD') : value
-        setEditValue(formattedValue)
-      }}
-      style={{ width: '100%' }}
-      disabled={field.length <= 0}
-      allowClear
-      showToday
-      renderExtraFooter={() => (
-        <div style={{textAlign:'right'}}>
-          <Button
-            style={{padding:0}}
-            type='link'
-            onClick={() => setEditValue(null)}>
-            Clear
-          </Button>
-        </div>
-      )}
-    />
+    return (
+      <DatePicker
+        showTime={showTime}
+        onChange={(value) => {
+          const formattedValue = value ? value.format('YYYY-MM-DD') : value;
+          setEditValue(formattedValue);
+        }}
+        style={{ width: '100%' }}
+        disabled={field.length <= 0}
+        allowClear
+        showToday
+        renderExtraFooter={() => (
+          <div style={{ textAlign: 'right' }}>
+            <Button style={{ padding: 0 }} type='link' onClick={() => setEditValue(null)}>
+              Clear
+            </Button>
+          </div>
+        )}
+      />
+    );
   }
 
   function renderPicklistInput(multipleMode: boolean) {
+    const props = multipleMode ? { mode: 'multiple' } : {};
 
-    const props = multipleMode ? {mode: 'multiple'} : {}
-
-    return <Select
-      {...{props}}
-      defaultValue={editValue}
-      disabled={field.length <= 0}
-      style={{ width: '100%' }}
-      onChange={value => setEditValue(value)}
-    >
-    {fieldSchema[field].picklistValues
-      .filter(picklistValue => picklistValue.active)
-      .map(picklistValue =>
-        <Select.Option key={picklistValue.value} value={picklistValue.value}>
-          {picklistValue.label}
-        </Select.Option>
-      )}
-    </Select>
+    return (
+      <Select
+        {...{ props }}
+        defaultValue={editValue}
+        disabled={field.length <= 0}
+        style={{ width: '100%' }}
+        onChange={(value) => setEditValue(value)}
+      >
+        {fieldSchema[field].picklistValues
+          .filter((picklistValue) => picklistValue.active)
+          .map((picklistValue) => (
+            <Select.Option key={picklistValue.value} value={picklistValue.value}>
+              {picklistValue.label}
+            </Select.Option>
+          ))}
+      </Select>
+    );
   }
 
   function renderBooleanInput() {
-    return <Checkbox
-      disabled={field.length <= 0}
-      defaultChecked={false}
-      onChange={value => setEditValue(value.target.checked)}
-    />
+    return (
+      <Checkbox
+        disabled={field.length <= 0}
+        defaultChecked={false}
+        onChange={(value) => setEditValue(value.target.checked)}
+      />
+    );
   }
 
   function renderInput() {
     switch (type) {
       case 'string':
-        return renderTextInput()
+        return renderTextInput();
       case 'textarea':
-        return renderTextInput()
+        return renderTextInput();
       case 'url':
-        return renderTextInput()
+        return renderTextInput();
       case 'double':
-        return renderNumberInput()
+        return renderNumberInput();
       case 'currency':
-        return renderNumberInput()
+        return renderNumberInput();
       case 'int':
-        return renderNumberInput()
+        return renderNumberInput();
       case 'percent':
-        return renderNumberInput()
+        return renderNumberInput();
       case 'date':
-        return renderDateInput(false)
+        return renderDateInput(false);
       case 'datetime':
-        return renderDateInput(true)
+        return renderDateInput(true);
       case 'picklist':
-        return renderPicklistInput(false)
+        return renderPicklistInput(false);
       case 'multipicklist':
-        return renderPicklistInput(true)
+        return renderPicklistInput(true);
       case 'phone':
-        return renderTextInput()
+        return renderTextInput();
       case 'boolean':
-        return renderBooleanInput()
+        return renderBooleanInput();
       default:
-        return renderTextInput()
+        return renderTextInput();
     }
   }
-})
+});
 
-export default BulkUpdate
+export default BulkUpdate;

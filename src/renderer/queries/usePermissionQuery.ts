@@ -1,45 +1,45 @@
-import { useQuery } from '@tanstack/react-query'
-import { ipcRenderer } from 'electron'
-import { QueryResult } from 'jsforce'
-import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore'
-import { queryKeys } from './queryKeys'
-import { getProfiles, getPermissionSets } from '../utils/queryBuilder'
-import { useNamespaceQuery } from './useSchemaQuery'
-import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery'
+import { useQuery } from '@tanstack/react-query';
+import { ipcRenderer } from 'electron';
+import { QueryResult } from 'jsforce';
+import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore';
+import { queryKeys } from './queryKeys';
+import { getProfiles, getPermissionSets } from '../utils/queryBuilder';
+import { useNamespaceQuery } from './useSchemaQuery';
+import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery';
 
 // Types for permission data
 export interface PermissionRecord {
-  Id: string
-  Name?: string
-  Label?: string
-  IsOwnedByProfile: boolean
+  Id: string;
+  Name?: string;
+  Label?: string;
+  IsOwnedByProfile: boolean;
   Profile?: {
-    Id: string
-    Name: string
-  }
+    Id: string;
+    Name: string;
+  };
 }
 
 export interface EntityDefinition {
-  Id: string
-  DeveloperName: string
-  Label: string
-  QualifiedApiName: string
+  Id: string;
+  DeveloperName: string;
+  Label: string;
+  QualifiedApiName: string;
 }
 
 export interface EntityParticle {
-  Id: string
-  Name: string
-  IsUpdatable: boolean
-  RelationshipName: string | null
-  DataType: string
-  ValueTypeId: string
-  IsCompound: boolean
-  IsCreatable: boolean
-  IsCalculated: boolean
-  IsPermissionable: boolean
-  Label: string
-  IsComponent: boolean
-  NamespacePrefix: string | null
+  Id: string;
+  Name: string;
+  IsUpdatable: boolean;
+  RelationshipName: string | null;
+  DataType: string;
+  ValueTypeId: string;
+  IsCompound: boolean;
+  IsCreatable: boolean;
+  IsCalculated: boolean;
+  IsPermissionable: boolean;
+  Label: string;
+  IsComponent: boolean;
+  NamespacePrefix: string | null;
 }
 
 // Fetch profiles via IPC
@@ -47,18 +47,18 @@ async function fetchProfiles(
   connectionInfo: ConnectionInfo,
   permissionIds: string[]
 ): Promise<PermissionRecord[]> {
-  const queryString = getProfiles(permissionIds)
+  const queryString = getProfiles(permissionIds);
   const result = await ipcRenderer.invoke('salesforce:query', {
     ...connectionInfo,
     queryString,
     toolingMode: false,
-  })
+  });
 
   if (!result.success) {
-    throw new Error(result.error)
+    throw new Error(result.error);
   }
 
-  return result.data.records
+  return result.data.records;
 }
 
 // Fetch permission sets via IPC
@@ -67,42 +67,42 @@ async function fetchPermissionSets(
   namespace: string | null,
   permissionIds: string[]
 ): Promise<PermissionRecord[]> {
-  const queryString = getPermissionSets(namespace, permissionIds)
+  const queryString = getPermissionSets(namespace, permissionIds);
   const result = await ipcRenderer.invoke('salesforce:query', {
     ...connectionInfo,
     queryString,
     toolingMode: false,
-  })
+  });
 
   if (!result.success) {
-    throw new Error(result.error)
+    throw new Error(result.error);
   }
 
-  return result.data.records
+  return result.data.records;
 }
 
 // Fetch FLS-enabled sObjects with pagination
 async function fetchFlsSObjects(connectionInfo: ConnectionInfo): Promise<EntityDefinition[]> {
-  const allRecords: EntityDefinition[] = []
-  let done = false
-  let nextRecordsUrl: string | null = null
+  const allRecords: EntityDefinition[] = [];
+  let done = false;
+  let nextRecordsUrl: string | null = null;
 
   // Initial query
-  const queryString = `SELECT Id, DeveloperName, Label, QualifiedApiName FROM EntityDefinition WHERE IsFlsEnabled = true ORDER BY DeveloperName`
+  const queryString = `SELECT Id, DeveloperName, Label, QualifiedApiName FROM EntityDefinition WHERE IsFlsEnabled = true ORDER BY DeveloperName`;
   const initialResult = await ipcRenderer.invoke('salesforce:query', {
     ...connectionInfo,
     queryString,
     toolingMode: true,
-  })
+  });
 
   if (!initialResult.success) {
-    throw new Error(initialResult.error)
+    throw new Error(initialResult.error);
   }
 
-  const initialData: QueryResult<EntityDefinition> = initialResult.data
-  allRecords.push(...initialData.records)
-  done = initialData.done
-  nextRecordsUrl = initialData.nextRecordsUrl || null
+  const initialData: QueryResult<EntityDefinition> = initialResult.data;
+  allRecords.push(...initialData.records);
+  done = initialData.done;
+  nextRecordsUrl = initialData.nextRecordsUrl || null;
 
   // Paginate if needed
   while (!done && nextRecordsUrl) {
@@ -110,19 +110,19 @@ async function fetchFlsSObjects(connectionInfo: ConnectionInfo): Promise<EntityD
       ...connectionInfo,
       nextRecordsUrl,
       toolingMode: true,
-    })
+    });
 
     if (!moreResult.success) {
-      throw new Error(moreResult.error)
+      throw new Error(moreResult.error);
     }
 
-    const moreData = moreResult.data
-    allRecords.push(...moreData.records)
-    done = moreData.done
-    nextRecordsUrl = moreData.nextRecordsUrl || null
+    const moreData = moreResult.data;
+    allRecords.push(...moreData.records);
+    done = moreData.done;
+    nextRecordsUrl = moreData.nextRecordsUrl || null;
   }
 
-  return allRecords
+  return allRecords;
 }
 
 // Fetch fields for an sObject with pagination
@@ -130,25 +130,25 @@ async function fetchFlsFields(
   connectionInfo: ConnectionInfo,
   sobjectName: string
 ): Promise<EntityParticle[]> {
-  const allRecords: EntityParticle[] = []
-  let done = false
-  let nextRecordsUrl: string | null = null
+  const allRecords: EntityParticle[] = [];
+  let done = false;
+  let nextRecordsUrl: string | null = null;
 
-  const queryString = `SELECT Id, Name, IsUpdatable, RelationshipName, DataType, ValueTypeId, IsCompound, IsCreatable, IsCalculated, IsPermissionable, Label, IsComponent, NamespacePrefix FROM EntityParticle WHERE EntityDefinitionId = '${sobjectName}'`
+  const queryString = `SELECT Id, Name, IsUpdatable, RelationshipName, DataType, ValueTypeId, IsCompound, IsCreatable, IsCalculated, IsPermissionable, Label, IsComponent, NamespacePrefix FROM EntityParticle WHERE EntityDefinitionId = '${sobjectName}'`;
   const initialResult = await ipcRenderer.invoke('salesforce:query', {
     ...connectionInfo,
     queryString,
     toolingMode: true,
-  })
+  });
 
   if (!initialResult.success) {
-    throw new Error(initialResult.error)
+    throw new Error(initialResult.error);
   }
 
-  const initialData: QueryResult<EntityParticle> = initialResult.data
-  allRecords.push(...initialData.records)
-  done = initialData.done
-  nextRecordsUrl = initialData.nextRecordsUrl || null
+  const initialData: QueryResult<EntityParticle> = initialResult.data;
+  allRecords.push(...initialData.records);
+  done = initialData.done;
+  nextRecordsUrl = initialData.nextRecordsUrl || null;
 
   // Paginate if needed
   while (!done && nextRecordsUrl) {
@@ -156,19 +156,19 @@ async function fetchFlsFields(
       ...connectionInfo,
       nextRecordsUrl,
       toolingMode: true,
-    })
+    });
 
     if (!moreResult.success) {
-      throw new Error(moreResult.error)
+      throw new Error(moreResult.error);
     }
 
-    const moreData = moreResult.data
-    allRecords.push(...moreData.records)
-    done = moreData.done
-    nextRecordsUrl = moreData.nextRecordsUrl || null
+    const moreData = moreResult.data;
+    allRecords.push(...moreData.records);
+    done = moreData.done;
+    nextRecordsUrl = moreData.nextRecordsUrl || null;
   }
 
-  return allRecords
+  return allRecords;
 }
 
 /**
@@ -176,20 +176,20 @@ async function fetchFlsFields(
  * Returns all profiles when no permissionIds are provided.
  */
 export function useProfilesQuery(permissionIds: string[] = []) {
-  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const isConnectionReady = !!activeConnection?.username
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const isConnectionReady = !!activeConnection?.username;
 
   return useQuery({
     queryKey: queryKeys.permissions.profiles(activeConnectionId ?? '', permissionIds),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
-      return fetchProfiles(connectionInfo, permissionIds)
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!);
+      return fetchProfiles(connectionInfo, permissionIds);
     },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
-  })
+  });
 }
 
 /**
@@ -197,10 +197,10 @@ export function useProfilesQuery(permissionIds: string[] = []) {
  * Uses the namespace from the org.
  */
 export function usePermissionSetsQuery(permissionIds: string[] = []) {
-  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const isConnectionReady = !!activeConnection?.username
-  const { data: namespace } = useNamespaceQuery()
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const isConnectionReady = !!activeConnection?.username;
+  const { data: namespace } = useNamespaceQuery();
 
   return useQuery({
     queryKey: queryKeys.permissions.permissionSets(
@@ -209,27 +209,32 @@ export function usePermissionSetsQuery(permissionIds: string[] = []) {
       permissionIds
     ),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
-      return fetchPermissionSets(connectionInfo, namespace ?? null, permissionIds)
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!);
+      return fetchPermissionSets(connectionInfo, namespace ?? null, permissionIds);
     },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-  })
+  });
 }
 
 /**
  * Hook to fetch permissions based on type.
  * Convenience hook that switches between profiles and permission sets.
  */
-export function usePermissionsQuery(permissionType: 'profile' | 'permissionSet', permissionIds: string[] = []) {
-  const profilesQuery = useProfilesQuery(permissionType === 'profile' ? permissionIds : [])
-  const permissionSetsQuery = usePermissionSetsQuery(permissionType === 'permissionSet' ? permissionIds : [])
+export function usePermissionsQuery(
+  permissionType: 'profile' | 'permissionSet',
+  permissionIds: string[] = []
+) {
+  const profilesQuery = useProfilesQuery(permissionType === 'profile' ? permissionIds : []);
+  const permissionSetsQuery = usePermissionSetsQuery(
+    permissionType === 'permissionSet' ? permissionIds : []
+  );
 
   if (permissionType === 'profile') {
-    return profilesQuery
+    return profilesQuery;
   }
-  return permissionSetsQuery
+  return permissionSetsQuery;
 }
 
 /**
@@ -237,20 +242,20 @@ export function usePermissionsQuery(permissionType: 'profile' | 'permissionSet',
  * Handles pagination automatically.
  */
 export function useFlsSObjectsQuery() {
-  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const isConnectionReady = !!activeConnection?.username
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const isConnectionReady = !!activeConnection?.username;
 
   return useQuery({
     queryKey: queryKeys.permissions.sobjects(activeConnectionId ?? ''),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
-      return fetchFlsSObjects(connectionInfo)
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!);
+      return fetchFlsSObjects(connectionInfo);
     },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-  })
+  });
 }
 
 /**
@@ -258,18 +263,18 @@ export function useFlsSObjectsQuery() {
  * Handles pagination automatically.
  */
 export function useFlsFieldsQuery(sobjectName: string | undefined) {
-  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const isConnectionReady = !!activeConnection?.username
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const isConnectionReady = !!activeConnection?.username;
 
   return useQuery({
     queryKey: queryKeys.permissions.fields(activeConnectionId ?? '', sobjectName ?? ''),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
-      return fetchFlsFields(connectionInfo, sobjectName!)
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!);
+      return fetchFlsFields(connectionInfo, sobjectName!);
     },
     enabled: !!activeConnectionId && !!activeConnection && isConnectionReady && !!sobjectName,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-  })
+  });
 }

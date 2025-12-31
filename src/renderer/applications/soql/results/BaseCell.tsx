@@ -23,7 +23,7 @@ const BaseCell: React.FC<IBaseCellProps> = (props: IBaseCellProps) => {
     handleCancelEditMode,
     handleConfirmChange,
     editMode,
-    setEditMode
+    setEditMode,
   } = props;
 
   const showEditMode = () => {
@@ -47,7 +47,7 @@ const BaseCell: React.FC<IBaseCellProps> = (props: IBaseCellProps) => {
   useKeyboardShortcut({
     keys: ['enter', 'esc', 'tab'],
     onKeyEvent: onKeyPress,
-    enabled: editMode
+    enabled: editMode,
   });
 
   return editMode ? props.children : renderNonEditMode();
@@ -71,9 +71,7 @@ const BaseCell: React.FC<IBaseCellProps> = (props: IBaseCellProps) => {
       record.errorMessage.length > 0 &&
       record.editFields.includes(fieldSchema.name) ? (
       <Tooltip title={record.errorMessage}>
-        <ExclamationCircleOutlined
-          style={{ fontSize: '.8em', color: '#f5222d' }}
-        />
+        <ExclamationCircleOutlined style={{ fontSize: '.8em', color: '#f5222d' }} />
       </Tooltip>
     ) : (
       <span />

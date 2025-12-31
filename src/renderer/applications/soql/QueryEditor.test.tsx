@@ -83,7 +83,7 @@ jest.mock('../../stores/useQueryResultStore', () => ({
           pending: false,
           dmlPending: false,
           errors: null,
-        }
+        },
       },
     };
     return selector(state);

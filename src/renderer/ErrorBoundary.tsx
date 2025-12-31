@@ -6,13 +6,13 @@ class ExampleBoundary extends Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
-      hasError: false
+      hasError: false,
     };
   }
 
   static getDerivedStateFromError() {
     return {
-      hasError: true
+      hasError: true,
     };
   }
 
@@ -37,9 +37,7 @@ class ExampleBoundary extends Component<any, any> {
                 <Button
                   style={{ margin: 0, padding: 0 }}
                   onClick={() =>
-                    shell.openExternal(
-                      'https://github.com/omniphx/adminite/issues/new'
-                    )
+                    shell.openExternal('https://github.com/omniphx/adminite/issues/new')
                   }
                   type='link'
                 >

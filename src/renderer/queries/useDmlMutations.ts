@@ -1,11 +1,11 @@
-import { useMutation } from '@tanstack/react-query'
-import { ipcRenderer } from 'electron'
-import { notification } from 'antd'
-import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore'
-import { useQueryResultStore } from '../stores/useQueryResultStore'
-import { useTabStore } from '../stores/useTabStore'
-import { getRecordId, chunk } from '../../helpers/utils'
-import { buildConnectionInfo } from './useConnectionQuery'
+import { useMutation } from '@tanstack/react-query';
+import { ipcRenderer } from 'electron';
+import { notification } from 'antd';
+import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore';
+import { useQueryResultStore } from '../stores/useQueryResultStore';
+import { useTabStore } from '../stores/useTabStore';
+import { getRecordId, chunk } from '../../helpers/utils';
+import { buildConnectionInfo } from './useConnectionQuery';
 
 /**
  * Hook for updating records via DML
@@ -14,58 +14,58 @@ import { buildConnectionInfo } from './useConnectionQuery'
 export function useDmlUpdate() {
   return useMutation({
     mutationFn: async (tabId: string) => {
-      const state = useConnectionStore.getState()
-      const connection = getActiveConnection(state)
-      const connectionId = state.activeConnectionId
+      const state = useConnectionStore.getState();
+      const connection = getActiveConnection(state);
+      const connectionId = state.activeConnectionId;
       if (!connection || !connectionId) {
-        throw new Error('No active connection')
+        throw new Error('No active connection');
       }
 
       // Build connection info with loginUrl for token refresh
-      const connectionInfo = buildConnectionInfo(connection, connectionId)
+      const connectionInfo = buildConnectionInfo(connection, connectionId);
 
-      const queryState = useTabStore.getState().queries[tabId]
-      const toolingMode = queryState?.toolingMode ?? false
-      const batchSize = queryState?.batchSize ?? 200
+      const queryState = useTabStore.getState().queries[tabId];
+      const toolingMode = queryState?.toolingMode ?? false;
+      const batchSize = queryState?.batchSize ?? 200;
 
-      const resultState = useQueryResultStore.getState().byTabId[tabId]
-      const data = resultState?.data ?? {}
+      const resultState = useQueryResultStore.getState().byTabId[tabId];
+      const data = resultState?.data ?? {};
 
       // Set DML pending
-      useQueryResultStore.getState().setDmlPending(tabId, true)
+      useQueryResultStore.getState().setDmlPending(tabId, true);
 
       // Find records with edits
-      const recordsWithUpdates: Record<string, any> = {}
+      const recordsWithUpdates: Record<string, any> = {};
       Object.values(data).forEach((record: any) => {
         if (record.editFields && record.editFields.length > 0) {
-          const recordId = getRecordId(record)
+          const recordId = getRecordId(record);
           if (recordId) {
-            recordsWithUpdates[recordId] = record
+            recordsWithUpdates[recordId] = record;
           }
         }
-      })
+      });
 
       // Group records by sObject type
-      const recordsToSaveWrapper: Record<string, any[]> = {}
+      const recordsToSaveWrapper: Record<string, any[]> = {};
       Object.values(recordsWithUpdates).forEach((record: any) => {
-        const Id = getRecordId(record)
-        const sObjectType = record.attributes.type
-        const recordToSave: Record<string, any> = { Id }
+        const Id = getRecordId(record);
+        const sObjectType = record.attributes.type;
+        const recordToSave: Record<string, any> = { Id };
 
         record.editFields.forEach((field: string) => {
-          recordToSave[field] = record[field]
-        })
+          recordToSave[field] = record[field];
+        });
 
         if (!recordsToSaveWrapper[sObjectType]) {
-          recordsToSaveWrapper[sObjectType] = []
+          recordsToSaveWrapper[sObjectType] = [];
         }
-        recordsToSaveWrapper[sObjectType].push(recordToSave)
-      })
+        recordsToSaveWrapper[sObjectType].push(recordToSave);
+      });
 
       // Process each sObject type
       await Promise.all(
         Object.keys(recordsToSaveWrapper).map(async (sObjectType) => {
-          const recordsChunked = chunk(recordsToSaveWrapper[sObjectType], batchSize)
+          const recordsChunked = chunk(recordsToSaveWrapper[sObjectType], batchSize);
 
           await Promise.all(
             recordsChunked.map(async (recordsToSave: any[]) => {
@@ -74,48 +74,48 @@ export function useDmlUpdate() {
                 sobjectType: sObjectType,
                 records: recordsToSave,
                 toolingMode,
-              })
+              });
 
               if (!apiResult.success) {
-                throw new Error(apiResult.error)
+                throw new Error(apiResult.error);
               }
 
-              const results: any[] = apiResult.data
+              const results: any[] = apiResult.data;
 
               // Update records with results
               for (let i = 0; i < results.length; i++) {
-                const recordId = recordsToSave[i].Id
-                const record = recordsWithUpdates[recordId]
-                const result = results[i]
+                const recordId = recordsToSave[i].Id;
+                const record = recordsWithUpdates[recordId];
+                const result = results[i];
 
                 if (result.success) {
-                  record.editFields = []
-                  record.errorMessage = ''
+                  record.editFields = [];
+                  record.errorMessage = '';
                 } else {
                   record.errorMessage = result.errors.reduce(
                     (errorString: string, error: any) => errorString + '\r\n' + error.message,
                     ''
-                  )
+                  );
                 }
               }
             })
-          )
+          );
         })
-      )
+      );
 
       // Update the store with the modified data
-      useQueryResultStore.getState().setData(tabId, { ...data })
+      useQueryResultStore.getState().setData(tabId, { ...data });
 
-      return { success: true }
+      return { success: true };
     },
     onError: (error: Error, tabId) => {
-      console.error('DML update error:', error)
-      useQueryResultStore.getState().setError(tabId, error.message)
+      console.error('DML update error:', error);
+      useQueryResultStore.getState().setError(tabId, error.message);
     },
     onSettled: (data, error, tabId) => {
-      useQueryResultStore.getState().setDmlPending(tabId, false)
+      useQueryResultStore.getState().setDmlPending(tabId, false);
     },
-  })
+  });
 }
 
 /**
@@ -125,36 +125,36 @@ export function useDmlUpdate() {
 export function useDmlDelete() {
   return useMutation({
     mutationFn: async (tabId: string) => {
-      const state = useConnectionStore.getState()
-      const connection = getActiveConnection(state)
-      const connectionId = state.activeConnectionId
+      const state = useConnectionStore.getState();
+      const connection = getActiveConnection(state);
+      const connectionId = state.activeConnectionId;
       if (!connection || !connectionId) {
-        throw new Error('No active connection')
+        throw new Error('No active connection');
       }
 
       // Build connection info with loginUrl for token refresh
-      const connectionInfo = buildConnectionInfo(connection, connectionId)
+      const connectionInfo = buildConnectionInfo(connection, connectionId);
 
-      const queryState = useTabStore.getState().queries[tabId]
-      const toolingMode = queryState?.toolingMode ?? false
-      const batchSize = queryState?.batchSize ?? 200
-      const sobjectName = queryState?.resultSObjectName
+      const queryState = useTabStore.getState().queries[tabId];
+      const toolingMode = queryState?.toolingMode ?? false;
+      const batchSize = queryState?.batchSize ?? 200;
+      const sobjectName = queryState?.resultSObjectName;
 
       if (!sobjectName) {
-        throw new Error('No sObject name available for delete operation')
+        throw new Error('No sObject name available for delete operation');
       }
 
-      const resultState = useQueryResultStore.getState().byTabId[tabId]
-      const data = { ...(resultState?.data ?? {}) }
-      const selectedIds = [...(resultState?.selectedIds ?? [])]
-      const filteredIds = [...(resultState?.filteredIds ?? [])]
+      const resultState = useQueryResultStore.getState().byTabId[tabId];
+      const data = { ...(resultState?.data ?? {}) };
+      const selectedIds = [...(resultState?.selectedIds ?? [])];
+      const filteredIds = [...(resultState?.filteredIds ?? [])];
 
       // Set DML pending
-      useQueryResultStore.getState().setDmlPending(tabId, true)
+      useQueryResultStore.getState().setDmlPending(tabId, true);
 
-      const idsToDeleteChunked = chunk(selectedIds, batchSize)
-      const successfulIds: string[] = []
-      const errors: string[] = []
+      const idsToDeleteChunked = chunk(selectedIds, batchSize);
+      const successfulIds: string[] = [];
+      const errors: string[] = [];
 
       await Promise.all(
         idsToDeleteChunked.map(async (idsToDelete: string[]) => {
@@ -163,34 +163,34 @@ export function useDmlDelete() {
             sobjectType: sobjectName,
             ids: idsToDelete,
             toolingMode,
-          })
+          });
 
           if (!apiResult.success) {
-            throw new Error(apiResult.error)
+            throw new Error(apiResult.error);
           }
 
-          const results: any[] = apiResult.data
+          const results: any[] = apiResult.data;
 
           // Process successful deletes
           results
             .filter((result) => result.success)
             .forEach((result) => {
-              delete data[result.id]
-              successfulIds.push(result.id)
-            })
+              delete data[result.id];
+              successfulIds.push(result.id);
+            });
 
           // Collect errors
           results.forEach((result, index) => {
-            if (result.success) return
+            if (result.success) return;
             result.errors.forEach((error: any) => {
-              errors.push(`${idsToDelete[index]}: ${error.message}`)
-            })
-          })
+              errors.push(`${idsToDelete[index]}: ${error.message}`);
+            });
+          });
         })
-      )
+      );
 
       // Update filteredIds to remove deleted records
-      const nonDeletedIds = filteredIds.filter((id) => !successfulIds.includes(id))
+      const nonDeletedIds = filteredIds.filter((id) => !successfulIds.includes(id));
 
       // Show errors if any
       if (errors.length > 0) {
@@ -199,7 +199,7 @@ export function useDmlDelete() {
           style: { zIndex: 10000 },
           description: errors.join(' '),
           duration: 0,
-        })
+        });
       }
 
       // Update the store
@@ -207,18 +207,18 @@ export function useDmlDelete() {
         filteredIds: nonDeletedIds,
         selectedIds: [],
         data: { ...data },
-      })
+      });
 
-      return { success: true, deletedCount: successfulIds.length, errorCount: errors.length }
+      return { success: true, deletedCount: successfulIds.length, errorCount: errors.length };
     },
     onError: (error: Error, tabId) => {
-      console.error('DML delete error:', error)
-      useQueryResultStore.getState().setError(tabId, error.message)
+      console.error('DML delete error:', error);
+      useQueryResultStore.getState().setError(tabId, error.message);
     },
     onSettled: (data, error, tabId) => {
-      useQueryResultStore.getState().setDmlPending(tabId, false)
+      useQueryResultStore.getState().setDmlPending(tabId, false);
     },
-  })
+  });
 }
 
 /**
@@ -227,18 +227,10 @@ export function useDmlDelete() {
  */
 export function useBulkFieldUpdate() {
   return useMutation({
-    mutationFn: async ({
-      tabId,
-      field,
-      value,
-    }: {
-      tabId: string
-      field: string
-      value: any
-    }) => {
-      const resultState = useQueryResultStore.getState().byTabId[tabId]
-      const data = { ...(resultState?.data ?? {}) }
-      const selectedIds = resultState?.selectedIds ?? []
+    mutationFn: async ({ tabId, field, value }: { tabId: string; field: string; value: any }) => {
+      const resultState = useQueryResultStore.getState().byTabId[tabId];
+      const data = { ...(resultState?.data ?? {}) };
+      const selectedIds = resultState?.selectedIds ?? [];
 
       // Update each selected record
       selectedIds.forEach((id) => {
@@ -247,14 +239,14 @@ export function useBulkFieldUpdate() {
             ...data[id],
             [field]: value,
             editFields: [...new Set([...(data[id].editFields || []), field])],
-          }
+          };
         }
-      })
+      });
 
       // Update the store
-      useQueryResultStore.getState().setData(tabId, data)
+      useQueryResultStore.getState().setData(tabId, data);
 
-      return { success: true, updatedCount: selectedIds.length }
+      return { success: true, updatedCount: selectedIds.length };
     },
-  })
+  });
 }

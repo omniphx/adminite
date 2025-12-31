@@ -1,26 +1,26 @@
-import * as React from 'react'
-import { Modal, Button, Checkbox, Tooltip, Row } from 'antd'
-import { useUserStore } from '../../stores/useUserStore'
+import * as React from 'react';
+import { Modal, Button, Checkbox, Tooltip, Row } from 'antd';
+import { useUserStore } from '../../stores/useUserStore';
 
 interface IUserSettingsProps {
-  setShowModal(show: boolean)
-  showModal: boolean
+  setShowModal(show: boolean);
+  showModal: boolean;
 }
 
 const UserSettings: React.FC<any> = React.memo((props: IUserSettingsProps) => {
-  const { setShowModal, showModal } = props
-  const disableAutoComplete = useUserStore((state) => state.disableAutoComplete)
-  const disableInlineTabs = useUserStore((state) => state.disableInlineTabs)
-  const setDisableAutoComplete = useUserStore((state) => state.setDisableAutoComplete)
-  const setDisableInlineTabs = useUserStore((state) => state.setDisableInlineTabs)
+  const { setShowModal, showModal } = props;
+  const disableAutoComplete = useUserStore((state) => state.disableAutoComplete);
+  const disableInlineTabs = useUserStore((state) => state.disableInlineTabs);
+  const setDisableAutoComplete = useUserStore((state) => state.setDisableAutoComplete);
+  const setDisableInlineTabs = useUserStore((state) => state.setDisableInlineTabs);
 
   const onDisableAutoComplete = (event: any) => {
-    setDisableAutoComplete(event.target.checked)
-  }
+    setDisableAutoComplete(event.target.checked);
+  };
 
   const onDisableInlineTabs = (event: any) => {
-    setDisableInlineTabs(event.target.checked)
-  }
+    setDisableInlineTabs(event.target.checked);
+  };
 
   return (
     <Modal
@@ -29,15 +29,17 @@ const UserSettings: React.FC<any> = React.memo((props: IUserSettingsProps) => {
       footer={[
         <Button key='back' onClick={() => setShowModal(false)}>
           Close
-        </Button>
+        </Button>,
       ]}
     >
       <Row>
-        <div style={{
-          fontWeight: 500,
-          fontSize: 16,
-          paddingBottom: 7
-        }}>
+        <div
+          style={{
+            fontWeight: 500,
+            fontSize: 16,
+            paddingBottom: 7,
+          }}
+        >
           Settings
         </div>
       </Row>
@@ -66,7 +68,7 @@ const UserSettings: React.FC<any> = React.memo((props: IUserSettingsProps) => {
       </Row>
       <KeyMapping {...{showModal}}/> */}
     </Modal>
-  )
-})
+  );
+});
 
-export default UserSettings
+export default UserSettings;

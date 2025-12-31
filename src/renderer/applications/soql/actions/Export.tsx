@@ -1,124 +1,126 @@
-import * as React from 'react'
-import { Input, Button, Modal, Select, Row, Col, Table } from 'antd'
-import * as XLSX from 'xlsx'
-import FileSaver from 'file-saver'
-import { ipcRenderer, shell } from 'electron'
-import { useShallow } from 'zustand/react/shallow'
-import { useQueryResultStore, selectTabData, selectTabPending } from '../../../stores/useQueryResultStore'
+import * as React from 'react';
+import { Input, Button, Modal, Select, Row, Col, Table } from 'antd';
+import * as XLSX from 'xlsx';
+import FileSaver from 'file-saver';
+import { ipcRenderer, shell } from 'electron';
+import { useShallow } from 'zustand/react/shallow';
+import {
+  useQueryResultStore,
+  selectTabData,
+  selectTabPending,
+} from '../../../stores/useQueryResultStore';
 
-const { Option } = Select
+const { Option } = Select;
 
 interface IExportProps {
-  tabId: string
+  tabId: string;
 }
 
 const Export = React.memo((props: IExportProps) => {
-  const { tabId } = props
+  const { tabId } = props;
 
   // Zustand for query results (Phase 9) - memoize selector to avoid infinite loop
-  const dataSelector = React.useCallback(selectTabData(tabId), [tabId])
-  const pendingSelector = React.useCallback(selectTabPending(tabId), [tabId])
-  const data = useQueryResultStore(useShallow(dataSelector))
-  const pending = useQueryResultStore(pendingSelector)
+  const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
+  const pendingSelector = React.useCallback(selectTabPending(tabId), [tabId]);
+  const data = useQueryResultStore(useShallow(dataSelector));
+  const pending = useQueryResultStore(pendingSelector);
 
-  const [showModal, setShowModal] = React.useState(false)
-  const [fileName, setFileName] = React.useState<string>('')
-  const [fileExtension, setFileExtension] = React.useState('.csv')
-  const [formattedData, setFormattedData] = React.useState([])
+  const [showModal, setShowModal] = React.useState(false);
+  const [fileName, setFileName] = React.useState<string>('');
+  const [fileExtension, setFileExtension] = React.useState('.csv');
+  const [formattedData, setFormattedData] = React.useState([]);
 
   React.useEffect(() => {
-    ipcRenderer.on('download-complete', handleDownloadComplete)
+    ipcRenderer.on('download-complete', handleDownloadComplete);
 
     return () => {
-      ipcRenderer.removeListener('download-complete', handleDownloadComplete)
-    }
-  }, [])
+      ipcRenderer.removeListener('download-complete', handleDownloadComplete);
+    };
+  }, []);
 
   React.useEffect(() => {
-    setFileExtension('.csv')
-    setFileName('')
-  }, [showModal])
+    setFileExtension('.csv');
+    setFileName('');
+  }, [showModal]);
 
   React.useEffect(() => {
-    setFormattedData(formatData(Object.values(data)))
-  }, [data])
+    setFormattedData(formatData(Object.values(data)));
+  }, [data]);
 
   function handleDownloadComplete(event, downloadPath: any) {
-    shell.showItemInFolder(downloadPath)
+    shell.showItemInFolder(downloadPath);
   }
 
   const handleFileNameChange = (event: any) => {
-    setFileName(event.target.value)
-  }
+    setFileName(event.target.value);
+  };
 
   const handleExtensionChange = (value: any) => {
-    setFileExtension(value)
-  }
+    setFileExtension(value);
+  };
 
-  const handleExport = async event => {
-    if (event) event.preventDefault()
+  const handleExport = async (event) => {
+    if (event) event.preventDefault();
     switch (fileExtension) {
       case '.csv': {
-        const fileType = 'text/csvcharset=utf-8'
-        const worksheet = XLSX.utils.json_to_sheet(formattedData)
-        const csv = XLSX.utils.sheet_to_csv(worksheet)
-        const blobData = new Blob([csv], { type: fileType })
-        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
-        break
+        const fileType = 'text/csvcharset=utf-8';
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const csv = XLSX.utils.sheet_to_csv(worksheet);
+        const blobData = new Blob([csv], { type: fileType });
+        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`);
+        break;
       }
       case '.xlsx': {
         const fileType =
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheetcharset=UTF-8'
-        const worksheet = XLSX.utils.json_to_sheet(formattedData)
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheetcharset=UTF-8';
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
         const workbook = {
           Sheets: { [fileName]: worksheet },
-          SheetNames: [fileName]
-        }
-        const xlsx = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-        const blobData = new Blob([xlsx], { type: fileType })
-        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
-        break
+          SheetNames: [fileName],
+        };
+        const xlsx = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blobData = new Blob([xlsx], { type: fileType });
+        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`);
+        break;
       }
       case '.txt': {
-        const fileType = 'text/plain;charset=utf-8'
-        const worksheet = XLSX.utils.json_to_sheet(formattedData)
-        const textFile = XLSX.utils.sheet_to_txt(worksheet)
-        const blobData = new Blob([textFile], { type: fileType })
-        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
-        break
+        const fileType = 'text/plain;charset=utf-8';
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const textFile = XLSX.utils.sheet_to_txt(worksheet);
+        const blobData = new Blob([textFile], { type: fileType });
+        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`);
+        break;
       }
       case '.html': {
-        const fileType = 'text/html;charset=utf-8'
-        const worksheet = XLSX.utils.json_to_sheet(formattedData)
-        const htmlFile = XLSX.utils.sheet_to_html(worksheet)
-        const blobData = new Blob([htmlFile], { type: fileType })
-        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`)
-        break
+        const fileType = 'text/html;charset=utf-8';
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const htmlFile = XLSX.utils.sheet_to_html(worksheet);
+        const blobData = new Blob([htmlFile], { type: fileType });
+        FileSaver.saveAs(blobData, `${fileName}${fileExtension}`);
+        break;
       }
       case '.json': {
-        const fileType = 'application/json;charset=utf-8'
-        const blobData = new File(
-          [JSON.stringify(data)],
-          `${fileName}${fileExtension}`,
-          { type: fileType }
-        )
-        FileSaver.saveAs(blobData)
-        break
+        const fileType = 'application/json;charset=utf-8';
+        const blobData = new File([JSON.stringify(data)], `${fileName}${fileExtension}`, {
+          type: fileType,
+        });
+        FileSaver.saveAs(blobData);
+        break;
       }
     }
 
-    setShowModal(false)
-  }
+    setShowModal(false);
+  };
 
   const showExportModal = () => {
-    setShowModal(true)
-  }
+    setShowModal(true);
+  };
 
   const handleClose = () => {
-    setShowModal(false)
-  }
+    setShowModal(false);
+  };
 
-  const dataValues = Object.values(data)
+  const dataValues = Object.values(data);
 
   return (
     <div className='button-style'>
@@ -144,17 +146,13 @@ const Export = React.memo((props: IExportProps) => {
           </Button>,
           <Button key='back' onClick={handleClose}>
             Close
-          </Button>
+          </Button>,
         ]}
       >
         <Row gutter={2}>
           <Col span={20}>
             <form onSubmit={handleExport}>
-              <Input
-                placeholder='File name'
-                value={fileName}
-                onChange={handleFileNameChange}
-              />
+              <Input placeholder='File name' value={fileName} onChange={handleFileNameChange} />
             </form>
           </Col>
           <Col span={4}>
@@ -178,72 +176,72 @@ const Export = React.memo((props: IExportProps) => {
         </Row>
       </Modal>
     </div>
-  )
+  );
 
   function formatData(records) {
-    return records.map(record => {
-      const row = {}
+    return records.map((record) => {
+      const row = {};
 
       //This step helps flatten lookups and child records
-      flattenData(record).forEach(pair => {
-        row[pair.key] = pair.value
-      })
+      flattenData(record).forEach((pair) => {
+        row[pair.key] = pair.value;
+      });
 
-      return row
-    })
+      return row;
+    });
   }
 
   function flattenData(record) {
-    let lookupKeyValues = []
+    const lookupKeyValues = [];
 
     for (const key in record) {
-      if (key === 'attributes') continue
-      if (key === 'key') continue
-      if (key === 'editFields') continue
-      if (key === 'errorMessage') continue
+      if (key === 'attributes') continue;
+      if (key === 'key') continue;
+      if (key === 'editFields') continue;
+      if (key === 'errorMessage') continue;
 
       if (typeof record[key] === 'object') {
-        if (record[key] === null) continue
+        if (record[key] === null) continue;
         if (record[key].records) {
           lookupKeyValues.push({
             key,
-            value: flattenChildRecords(record[key].records)
-          })
+            value: flattenChildRecords(record[key].records),
+          });
         } else {
           lookupKeyValues.push(
-            ...flattenData(record[key]).map(path => {
+            ...flattenData(record[key]).map((path) => {
               return {
                 ...path,
-                key: `${key} ${path.key}`
-              }
+                key: `${key} ${path.key}`,
+              };
             })
-          )
+          );
         }
       } else {
         lookupKeyValues.push({
           key,
-          value: record[key]
-        })
+          value: record[key],
+        });
       }
     }
 
-    return lookupKeyValues
+    return lookupKeyValues;
   }
 
   function flattenChildRecords(innerData) {
     return innerData
-      .map(record => {
-        const recordKeyValueStrings = []
+      .map((record) => {
+        const recordKeyValueStrings = [];
 
         for (const key in record) {
-          if (key === 'attributes') continue
-          recordKeyValueStrings.push(`${key}:${record[key]}`)
+          if (key === 'attributes') continue;
+          recordKeyValueStrings.push(`${key}:${record[key]}`);
         }
 
-        return `[${recordKeyValueStrings.join(',')}]`
+        return `[${recordKeyValueStrings.join(',')}]`;
       })
-      .join(',')
+      .join(',');
   }
-})
+});
 
-export default Export
+export default Export;

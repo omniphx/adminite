@@ -1,67 +1,67 @@
-import * as React from 'react'
-import { Button, Row, Col } from 'antd'
-import QueryEditor from './QueryEditor'
-import SearchFilter from './actions/SearchFilter'
-import SaveQuery from './actions/SaveQuery'
-import LoadQueries from './actions/LoadQueries'
-import Export from './actions/Export'
-import PageSizeSelect from './actions/PageSizeSelect'
-import DateFormatToggle from './actions/DateFormatToggle'
-import Pagination from './actions/Pagination'
-import QueryOptions from './actions/QueryOptions'
-import QueryResult from './results/QueryResult'
-import Query from './actions/Query'
-import SelectContext from '../SelectContext'
-import { DescribeGlobalSObjectResult } from '../../queries/useSchemaQuery'
-import History from './actions/History'
-import QueryValidator from './QueryValidator'
-import { formatQuery } from 'soql-parser-js'
-import SaveEdits from './actions/SaveEdits'
-import FillFields from './actions/FillFields'
-import BulkActions from './actions/BulkActions'
-import { useTabStore } from '../../stores/useTabStore'
-import { useSObjectList } from '../../queries/useSchemaQuery'
+import * as React from 'react';
+import { Button, Row, Col } from 'antd';
+import QueryEditor from './QueryEditor';
+import SearchFilter from './actions/SearchFilter';
+import SaveQuery from './actions/SaveQuery';
+import LoadQueries from './actions/LoadQueries';
+import Export from './actions/Export';
+import PageSizeSelect from './actions/PageSizeSelect';
+import DateFormatToggle from './actions/DateFormatToggle';
+import Pagination from './actions/Pagination';
+import QueryOptions from './actions/QueryOptions';
+import QueryResult from './results/QueryResult';
+import Query from './actions/Query';
+import SelectContext from '../SelectContext';
+import { DescribeGlobalSObjectResult } from '../../queries/useSchemaQuery';
+import History from './actions/History';
+import QueryValidator from './QueryValidator';
+import { formatQuery } from 'soql-parser-js';
+import SaveEdits from './actions/SaveEdits';
+import FillFields from './actions/FillFields';
+import BulkActions from './actions/BulkActions';
+import { useTabStore } from '../../stores/useTabStore';
+import { useSObjectList } from '../../queries/useSchemaQuery';
 
 interface IQueryTabProps {
-  tabId: string
+  tabId: string;
 }
 
 const QueryTab = React.memo((props: IQueryTabProps) => {
-  const { tabId } = props
+  const { tabId } = props;
 
   // Zustand store for query state
-  const queryState = useTabStore((state) => state.queries[tabId])
-  const setQuery = useTabStore((state) => state.setQuery)
-  const setQuerySObjectName = useTabStore((state) => state.setQuerySObjectName)
-  const toolingMode = queryState?.toolingMode ?? false
-  const query = queryState?.query ?? { body: '' }
-  const querySObjectName = queryState?.querySObjectName ?? ''
+  const queryState = useTabStore((state) => state.queries[tabId]);
+  const setQuery = useTabStore((state) => state.setQuery);
+  const setQuerySObjectName = useTabStore((state) => state.setQuerySObjectName);
+  const toolingMode = queryState?.toolingMode ?? false;
+  const query = queryState?.query ?? { body: '' };
+  const querySObjectName = queryState?.querySObjectName ?? '';
 
   // TanStack Query for schema (Phase 5)
-  const { sobjects: sObjectList } = useSObjectList(toolingMode)
+  const { sobjects: sObjectList } = useSObjectList(toolingMode);
 
-  const sobjects: DescribeGlobalSObjectResult[] = getQueryableSObjects(sObjectList ?? [])
+  const sobjects: DescribeGlobalSObjectResult[] = getQueryableSObjects(sObjectList ?? []);
 
   //Props
-  const childProps = { tabId }
+  const childProps = { tabId };
 
   const handleChange = (sObjectName: string) => {
     // Update Zustand store (Phase 6)
-    setQuerySObjectName(tabId, sObjectName)
-  }
+    setQuerySObjectName(tabId, sObjectName);
+  };
 
   const formatConfig = {
     fieldMaxLineLength: 1000000,
     numIndent: 1,
     fieldSubqueryParensOnOwnLine: true,
-    whereClauseOperatorsIndented: false
-  }
+    whereClauseOperatorsIndented: false,
+  };
 
   const handleFormat = () => {
     setQuery(tabId, {
-      query: { ...query, body: formatQuery(query.body, formatConfig) }
-    })
-  }
+      query: { ...query, body: formatQuery(query.body, formatConfig) },
+    });
+  };
 
   return (
     <div className='query-editor'>
@@ -74,11 +74,7 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
           />
         </Col>
         <Col span={12} style={{ textAlign: 'right' }}>
-          <Button
-            type='link'
-            onClick={handleFormat}
-            disabled={query.body.length <= 0}
-          >
+          <Button type='link' onClick={handleFormat} disabled={query.body.length <= 0}>
             Format
           </Button>
           <FillFields {...childProps} />
@@ -100,14 +96,8 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
           <SaveEdits {...childProps} />
           <Export {...childProps} />
         </Col>
-        <Col
-          className='bump-left'
-          xs={24}
-          sm={24}
-          lg={12}
-          style={{ textAlign: 'right' }}
-        >
-          <Row justify="end" align="middle">
+        <Col className='bump-left' xs={24} sm={24} lg={12} style={{ textAlign: 'right' }}>
+          <Row justify='end' align='middle'>
             <DateFormatToggle {...childProps} />
             <PageSizeSelect {...childProps} />
           </Row>
@@ -118,26 +108,19 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
           <BulkActions {...childProps} />
           <SearchFilter {...childProps} />
         </Col>
-        <Col
-          className='bump-left'
-          xs={24}
-          sm={24}
-          md={24}
-          lg={12}
-          style={{ textAlign: 'right' }}
-        >
+        <Col className='bump-left' xs={24} sm={24} md={24} lg={12} style={{ textAlign: 'right' }}>
           <Pagination {...childProps} />
         </Col>
       </Row>
       <QueryResult {...childProps} />
     </div>
-  )
+  );
 
   function getQueryableSObjects(sobjects: DescribeGlobalSObjectResult[]) {
-    return sobjects.filter(sobject => {
-      return sobject.queryable
-    })
+    return sobjects.filter((sobject) => {
+      return sobject.queryable;
+    });
   }
-})
+});
 
-export default QueryTab
+export default QueryTab;

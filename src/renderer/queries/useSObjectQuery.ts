@@ -1,19 +1,19 @@
-import { useQuery } from '@tanstack/react-query'
-import { ipcRenderer } from 'electron'
-import { DescribeSObjectResult, Field } from 'jsforce'
-import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore'
-import { useTabStore } from '../stores/useTabStore'
-import { queryKeys } from './queryKeys'
-import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery'
+import { useQuery } from '@tanstack/react-query';
+import { ipcRenderer } from 'electron';
+import { DescribeSObjectResult, Field } from 'jsforce';
+import { useConnectionStore, getActiveConnection } from '../stores/useConnectionStore';
+import { useTabStore } from '../stores/useTabStore';
+import { queryKeys } from './queryKeys';
+import { ConnectionInfo, buildConnectionInfo } from './useConnectionQuery';
 
 // Field schema is fields indexed by name for quick lookup
 export interface FieldSchema {
-  [fieldName: string]: Field
+  [fieldName: string]: Field;
 }
 
 export interface SObjectDescribeResult {
-  sobject: DescribeSObjectResult
-  fieldSchema: FieldSchema
+  sobject: DescribeSObjectResult;
+  fieldSchema: FieldSchema;
 }
 
 /**
@@ -28,21 +28,21 @@ async function fetchSObjectDescribe(
     ...connectionInfo,
     sObjectName,
     toolingMode,
-  })
+  });
 
   if (!result.success) {
-    throw new Error(result.error)
+    throw new Error(result.error);
   }
 
-  const sobject: DescribeSObjectResult = result.data
+  const sobject: DescribeSObjectResult = result.data;
 
   // Build field schema (fields indexed by name)
   const fieldSchema = sobject.fields.reduce<FieldSchema>((accumulator, field) => {
-    accumulator[field.name] = field
-    return accumulator
-  }, {})
+    accumulator[field.name] = field;
+    return accumulator;
+  }, {});
 
-  return { sobject, fieldSchema }
+  return { sobject, fieldSchema };
 }
 
 /**
@@ -53,20 +53,25 @@ async function fetchSObjectDescribe(
  * @param sObjectName - The sObject API name to describe
  */
 export function useQuerySObjectDescribe(tabId: string, sObjectName: string | undefined) {
-  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const toolingMode = useTabStore((state) => state.queries[tabId]?.toolingMode ?? false)
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const toolingMode = useTabStore((state) => state.queries[tabId]?.toolingMode ?? false);
 
   return useQuery({
-    queryKey: queryKeys.sobject.describe(activeConnectionId ?? '', tabId, sObjectName ?? '', 'QUERY'),
+    queryKey: queryKeys.sobject.describe(
+      activeConnectionId ?? '',
+      tabId,
+      sObjectName ?? '',
+      'QUERY'
+    ),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
-      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode)
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!);
+      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode);
     },
     enabled: !!activeConnectionId && !!activeConnection && !!sObjectName,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
-  })
+  });
 }
 
 /**
@@ -77,20 +82,25 @@ export function useQuerySObjectDescribe(tabId: string, sObjectName: string | und
  * @param sObjectName - The sObject API name to describe
  */
 export function useResultSObjectDescribe(tabId: string, sObjectName: string | undefined) {
-  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const toolingMode = useTabStore((state) => state.queries[tabId]?.toolingMode ?? false)
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const toolingMode = useTabStore((state) => state.queries[tabId]?.toolingMode ?? false);
 
   return useQuery({
-    queryKey: queryKeys.sobject.describe(activeConnectionId ?? '', tabId, sObjectName ?? '', 'RESULT'),
+    queryKey: queryKeys.sobject.describe(
+      activeConnectionId ?? '',
+      tabId,
+      sObjectName ?? '',
+      'RESULT'
+    ),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
-      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode)
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!);
+      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode);
     },
     enabled: !!activeConnectionId && !!activeConnection && !!sObjectName,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
-  })
+  });
 }
 
 /**
@@ -105,18 +115,23 @@ export function useSObjectDescribe(
   sObjectName: string | undefined,
   context: 'QUERY' | 'RESULT'
 ) {
-  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId)
-  const activeConnection = useConnectionStore(getActiveConnection)
-  const toolingMode = useTabStore((state) => state.queries[tabId]?.toolingMode ?? false)
+  const activeConnectionId = useConnectionStore((state) => state.activeConnectionId);
+  const activeConnection = useConnectionStore(getActiveConnection);
+  const toolingMode = useTabStore((state) => state.queries[tabId]?.toolingMode ?? false);
 
   return useQuery({
-    queryKey: queryKeys.sobject.describe(activeConnectionId ?? '', tabId, sObjectName ?? '', context),
+    queryKey: queryKeys.sobject.describe(
+      activeConnectionId ?? '',
+      tabId,
+      sObjectName ?? '',
+      context
+    ),
     queryFn: () => {
-      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!)
-      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode)
+      const connectionInfo = buildConnectionInfo(activeConnection, activeConnectionId!);
+      return fetchSObjectDescribe(connectionInfo, sObjectName!, toolingMode);
     },
     enabled: !!activeConnectionId && !!activeConnection && !!sObjectName,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
-  })
+  });
 }

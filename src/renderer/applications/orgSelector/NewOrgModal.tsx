@@ -1,72 +1,70 @@
-import * as React from 'react'
-import { Modal, Input, Select, Button, Form } from 'antd'
-import { ipcRenderer } from 'electron'
-import { useConnectionStore } from '../../stores/useConnectionStore'
+import * as React from 'react';
+import { Modal, Input, Select, Button, Form } from 'antd';
+import { ipcRenderer } from 'electron';
+import { useConnectionStore } from '../../stores/useConnectionStore';
 
 const NewOrgModal: React.FC<any> = React.memo((props: any) => {
-  const [form] = Form.useForm()
-  const [customUrl, setCustomUrl] = React.useState('')
-  const [showCustomUrl, setShowCustomUrl] = React.useState(false)
+  const [form] = Form.useForm();
+  const [customUrl, setCustomUrl] = React.useState('');
+  const [showCustomUrl, setShowCustomUrl] = React.useState(false);
 
   // Zustand store
-  const modalVisible = useConnectionStore((state) => state.modalVisible)
-  const toggleModal = useConnectionStore((state) => state.toggleModal)
+  const modalVisible = useConnectionStore((state) => state.modalVisible);
+  const toggleModal = useConnectionStore((state) => state.toggleModal);
 
   React.useEffect(() => {
     if (modalVisible === true) {
-      form.resetFields()
-      setShowCustomUrl(false)
-      setCustomUrl('')
+      form.resetFields();
+      setShowCustomUrl(false);
+      setCustomUrl('');
     }
-  }, [modalVisible])
+  }, [modalVisible]);
 
-  const handleSubmit = async event => {
-    event.preventDefault()
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     try {
-      const result = await form.validateFields()
+      const result = await form.validateFields();
       switch (result.environment) {
         case 'sandbox':
-          result.url = 'https://test.salesforce.com'
-          break
+          result.url = 'https://test.salesforce.com';
+          break;
         case 'custom':
-          result.url = `https://${result.url}`
-          break
+          result.url = `https://${result.url}`;
+          break;
         default:
-          result.url = 'https://login.salesforce.com'
-          break
+          result.url = 'https://login.salesforce.com';
+          break;
       }
 
-      ipcRenderer.send('create-new-connection', result)
+      ipcRenderer.send('create-new-connection', result);
     } catch (exception) {
-      console.error(exception)
+      console.error(exception);
     }
-  }
+  };
 
   const handleCancel = () => {
-    toggleModal()
-  }
+    toggleModal();
+  };
 
-  const handleEnvironmentChange = value => {
-    setShowCustomUrl(value === 'custom')
-  }
+  const handleEnvironmentChange = (value) => {
+    setShowCustomUrl(value === 'custom');
+  };
 
-  const handleCustomUrlChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setCustomUrl(event.target.value)
-  }
+  const handleCustomUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomUrl(event.target.value);
+  };
 
   const formProps = {
     form,
     labelCol: {
       xs: { span: 24 },
-      sm: { span: 6 }
+      sm: { span: 6 },
     },
     wrapperCol: {
       xs: { span: 24 },
-      sm: { span: 18 }
-    }
-  }
+      sm: { span: 18 },
+    },
+  };
 
   return (
     <Modal
@@ -85,7 +83,7 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
           onClick={handleSubmit}
         >
           Connect
-        </Button>
+        </Button>,
       ]}
     >
       <Form
@@ -124,7 +122,7 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
         {renderCustomUrl()}
       </Form>
     </Modal>
-  )
+  );
 
   function renderCustomUrl() {
     return showCustomUrl ? (
@@ -142,8 +140,8 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
       </div>
     ) : (
       <div />
-    )
+    );
   }
-})
+});
 
-export default NewOrgModal
+export default NewOrgModal;

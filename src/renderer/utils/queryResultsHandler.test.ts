@@ -1,7 +1,6 @@
-import { flattenData } from "./queryResultsHandler"
+import { flattenData } from './queryResultsHandler';
 
 describe('queryResultsHandler', () => {
-
   it('should render', () => {
     const record = {
       attributes: {},
@@ -11,13 +10,13 @@ describe('queryResultsHandler', () => {
       Account: {
         Name: 'Morty',
         ParentAccount: {
-          Name: 'Jerry'
-        }
-      }
-    }
+          Name: 'Jerry',
+        },
+      },
+    };
 
-    const result = flattenData(record)
-    expect(result['Account.Name']).toBe('Morty')
-    expect(result['Account.ParentAccount.Name']).toBe('Jerry')
-  })
-})
+    const result = flattenData(record);
+    expect(result['Account.Name']).toBe('Morty');
+    expect(result['Account.ParentAccount.Name']).toBe('Jerry');
+  });
+});

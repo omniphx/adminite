@@ -5,7 +5,11 @@ const { Column } = Table;
 
 // Zustand + TanStack Query (Phase 7 & 8)
 import { usePermissionUIStore, FieldPermissionChange } from '../../stores/usePermissionUIStore';
-import { useProfilesQuery, usePermissionSetsQuery, useFlsFieldsQuery } from '../../queries/usePermissionQuery';
+import {
+  useProfilesQuery,
+  usePermissionSetsQuery,
+  useFlsFieldsQuery,
+} from '../../queries/usePermissionQuery';
 import { useFieldPermissionsQuery } from '../../queries/useFieldPermissionQuery';
 
 const FieldLevelSecurity: React.FC = () => {
@@ -33,34 +37,29 @@ const FieldLevelSecurity: React.FC = () => {
 
   // Get permissions based on type
   const rawPermissions = permissionType === 'profile' ? profiles : permissionSets;
-  const permissions = rawPermissions.map(p => ({
+  const permissions = rawPermissions.map((p) => ({
     ...p,
-    name: p.IsOwnedByProfile ? p.Profile?.Name : (p.Label || p.Name),
+    name: p.IsOwnedByProfile ? p.Profile?.Name : p.Label || p.Name,
     key: p.Id,
   }));
 
-  const filteredPermissions = permissions
-    .filter(permission => permissionIds.includes(permission.key));
+  const filteredPermissions = permissions.filter((permission) =>
+    permissionIds.includes(permission.key)
+  );
 
   const filteredFields = fields
-    .filter(field => {
+    .filter((field) => {
       //Component fields such as Address Street should be omitted even though they are permissionable
       return field.IsPermissionable && !field.IsComponent;
     })
-    .filter(field => {
+    .filter((field) => {
       if (!filter || filter.length <= 0) return true;
-      const nameMatch =
-        field.Name.toLowerCase().indexOf(filter.toLowerCase()) >= 0;
-      const labelMatch =
-        field.Label.toLowerCase().indexOf(filter.toLowerCase()) >= 0;
+      const nameMatch = field.Name.toLowerCase().indexOf(filter.toLowerCase()) >= 0;
+      const labelMatch = field.Label.toLowerCase().indexOf(filter.toLowerCase()) >= 0;
       return nameMatch || labelMatch;
     });
 
-  const fieldWrappers = getFieldWrappers(
-    filteredFields,
-    filteredPermissions,
-    fieldPermissions
-  );
+  const fieldWrappers = getFieldWrappers(filteredFields, filteredPermissions, fieldPermissions);
 
   const handleEditCellClick = (record, permissionKey) => {
     record[`edit_${permissionKey}`] = !record[`edit_${permissionKey}`];
@@ -73,7 +72,7 @@ const FieldLevelSecurity: React.FC = () => {
   };
 
   const handleEditAll = (value, permissionKey) => {
-    fieldWrappers.forEach(field => {
+    fieldWrappers.forEach((field) => {
       if (field.key === 'all') return;
       if (!field.IsUpdatable && field.DataType !== 'address') {
         if (!value) return;
@@ -87,7 +86,7 @@ const FieldLevelSecurity: React.FC = () => {
   };
 
   const handleReadAll = (value, permissionKey) => {
-    fieldWrappers.forEach(field => {
+    fieldWrappers.forEach((field) => {
       if (field.key === 'all') return;
       field[`read_${permissionKey}`] = value;
       handleReadFieldPermissionChange(field, permissionKey);
@@ -95,14 +94,14 @@ const FieldLevelSecurity: React.FC = () => {
   };
 
   const handleReadAllByField = (value, row) => {
-    filteredPermissions.forEach(permission => {
+    filteredPermissions.forEach((permission) => {
       row[`read_${permission.key}`] = value;
       handleReadFieldPermissionChange(row, permission.key);
     });
   };
 
   const handleEditAllByField = (value, row) => {
-    filteredPermissions.forEach(permission => {
+    filteredPermissions.forEach((permission) => {
       row[`edit_${permission.key}`] = value;
       handleEditFieldPermissionChange(row, permission.key);
     });
@@ -130,7 +129,7 @@ const FieldLevelSecurity: React.FC = () => {
       PermissionsRead: record[`read_${permissionKey}`],
       PermissionsEdit: record[`edit_${permissionKey}`],
       SobjectType: sobjectName,
-      ParentId: permissionKey
+      ParentId: permissionKey,
     };
 
     const salesforceId = record[`id_${permissionKey}`];
@@ -169,15 +168,14 @@ const FieldLevelSecurity: React.FC = () => {
 
   function createFirstRow() {
     const firstRow = { field: 'All', key: 'all' };
-    filteredPermissions.forEach(permission => {
+    filteredPermissions.forEach((permission) => {
       const permissionKey = permission.key;
       firstRow[`edit_${permissionKey}`] = fieldWrappers.every(
-        fieldPermission =>
-          fieldPermission[`edit_${permissionKey}`] ||
-          fieldPermission.editDisabled
+        (fieldPermission) =>
+          fieldPermission[`edit_${permissionKey}`] || fieldPermission.editDisabled
       );
       firstRow[`read_${permissionKey}`] = fieldWrappers.every(
-        fieldPermission => fieldPermission[`read_${permissionKey}`]
+        (fieldPermission) => fieldPermission[`read_${permissionKey}`]
       );
     });
 
@@ -244,18 +242,14 @@ const FieldLevelSecurity: React.FC = () => {
                 <Checkbox
                   checked={editAllValue}
                   disabled={disabled}
-                  onChange={event =>
-                    handleEditAllByField(event.target.checked, row)
-                  }
+                  onChange={(event) => handleEditAllByField(event.target.checked, row)}
                 />{' '}
                 Edit
               </div>
               <div className='no-wrap'>
                 <Checkbox
                   checked={readAllValue}
-                  onChange={event =>
-                    handleReadAllByField(event.target.checked, row)
-                  }
+                  onChange={(event) => handleReadAllByField(event.target.checked, row)}
                 />{' '}
                 Read
               </div>
@@ -268,14 +262,12 @@ const FieldLevelSecurity: React.FC = () => {
 
   function renderPermissionColumns() {
     const permissionColumns = [];
-    filteredPermissions.forEach(permission => {
+    filteredPermissions.forEach((permission) => {
       const permissionKey = permission.Id;
       const editKey = `edit_${permissionKey}`;
       const readKey = `read_${permissionKey}`;
       const profileLabel =
-        permission.name.length > 31
-          ? `${permission.name.substring(0, 28)}...`
-          : permission.name;
+        permission.name.length > 31 ? `${permission.name.substring(0, 28)}...` : permission.name;
       permissionColumns.push(
         <Column
           className='rotate'
@@ -298,7 +290,7 @@ const FieldLevelSecurity: React.FC = () => {
                 if (record.editDisabled) return;
                 handleEditCellClick(record, permissionKey);
               }
-            }
+            },
           })}
           render={(value, record: any, index) => {
             const cellKey = `${editKey}_${record.key}`;
@@ -313,9 +305,7 @@ const FieldLevelSecurity: React.FC = () => {
                     checked={value}
                     id={cellKey}
                     disabled={disabled}
-                    onChange={event =>
-                      handleEditAll(event.target.checked, permissionKey)
-                    }
+                    onChange={(event) => handleEditAll(event.target.checked, permissionKey)}
                   />
                 </div>
               );
@@ -323,11 +313,7 @@ const FieldLevelSecurity: React.FC = () => {
               return (
                 <div style={{ textAlign: 'center' }}>
                   <Tooltip title={`Edit ${permission.name}`} placement='bottom'>
-                    <Checkbox
-                      id={cellKey}
-                      checked={value}
-                      disabled={disabled}
-                    />
+                    <Checkbox id={cellKey} checked={value} disabled={disabled} />
                   </Tooltip>
                 </div>
               );
@@ -349,7 +335,7 @@ const FieldLevelSecurity: React.FC = () => {
               } else {
                 handleReadCellClick(record, permissionKey);
               }
-            }
+            },
           })}
           render={(value, record: any, index) => {
             const cellKey = `${readKey}_${record.key}`;
@@ -360,9 +346,7 @@ const FieldLevelSecurity: React.FC = () => {
                   <Checkbox
                     id={cellKey}
                     checked={value}
-                    onChange={event =>
-                      handleReadAll(event.target.checked, permissionKey)
-                    }
+                    onChange={(event) => handleReadAll(event.target.checked, permissionKey)}
                   />
                 </div>
               );
@@ -384,11 +368,7 @@ const FieldLevelSecurity: React.FC = () => {
   }
 };
 
-function getFieldWrappers(
-  fields: any,
-  permissionSets: any,
-  fieldPermissions: any
-) {
+function getFieldWrappers(fields: any, permissionSets: any, fieldPermissions: any) {
   //Should never happen
   if (!fieldPermissions) return [];
   if (!fields) return [];
@@ -411,10 +391,10 @@ function getFieldWrappers(
       ...field,
       key: field.Name,
       //Address is not updateable because it is a compound field but it can still be assigned edit access
-      editDisabled: !field.IsUpdatable && !field.IsCompound
+      editDisabled: !field.IsUpdatable && !field.IsCompound,
     };
 
-    permissionSets.forEach(permission => {
+    permissionSets.forEach((permission) => {
       const profileKeyName = permission.Id;
       fieldWrappers[field.Name] = {
         ...fieldWrappers[field.Name],
@@ -422,14 +402,14 @@ function getFieldWrappers(
         label: field.Label,
         key: field.Name,
         [`edit_${profileKeyName}`]: false,
-        [`read_${profileKeyName}`]: false
+        [`read_${profileKeyName}`]: false,
       };
     });
   });
 
-  for (let fieldKey in fieldPermissions) {
+  for (const fieldKey in fieldPermissions) {
     if (!fieldPermissions.hasOwnProperty(fieldKey)) continue;
-    let fieldPermission = fieldPermissions[fieldKey];
+    const fieldPermission = fieldPermissions[fieldKey];
     if (!fieldPermission.ParentId) continue;
     if (!fieldPermission.Field) continue;
 
@@ -441,14 +421,14 @@ function getFieldWrappers(
       ...fieldWrappers[field],
       [`edit_${profileKeyName}`]: fieldPermission.PermissionsEdit,
       [`read_${profileKeyName}`]: fieldPermission.PermissionsRead,
-      [`id_${profileKeyName}`]: fieldPermission.Id
+      [`id_${profileKeyName}`]: fieldPermission.Id,
     };
   }
 
   //Sort objects alphabetically
   return Object.keys(fieldWrappers)
     .sort()
-    .map(field => fieldWrappers[field]);
+    .map((field) => fieldWrappers[field]);
 }
 
 export default FieldLevelSecurity;

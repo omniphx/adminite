@@ -35,14 +35,14 @@ function createSalesforceConnection(params: ConnectionParams): jsforce.Connectio
     loginUrl,
     clientId: process.env.SALESFORCE_CLIENT_ID,
     clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
-    redirectUri: `${PROTOCOL_NAME}://oauth/callback`
+    redirectUri: `${PROTOCOL_NAME}://oauth/callback`,
   });
 
   const connection = new jsforce.Connection({
     oauth2,
     instanceUrl,
     accessToken,
-    refreshToken
+    refreshToken,
   });
 
   // Listen for token refresh events and notify the renderer
@@ -51,7 +51,7 @@ function createSalesforceConnection(params: ConnectionParams): jsforce.Connectio
     if (mainWindow && connectionId) {
       mainWindow.webContents.send('token-refreshed', {
         connectionId,
-        accessToken: newAccessToken
+        accessToken: newAccessToken,
       });
     }
   });
@@ -91,10 +91,10 @@ async function createWindow(): Promise<void> {
       webPreferences: {
         // devTools: isDevelopment,
         nodeIntegration: true,
-        contextIsolation: false
+        contextIsolation: false,
       },
       title: 'Adminite',
-      titleBarStyle: 'hidden'
+      titleBarStyle: 'hidden',
     });
 
     if (isDevelopment) {
@@ -115,21 +115,15 @@ async function createWindow(): Promise<void> {
       mainWindow = null;
     });
 
-    mainWindow.webContents.session.on(
-      'will-download',
-      (event, item, webContents) => {
-        item.once('done', (event, state) => {
-          if (state === 'completed') {
-            mainWindow.webContents.send(
-              'download-complete',
-              item.getSavePath()
-            );
-          } else {
-            console.log(`Download failed: ${state}`);
-          }
-        });
-      }
-    );
+    mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
+      item.once('done', (event, state) => {
+        if (state === 'completed') {
+          mainWindow.webContents.send('download-complete', item.getSavePath());
+        } else {
+          console.log(`Download failed: ${state}`);
+        }
+      });
+    });
   } catch (error) {
     console.log(error);
   }
@@ -167,7 +161,11 @@ async function handleOAuthCallback(callbackUrl: string): Promise<void> {
     await connection.authorize(code);
     const { accessToken, instanceUrl, refreshToken } = connection;
 
-    log.info('OAuth successful:', { instanceUrl, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken });
+    log.info('OAuth successful:', {
+      instanceUrl,
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+    });
 
     // Extra API call but gives us more information
     const identity = await connection.identity();
@@ -179,7 +177,7 @@ async function handleOAuthCallback(callbackUrl: string): Promise<void> {
       user_id,
       user_type,
       organization_id,
-      language
+      language,
     } = identity;
     const { loginUrl, redirectUri } = oauth2;
 
@@ -197,7 +195,7 @@ async function handleOAuthCallback(callbackUrl: string): Promise<void> {
       user_id,
       user_type,
       organization_id,
-      language
+      language,
     });
 
     // Clear pending OAuth
@@ -221,208 +219,376 @@ async function createServer(): Promise<void> {
         loginUrl: arg.url,
         clientId: process.env.SALESFORCE_CLIENT_ID,
         clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
-        redirectUri: `${PROTOCOL_NAME}://oauth/callback`
+        redirectUri: `${PROTOCOL_NAME}://oauth/callback`,
       });
 
       pendingOAuth = {
         oauth2,
-        connectionName: arg.name
+        connectionName: arg.name,
       };
 
-      createAuthenticationWindow(
-        oauth2.getAuthorizationUrl({ scope: 'api id web refresh_token' })
-      );
+      createAuthenticationWindow(oauth2.getAuthorizationUrl({ scope: 'api id web refresh_token' }));
     });
 
     // IPC handler for Salesforce API calls (avoids CORS issues in renderer)
     // Explicit token refresh handler - manually refresh the access token using refresh token
-    ipcMain.handle('salesforce:refreshToken', async (event, { instanceUrl, refreshToken, loginUrl, connectionId }) => {
-      try {
-        log.info('Manual token refresh requested for connection:', connectionId);
+    ipcMain.handle(
+      'salesforce:refreshToken',
+      async (event, { instanceUrl, refreshToken, loginUrl, connectionId }) => {
+        try {
+          log.info('Manual token refresh requested for connection:', connectionId);
 
-        const oauth2 = new jsforce.OAuth2({
-          loginUrl,
-          clientId: process.env.SALESFORCE_CLIENT_ID,
-          clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
-          redirectUri: `${PROTOCOL_NAME}://oauth/callback`
-        });
-
-        // Use the oauth2.refreshToken method as per jsforce documentation
-        const res = await oauth2.refreshToken(refreshToken);
-        const newAccessToken = res.access_token;
-
-        log.info('Manual token refresh successful for connection:', connectionId);
-
-        // Notify the renderer of the new token
-        if (mainWindow && connectionId && newAccessToken) {
-          mainWindow.webContents.send('token-refreshed', {
-            connectionId,
-            accessToken: newAccessToken
+          const oauth2 = new jsforce.OAuth2({
+            loginUrl,
+            clientId: process.env.SALESFORCE_CLIENT_ID,
+            clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
+            redirectUri: `${PROTOCOL_NAME}://oauth/callback`,
           });
+
+          // Use the oauth2.refreshToken method as per jsforce documentation
+          const res = await oauth2.refreshToken(refreshToken);
+          const newAccessToken = res.access_token;
+
+          log.info('Manual token refresh successful for connection:', connectionId);
+
+          // Notify the renderer of the new token
+          if (mainWindow && connectionId && newAccessToken) {
+            mainWindow.webContents.send('token-refreshed', {
+              connectionId,
+              accessToken: newAccessToken,
+            });
+          }
+
+          return { success: true, data: { accessToken: newAccessToken } };
+        } catch (error) {
+          log.error('salesforce:refreshToken error:', error);
+
+          // Check if this is a refresh token expiration (requires re-authentication)
+          if (isRefreshTokenInvalidError(error)) {
+            return {
+              success: false,
+              error: 'Your session has expired. Please reconnect to this org.',
+              requiresReauth: true,
+            };
+          }
+
+          return { success: false, error: error.message };
         }
+      }
+    );
 
-        return { success: true, data: { accessToken: newAccessToken } };
-      } catch (error) {
-        log.error('salesforce:refreshToken error:', error);
-
-        // Check if this is a refresh token expiration (requires re-authentication)
-        if (isRefreshTokenInvalidError(error)) {
-          return {
-            success: false,
-            error: 'Your session has expired. Please reconnect to this org.',
-            requiresReauth: true
-          };
+    ipcMain.handle(
+      'salesforce:identity',
+      async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
+        try {
+          log.debug('refresh token', refreshToken);
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const identity = await connection.identity();
+          return { success: true, data: identity };
+        } catch (error) {
+          log.error('salesforce:identity error:', error);
+          return { success: false, error: error.message };
         }
-
-        return { success: false, error: error.message };
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:identity', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
-      try {
-        log.debug("refresh token", refreshToken)
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const identity = await connection.identity();
-        return { success: true, data: identity };
-      } catch (error) {
-        log.error('salesforce:identity error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:getUserInfo',
+      async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const userInfo = await connection.soap.getUserInfo();
+          return { success: true, data: userInfo };
+        } catch (error) {
+          log.error('salesforce:getUserInfo error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:getUserInfo', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const userInfo = await connection.soap.getUserInfo();
-        return { success: true, data: userInfo };
-      } catch (error) {
-        log.error('salesforce:getUserInfo error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:describeGlobal',
+      async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = await connection.describeGlobal();
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:describeGlobal error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:describeGlobal', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = await connection.describeGlobal();
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:describeGlobal error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:toolingDescribeGlobal',
+      async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = await connection.tooling.describeGlobal();
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:toolingDescribeGlobal error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:toolingDescribeGlobal', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = await connection.tooling.describeGlobal();
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:toolingDescribeGlobal error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:describe',
+      async (
+        event,
+        { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sObjectName, toolingMode }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = toolingMode
+            ? await connection.tooling.describe(sObjectName)
+            : await connection.describe(sObjectName);
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:describe error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:describe', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sObjectName, toolingMode }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = toolingMode
-          ? await connection.tooling.describe(sObjectName)
-          : await connection.describe(sObjectName);
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:describe error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:query',
+      async (
+        event,
+        { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString, toolingMode }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = toolingMode
+            ? await connection.tooling.query(queryString)
+            : await connection.query(queryString);
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:query error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:query', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString, toolingMode }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = toolingMode
-          ? await connection.tooling.query(queryString)
-          : await connection.query(queryString);
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:query error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:queryAll',
+      async (
+        event,
+        { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          // In jsforce v3, queryAll is replaced with query() using scanAll option
+          const result = await connection.query(queryString, { scanAll: true });
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:queryAll error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:queryAll', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        // In jsforce v3, queryAll is replaced with query() using scanAll option
-        const result = await connection.query(queryString, { scanAll: true });
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:queryAll error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:search',
+      async (
+        event,
+        { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = await connection.search(queryString);
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:search error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:search', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, queryString }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = await connection.search(queryString);
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:search error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:queryMore',
+      async (
+        event,
+        {
+          accessToken,
+          instanceUrl,
+          refreshToken,
+          loginUrl,
+          connectionId,
+          nextRecordsUrl,
+          toolingMode,
+        }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = toolingMode
+            ? await connection.tooling.queryMore(nextRecordsUrl)
+            : await connection.queryMore(nextRecordsUrl);
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:queryMore error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:queryMore', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, nextRecordsUrl, toolingMode }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = toolingMode
-          ? await connection.tooling.queryMore(nextRecordsUrl)
-          : await connection.queryMore(nextRecordsUrl);
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:queryMore error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:insert',
+      async (
+        event,
+        {
+          accessToken,
+          instanceUrl,
+          refreshToken,
+          loginUrl,
+          connectionId,
+          sobjectType,
+          records,
+          toolingMode,
+        }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = toolingMode
+            ? await connection.tooling.sobject(sobjectType).insert(records)
+            : await connection.sobject(sobjectType).insert(records);
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:insert error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:insert', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sobjectType, records, toolingMode }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = toolingMode
-          ? await connection.tooling.sobject(sobjectType).insert(records)
-          : await connection.sobject(sobjectType).insert(records);
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:insert error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:update',
+      async (
+        event,
+        {
+          accessToken,
+          instanceUrl,
+          refreshToken,
+          loginUrl,
+          connectionId,
+          sobjectType,
+          records,
+          toolingMode,
+        }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = toolingMode
+            ? await connection.tooling.sobject(sobjectType).update(records)
+            : await connection.sobject(sobjectType).update(records);
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:update error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
+    );
 
-    ipcMain.handle('salesforce:update', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sobjectType, records, toolingMode }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = toolingMode
-          ? await connection.tooling.sobject(sobjectType).update(records)
-          : await connection.sobject(sobjectType).update(records);
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:update error:', error);
-        return { success: false, error: error.message };
+    ipcMain.handle(
+      'salesforce:delete',
+      async (
+        event,
+        {
+          accessToken,
+          instanceUrl,
+          refreshToken,
+          loginUrl,
+          connectionId,
+          sobjectType,
+          ids,
+          toolingMode,
+        }
+      ) => {
+        try {
+          const connection = createSalesforceConnection({
+            accessToken,
+            instanceUrl,
+            refreshToken,
+            loginUrl,
+            connectionId,
+          });
+          const result = toolingMode
+            ? await connection.tooling.sobject(sobjectType).del(ids)
+            : await connection.sobject(sobjectType).del(ids);
+          return { success: true, data: result };
+        } catch (error) {
+          log.error('salesforce:delete error:', error);
+          return { success: false, error: error.message };
+        }
       }
-    });
-
-    ipcMain.handle('salesforce:delete', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId, sobjectType, ids, toolingMode }) => {
-      try {
-        const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
-        const result = toolingMode
-          ? await connection.tooling.sobject(sobjectType).del(ids)
-          : await connection.sobject(sobjectType).del(ids);
-        return { success: true, data: result };
-      } catch (error) {
-        log.error('salesforce:delete error:', error);
-        return { success: false, error: error.message };
-      }
-    });
+    );
   } catch (error) {
     console.error(error);
   }
@@ -472,7 +638,7 @@ if (!gotTheLock) {
   app.on('ready', createServer);
 
   // Quit when all windows are closed.
-  app.on('window-all-closed', function() {
+  app.on('window-all-closed', function () {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
@@ -480,7 +646,7 @@ if (!gotTheLock) {
     }
   });
 
-  app.on('activate', function() {
+  app.on('activate', function () {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) {
@@ -499,7 +665,7 @@ if (!gotTheLock) {
 
   // Auto-update features (production only)
   if (!isDevelopment && autoUpdater) {
-    app.on('ready', function() {
+    app.on('ready', function () {
       autoUpdater.checkForUpdatesAndNotify();
 
       //Every 5 minutes
@@ -508,43 +674,43 @@ if (!gotTheLock) {
       }, 300000);
     });
 
-    autoUpdater.on('checking-for-update', function() {
+    autoUpdater.on('checking-for-update', function () {
       sendStatusToWindow('Checking for update...');
     });
 
-    autoUpdater.on('update-available', function(info) {
+    autoUpdater.on('update-available', function (info) {
       sendStatusToWindow('Update available.');
     });
 
-    autoUpdater.on('update-not-available', function(info) {
+    autoUpdater.on('update-not-available', function (info) {
       sendStatusToWindow('Update not available.');
     });
 
-    autoUpdater.on('error', function(err) {
+    autoUpdater.on('error', function (err) {
       sendStatusToWindow('Error in auto-updater. ' + err);
     });
 
-    autoUpdater.on('download-progress', function(progressObj) {
+    autoUpdater.on('download-progress', function (progressObj) {
       const log_message = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`;
       sendStatusToWindow(log_message);
     });
 
-    autoUpdater.on('update-downloaded', function(info) {
+    autoUpdater.on('update-downloaded', function (info) {
       sendStatusToWindow('Update downloaded');
       mainWindow.webContents.send('update-downloaded');
     });
 
-    ipcMain.on('start-update', function(event, arg) {
+    ipcMain.on('start-update', function (event, arg) {
       sendStatusToWindow('Quit and install');
       autoUpdater.quitAndInstall();
     });
   }
 
-  ipcMain.on('refresh', function(event, arg) {
+  ipcMain.on('refresh', function (event, arg) {
     mainWindow.reload();
   });
 
-  ipcMain.on('error', function(event, arg) {
+  ipcMain.on('error', function (event, arg) {
     console.log('Main error');
     console.log(arg);
     log.error(arg);

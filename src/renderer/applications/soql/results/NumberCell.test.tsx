@@ -16,44 +16,34 @@ jest.mock('../../../stores/useConnectionStore', () => ({
         userInfo: {
           userLocale: 'us_EN',
           orgDefaultCurrencyLocale: 'us_EN',
-          orgDefaultCurrencyIsoCode: 'USD'
-        }
-      }
+          orgDefaultCurrencyIsoCode: 'USD',
+        },
+      },
     };
     return selector(state);
-  }
+  },
 }));
 
 describe('<NumberCell/>', () => {
   it('should render', () => {
-    render(
-      <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
-    );
+    render(<NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />);
   });
 
   it('should render zero', () => {
-    render(
-      <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
-    );
+    render(<NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />);
     screen.getByText('0');
   });
 
   it('should render percent correctly', () => {
     fieldSchema.type = 'percent';
     fieldSchema.scale = 3;
-    render(
-      <NumberCell
-        {...{ tabId: 'test', value: 0.199444, record: {}, fieldSchema }}
-      />
-    );
+    render(<NumberCell {...{ tabId: 'test', value: 0.199444, record: {}, fieldSchema }} />);
     screen.getByText(/0\.199%/);
   });
   it('should not treat zeros as nulls', () => {
     fieldSchema.type = 'percent';
     fieldSchema.scale = 2;
-    render(
-      <NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />
-    );
+    render(<NumberCell {...{ tabId: 'test', value: 0, record: {}, fieldSchema }} />);
     screen.getByText(/0\.00%/);
   });
 });

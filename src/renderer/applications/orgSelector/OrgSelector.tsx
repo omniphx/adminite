@@ -1,57 +1,48 @@
-import * as React from 'react'
+import * as React from 'react';
 import {
   CaretDownOutlined,
   CloudTwoTone,
   InfoCircleOutlined,
-  LoadingOutlined
-} from '@ant-design/icons'
-import { Dropdown, Card, Tooltip } from 'antd'
-import type { MenuProps } from 'antd'
-import {
-  useConnectionStore,
-  useConnectionsArray
-} from '../../stores/useConnectionStore'
+  LoadingOutlined,
+} from '@ant-design/icons';
+import { Dropdown, Card, Tooltip } from 'antd';
+import type { MenuProps } from 'antd';
+import { useConnectionStore, useConnectionsArray } from '../../stores/useConnectionStore';
 
-const { Meta } = Card
-import ConnectionCard from './ConnectionCard'
-import { MdAddBox, MdSettings } from 'react-icons/md'
-import IconWrapper from '../ui/IconWrapper'
-import UserSettings from './UserSettings'
+const { Meta } = Card;
+import ConnectionCard from './ConnectionCard';
+import { MdAddBox, MdSettings } from 'react-icons/md';
+import IconWrapper from '../ui/IconWrapper';
+import UserSettings from './UserSettings';
 
 const OrgSelector: React.FC = React.memo(() => {
   // Zustand store - select primitive values to avoid reference instability
-  const connections = useConnectionsArray()
+  const connections = useConnectionsArray();
   const activeConnectionName = useConnectionStore((state) =>
     state.activeConnectionId ? state.connections[state.activeConnectionId]?.name : null
-  )
-  const pending = useConnectionStore((state) => state.activeConnection.pending)
-  const error = useConnectionStore((state) => state.activeConnection.error)
-  const toggleModal = useConnectionStore((state) => state.toggleModal)
+  );
+  const pending = useConnectionStore((state) => state.activeConnection.pending);
+  const error = useConnectionStore((state) => state.activeConnection.error);
+  const toggleModal = useConnectionStore((state) => state.toggleModal);
 
-  const [showDropdown, setShowDropdown] = React.useState(false)
-  const [showUserSettingsModal, setShowUserSettingsModal] = React.useState(
-    false
-  )
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const [showUserSettingsModal, setShowUserSettingsModal] = React.useState(false);
 
   const handleNewOrg = () => {
-    setShowDropdown(false)
-    toggleModal()
-  }
+    setShowDropdown(false);
+    toggleModal();
+  };
 
   const handleUserSettings = () => {
-    setShowDropdown(false)
-    setShowUserSettingsModal(true)
-  }
+    setShowDropdown(false);
+    setShowUserSettingsModal(true);
+  };
 
   const getMenuItems = (): MenuProps['items'] => {
     const connectionItems = connections.map((connection: any, index) => ({
       key: connection.id,
-      label: (
-        <ConnectionCard
-          {...{ connection, setShowDropdown, index }}
-        />
-      )
-    }))
+      label: <ConnectionCard {...{ connection, setShowDropdown, index }} />,
+    }));
 
     return [
       ...connectionItems,
@@ -59,7 +50,7 @@ const OrgSelector: React.FC = React.memo(() => {
         key: 'create',
         onClick: handleNewOrg,
         label: (
-          <Card variant="borderless" style={{ background: 'transparent' }}>
+          <Card variant='borderless' style={{ background: 'transparent' }}>
             <Meta
               avatar={
                 <IconWrapper>
@@ -69,13 +60,13 @@ const OrgSelector: React.FC = React.memo(() => {
               description='New connection'
             />
           </Card>
-        )
+        ),
       },
       {
         key: 'settings',
         onClick: handleUserSettings,
         label: (
-          <Card variant="borderless" style={{ background: 'transparent' }}>
+          <Card variant='borderless' style={{ background: 'transparent' }}>
             <Meta
               avatar={
                 <IconWrapper>
@@ -85,10 +76,10 @@ const OrgSelector: React.FC = React.memo(() => {
               description='Settings'
             />
           </Card>
-        )
-      }
-    ]
-  }
+        ),
+      },
+    ];
+  };
 
   const menuProps: MenuProps = {
     items: getMenuItems(),
@@ -97,17 +88,17 @@ const OrgSelector: React.FC = React.memo(() => {
       overflow: 'hidden',
       overflowY: 'scroll',
       maxHeight: 600,
-      display: !showDropdown ? 'none' : ''
+      display: !showDropdown ? 'none' : '',
     },
-    className: 'org-drop-down'
-  }
+    className: 'org-drop-down',
+  };
 
   return (
     <div>
       <Dropdown
         menu={menuProps}
         trigger={['click']}
-        onOpenChange={visible => setShowDropdown(visible)}
+        onOpenChange={(visible) => setShowDropdown(visible)}
       >
         <a className='ant-dropdown-link' href='#' style={{ color: 'inherit' }}>
           <div
@@ -115,7 +106,7 @@ const OrgSelector: React.FC = React.memo(() => {
             style={{
               padding: 24,
               fontWeight: 600,
-              borderRight: '1px solid #e8e8e8'
+              borderRight: '1px solid #e8e8e8',
             }}
           >
             {renderDropDown()}
@@ -125,11 +116,11 @@ const OrgSelector: React.FC = React.memo(() => {
       <UserSettings
         {...{
           showModal: showUserSettingsModal,
-          setShowModal: setShowUserSettingsModal
+          setShowModal: setShowUserSettingsModal,
         }}
       />
     </div>
-  )
+  );
 
   function renderDropDown() {
     return activeConnectionName ? (
@@ -140,28 +131,28 @@ const OrgSelector: React.FC = React.memo(() => {
     ) : (
       //Has no connection
       <span>Connect to an Org {renderCaret()}</span>
-    )
+    );
   }
 
   function renderIcon() {
     if (pending) {
-      return <LoadingOutlined />
+      return <LoadingOutlined />;
     } else if (error) {
       return (
         <Tooltip title={error} placement='bottomRight' arrow={{ pointAtCenter: true }}>
           <InfoCircleOutlined className='icon-error' />
         </Tooltip>
-      )
+      );
     } else {
-      return <CloudTwoTone />
+      return <CloudTwoTone />;
     }
   }
 
   function renderCaret() {
-    const degrees: number = showDropdown ? 180 : 0
+    const degrees: number = showDropdown ? 180 : 0;
     //TODO: Clean up animation
-    return <CaretDownOutlined rotate={degrees} />
+    return <CaretDownOutlined rotate={degrees} />;
   }
-})
+});
 
-export default OrgSelector
+export default OrgSelector;

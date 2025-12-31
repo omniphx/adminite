@@ -51,24 +51,20 @@ export function hash(): string {
 }
 
 // Memoized results for optimizing performance
-const recordMatchResults = new Map<String, boolean>();
-const keyMatchResults = new Map<String, boolean>();
+const recordMatchResults = new Map<string, boolean>();
+const keyMatchResults = new Map<string, boolean>();
 
 export function hasMatch(record: any, filter: string) {
   if (!filter) return true;
   if (filter.length === 0) return true;
-  const compositeKey = v5(
-    JSON.stringify(record) + filter,
-    'a2ad0020-d0de-4f2b-9051-5ddcd0ba32d7'
-  );
-  if (recordMatchResults.has(compositeKey))
-    return recordMatchResults.get(compositeKey);
-  let normalizedFilter = filter.toLowerCase();
+  const compositeKey = v5(JSON.stringify(record) + filter, 'a2ad0020-d0de-4f2b-9051-5ddcd0ba32d7');
+  if (recordMatchResults.has(compositeKey)) return recordMatchResults.get(compositeKey);
+  const normalizedFilter = filter.toLowerCase();
 
-  for (var key in record) {
+  for (const key in record) {
     if (key === 'key') continue;
     if (key === 'attributes') continue;
-    let value = record[key];
+    const value = record[key];
     if (!value) continue;
 
     if (isMatch(normalizedFilter, key, value)) {
@@ -86,14 +82,13 @@ function isMatch(filter, key, value): boolean {
     filter + key + JSON.stringify(value),
     'eec8b9c4-4ab2-4729-aeb6-e09e67b5d735'
   );
-  if (keyMatchResults.has(keyMatchCompositeKey))
-    return keyMatchResults.get(keyMatchCompositeKey);
+  if (keyMatchResults.has(keyMatchCompositeKey)) return keyMatchResults.get(keyMatchCompositeKey);
 
   if (typeof value === 'string') {
     return normalizeValue(value).includes(filter);
   } else if (typeof value === 'object') {
     if (value.records) {
-      value.records.forEach(record => {
+      value.records.forEach((record) => {
         const match = hasMatch(record, filter);
         keyMatchResults.set(keyMatchCompositeKey, match);
         return match;
@@ -120,25 +115,19 @@ function normalizeValue(value: string, locale: Locale = enUS) {
 }
 
 export function dataReducer(data: any) {
-  return Object.values(data).reduce(
-    (accumulator, record: any, index: number) => {
-      const key =
-        record.attributes.type === 'AggregateResult'
-          ? index
-          : getRecordId(record);
-      record['editFields'] = [];
-      record['errorMessage'] = '';
-      record['key'] = key;
-      accumulator[key] = record;
-      return accumulator;
-    },
-    {}
-  );
+  return Object.values(data).reduce((accumulator, record: any, index: number) => {
+    const key = record.attributes.type === 'AggregateResult' ? index : getRecordId(record);
+    record['editFields'] = [];
+    record['errorMessage'] = '';
+    record['key'] = key;
+    accumulator[key] = record;
+    return accumulator;
+  }, {});
 }
 
 export function filterReducer(data: any, filterString: string) {
   return Object.values(data)
-    .filter(record => hasMatch(record, filterString))
+    .filter((record) => hasMatch(record, filterString))
     .reduce((accumulator, record: any) => {
       accumulator[record.Id] = record;
       return accumulator;
@@ -146,7 +135,7 @@ export function filterReducer(data: any, filterString: string) {
 }
 
 export function filterIds(data: any, filterString: string) {
-  return Object.keys(data).filter(key => hasMatch(data[key], filterString));
+  return Object.keys(data).filter((key) => hasMatch(data[key], filterString));
 }
 
 export function chunk(arr, size): any[] {

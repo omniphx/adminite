@@ -1,23 +1,24 @@
-import * as React from 'react'
-import { Select } from 'antd'
-import { useTabStore } from '../../../stores/useTabStore'
+import * as React from 'react';
+import { Select } from 'antd';
+import { useTabStore } from '../../../stores/useTabStore';
 
 interface IPageSizeSelectProps {
-  tabId: string
+  tabId: string;
 }
 
-const PageSizeSelect: React.FC<IPageSizeSelectProps> = (
-  props: IPageSizeSelectProps
-) => {
-  const { tabId } = props
+const PageSizeSelect: React.FC<IPageSizeSelectProps> = (props: IPageSizeSelectProps) => {
+  const { tabId } = props;
 
   // Zustand store
-  const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? { current: 1, pageSize: 25 }
-  const setPaginationConfig = useTabStore((state) => state.setPaginationConfig)
+  const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? {
+    current: 1,
+    pageSize: 25,
+  };
+  const setPaginationConfig = useTabStore((state) => state.setPaginationConfig);
 
   const handleChange = (value: number) => {
-    setPaginationConfig(tabId, { ...paginationConfig, pageSize: value })
-  }
+    setPaginationConfig(tabId, { ...paginationConfig, pageSize: value });
+  };
 
   return (
     <div>
@@ -29,7 +30,7 @@ const PageSizeSelect: React.FC<IPageSizeSelectProps> = (
         <Select.Option value={200}>200</Select.Option>
       </Select>
     </div>
-  )
-}
+  );
+};
 
-export default PageSizeSelect
+export default PageSizeSelect;

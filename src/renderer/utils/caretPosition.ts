@@ -1,18 +1,18 @@
 // Converted this into typescript from https://github.com/component/textarea-caret-position
 
-declare var window: Window
+declare let window: Window;
 
 export interface CaretLocator {
-  top: number
-  left: number
-  height: number
+  top: number;
+  left: number;
+  height: number;
 }
 
 export class Caret {
-  private textArea: HTMLTextAreaElement
+  private textArea: HTMLTextAreaElement;
 
   constructor(textArea: HTMLTextAreaElement) {
-    this.textArea = textArea
+    this.textArea = textArea;
   }
 
   // We'll copy the properties below into the mirror div.
@@ -57,74 +57,74 @@ export class Caret {
     'wordSpacing',
 
     'tabSize',
-    'MozTabSize'
-  ]
+    'MozTabSize',
+  ];
 
-  private isBrowser = typeof window !== 'undefined'
-  private isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+  private isBrowser = typeof window !== 'undefined';
+  private isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 
   public getCoordinates = (position: number): CaretLocator => {
     if (!this.isBrowser) {
       throw new Error(
         'textarea-caret-position#getCaretCoordinates should only be called in a browser'
-      )
+      );
     }
 
     // The mirror div will replicate the textarea's style
-    const div = document.createElement('div')
-    div.id = 'input-textarea-caret-position-mirror-div'
-    document.body.appendChild(div)
+    const div = document.createElement('div');
+    div.id = 'input-textarea-caret-position-mirror-div';
+    document.body.appendChild(div);
 
-    const style = div.style
-    const computed: any = window.getComputedStyle(this.textArea)
+    const style = div.style;
+    const computed: any = window.getComputedStyle(this.textArea);
 
     // Default textarea styles
-    style.whiteSpace = 'pre-wrap'
+    style.whiteSpace = 'pre-wrap';
 
     // Position off-screen
-    style.position = 'absolute' // required to return coordinates properly
+    style.position = 'absolute'; // required to return coordinates properly
 
     // Transfer the element's properties to the div
-    this.properties.forEach(prop => {
-      style[prop] = computed[prop]
-    })
+    this.properties.forEach((prop) => {
+      style[prop] = computed[prop];
+    });
 
     if (this.isFirefox) {
       // Firefox lies about the overflow property for textareas: https://bugzilla.mozilla.org/show_bug.cgi?id=984275
       if (this.textArea.scrollHeight > parseInt(computed['height'])) {
-        style.overflowY = 'scroll'
+        style.overflowY = 'scroll';
       }
     } else {
-      style.overflow = 'hidden' // for Chrome to not render a scrollbar IE keeps overflowY = 'scroll'
+      style.overflow = 'hidden'; // for Chrome to not render a scrollbar IE keeps overflowY = 'scroll'
     }
 
-    const contentAtPosition = this.textArea.value.substring(0, position)
-    div.textContent = contentAtPosition
+    const contentAtPosition = this.textArea.value.substring(0, position);
+    div.textContent = contentAtPosition;
 
-    const span = document.createElement('span')
+    const span = document.createElement('span');
     // Wrapping must be replicated *exactly*, including when a long word gets
     // onto the next line, with whitespace at the end of the line before (#7).
     // The  *only* reliable way to do that is to copy the *entire* rest of the
     // textarea's content into the <span> created at the caret position.
     // For inputs, just '.' would be enough, but no need to bother.
-    span.textContent = this.textArea.value.substring(position) || '.' // || because a completely empty faux span doesn't render at all
-    div.appendChild(span)
+    span.textContent = this.textArea.value.substring(position) || '.'; // || because a completely empty faux span doesn't render at all
+    div.appendChild(span);
 
     const coordinates: CaretLocator = {
       top: span.offsetTop + parseInt(computed['borderTopWidth']),
       left: span.offsetLeft + parseInt(computed['borderLeftWidth']),
-      height: parseInt(computed['lineHeight'])
-    }
+      height: parseInt(computed['lineHeight']),
+    };
 
-    document.body.removeChild(div)
+    document.body.removeChild(div);
 
-    return coordinates
-  }
+    return coordinates;
+  };
 
   public setPosition = (start: number, end?: number) => {
-    if (!this.textArea) return
-    if(!end) end = start
-    this.textArea.focus()
-    this.textArea.setSelectionRange(start, end)
-  }
+    if (!this.textArea) return;
+    if (!end) end = start;
+    this.textArea.focus();
+    this.textArea.setSelectionRange(start, end);
+  };
 }

@@ -22,11 +22,7 @@ const TextCell: React.FC<ITextCellProps> = (props: ITextCellProps) => {
     fieldSchema.type === 'url' ? (
       <a
         href='#'
-        onClick={() =>
-          shell.openExternal(
-            value.indexOf('http') < 0 ? `https://${value}` : value
-          )
-        }
+        onClick={() => shell.openExternal(value.indexOf('http') < 0 ? `https://${value}` : value)}
       >
         {value}
       </a>
@@ -62,7 +58,7 @@ const TextCell: React.FC<ITextCellProps> = (props: ITextCellProps) => {
     editMode,
     setEditMode,
     setEditValue,
-    value: renderedValue
+    value: renderedValue,
   };
 
   return (

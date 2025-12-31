@@ -41,12 +41,9 @@ const mockTabStoreState = {
 };
 
 jest.mock('../../../stores/useTabStore', () => ({
-  useTabStore: Object.assign(
-    (selector: any) => selector(mockTabStoreState),
-    {
-      getState: () => mockTabStoreState,
-    }
-  ),
+  useTabStore: Object.assign((selector: any) => selector(mockTabStoreState), {
+    getState: () => mockTabStoreState,
+  }),
 }));
 
 // Mock Zustand query result store (Phase 9)
@@ -60,7 +57,7 @@ const mockQueryResultStoreState = {
       pending: false,
       dmlPending: false,
       errors: null,
-    }
+    },
   },
   setSelectedIds: jest.fn(),
 };
@@ -81,9 +78,9 @@ jest.mock('../../../queries/useSObjectQuery', () => ({
         Name: {
           name: 'Name',
           type: 'string',
-          updateable: true
-        }
-      }
+          updateable: true,
+        },
+      },
     },
     isLoading: false,
     error: null,
@@ -125,19 +122,19 @@ describe('<QueryResultsTable/>', () => {
           Name: 'Morty Smith',
           attributes: {
             type: 'Opportunity',
-            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3',
           },
-          editFields: []
+          editFields: [],
         },
         '2': {
           key: '2',
           Name: 'Rick Sanchez',
           attributes: {
             type: 'Opportunity',
-            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3',
           },
-          editFields: []
-        }
+          editFields: [],
+        },
       },
       filteredIds: ['2'],
       selectedIds: [],
@@ -161,15 +158,15 @@ describe('<QueryResultsTable/>', () => {
           Account: {
             Name: 'Morty Smith',
             ParentAccount: {
-              Name: 'Jerry Smith'
-            }
+              Name: 'Jerry Smith',
+            },
           },
           attributes: {
             type: 'Opportunity',
-            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3',
           },
-          editFields: []
-        }
+          editFields: [],
+        },
       },
       filteredIds: ['1'],
       selectedIds: [],
@@ -197,19 +194,19 @@ describe('<QueryResultsTable/>', () => {
           Name: 'Morty Smith',
           attributes: {
             type: 'Opportunity',
-            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3',
           },
-          editFields: []
+          editFields: [],
         },
         '2': {
           key: '2',
           Name: 'Rick Sanchez',
           attributes: {
             type: 'Opportunity',
-            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3'
+            url: '/services/data/v42.0/sobjects/Opportunity/0061N00000TbONAQA3',
           },
-          editFields: []
-        }
+          editFields: [],
+        },
       },
       filteredIds: ['1', '2'],
       selectedIds: [],

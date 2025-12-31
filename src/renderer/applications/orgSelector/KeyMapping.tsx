@@ -1,118 +1,117 @@
-import * as React from 'react'
-import { EditOutlined } from '@ant-design/icons'
-import { Row, Col } from 'antd'
-import Hotkeys from '../ui/Hotkeys'
-import hotkeys from 'hotkeys-js'
-import * as os from 'os'
-import { useUserStore } from '../../stores/useUserStore'
+import * as React from 'react';
+import { EditOutlined } from '@ant-design/icons';
+import { Row, Col } from 'antd';
+import Hotkeys from '../ui/Hotkeys';
+import hotkeys from 'hotkeys-js';
+import * as os from 'os';
+import { useUserStore } from '../../stores/useUserStore';
 
 interface IKeyMappingProps {
-  showModal: boolean
+  showModal: boolean;
 }
 
 const KeyMapping: React.FC<any> = React.memo((props: IKeyMappingProps) => {
-  const { showModal } = props
-  const queryHotkey = useUserStore((state) => state.queryHotkey)
-  const setQueryHotkey = useUserStore((state) => state.setQueryHotkey)
+  const { showModal } = props;
+  const queryHotkey = useUserStore((state) => state.queryHotkey);
+  const setQueryHotkey = useUserStore((state) => state.setQueryHotkey);
 
-  const [editMode, setEditMode] = React.useState(false)
-  const [keyCombo, setKeyCombo] = React.useState('')
+  const [editMode, setEditMode] = React.useState(false);
+  const [keyCombo, setKeyCombo] = React.useState('');
 
   const onEdit = () => {
-    setEditMode(true)
-  }
+    setEditMode(true);
+  };
 
   React.useEffect(() => {
     if (!showModal) {
-      setEditMode(false)
-      setKeyCombo('')
+      setEditMode(false);
+      setKeyCombo('');
     }
-  }, [showModal])
+  }, [showModal]);
 
   React.useEffect(() => {
     if (editMode) {
-      let keyCodeCombo = ''
-      hotkeys.setScope('setting')
+      let keyCodeCombo = '';
+      hotkeys.setScope('setting');
       hotkeys('*', 'setting', function (event, handler) {
-        event.preventDefault()
+        event.preventDefault();
 
-        const isMac = os.type() === 'Darwin'
+        const isMac = os.type() === 'Darwin';
 
-        if(hotkeys.isPressed('enter')) {
-          hotkeys.deleteScope('setting')
-          setEditMode(false)
-          setQueryHotkey(keyCodeCombo)
-        } else if(hotkeys.isPressed('esc')) {
-          hotkeys.deleteScope('setting')
-          setEditMode(false)
+        if (hotkeys.isPressed('enter')) {
+          hotkeys.deleteScope('setting');
+          setEditMode(false);
+          setQueryHotkey(keyCodeCombo);
+        } else if (hotkeys.isPressed('esc')) {
+          hotkeys.deleteScope('setting');
+          setEditMode(false);
         } else {
-          const keys = hotkeys.getPressedKeyCodes()
-            .filter(keyCode => [16, 18, 91, 17, 37, 38, 39, 40].includes(keyCode) || (keyCode >= 65 && keyCode <= 90))
-            .map(keyCode => {
+          const keys = hotkeys
+            .getPressedKeyCodes()
+            .filter(
+              (keyCode) =>
+                [16, 18, 91, 17, 37, 38, 39, 40].includes(keyCode) ||
+                (keyCode >= 65 && keyCode <= 90)
+            )
+            .map((keyCode) => {
               switch (keyCode) {
                 case 16:
-                  return 'shift'
+                  return 'shift';
                 case 18:
-                  return isMac ? '⌥' : 'alt'
+                  return isMac ? '⌥' : 'alt';
                 case 91:
-                  return isMac ? '⌘' : 'cmd'
+                  return isMac ? '⌘' : 'cmd';
                 case 17:
-                  return isMac ? '⌃' : 'ctrl'
+                  return isMac ? '⌃' : 'ctrl';
                 case 37:
-                  return '◄'
+                  return '◄';
                 case 38:
-                  return '▲'
+                  return '▲';
                 case 39:
-                  return '►'
+                  return '►';
                 case 40:
-                  return '▼'
+                  return '▼';
                 default:
-                  return String.fromCharCode(keyCode)
+                  return String.fromCharCode(keyCode);
               }
-            })
-            //A variable is also being set because a listener has no reference to the changing hook value
-            keyCodeCombo = keys.join('+')
-            setKeyCombo(keys.join('+'))
+            });
+          //A variable is also being set because a listener has no reference to the changing hook value
+          keyCodeCombo = keys.join('+');
+          setKeyCombo(keys.join('+'));
         }
-
-      })
+      });
     } else {
-      hotkeys.unbind('*', 'setting')
+      hotkeys.unbind('*', 'setting');
     }
 
     return () => {
-      hotkeys.unbind('*', 'setting')
-    }
-  }, [editMode])
+      hotkeys.unbind('*', 'setting');
+    };
+  }, [editMode]);
 
   return (
     <Row justify='space-between' align='middle'>
-      <Col span={6}>
-        Execute query
-        </Col>
-      <Col span={2}>
-        {renderIcons()}
-      </Col>
-      <Col span={16}>
-        {renderHotkey()}
-      </Col>
+      <Col span={6}>Execute query</Col>
+      <Col span={2}>{renderIcons()}</Col>
+      <Col span={16}>{renderHotkey()}</Col>
     </Row>
-  )
+  );
 
   function renderIcons() {
-    return editMode
-      ? <></>
-      : <EditOutlined onClick={onEdit} />
+    return editMode ? <></> : <EditOutlined onClick={onEdit} />;
   }
 
   function renderHotkey() {
-    return editMode
-      ?
-      <div style={{ border: '1px solid #d9d9d9', borderRadius: 4, padding: '6px 11px', height: 41 }}>
+    return editMode ? (
+      <div
+        style={{ border: '1px solid #d9d9d9', borderRadius: 4, padding: '6px 11px', height: 41 }}
+      >
         <Hotkeys combination={keyCombo} />
       </div>
-      : <Hotkeys combination={queryHotkey} />
+    ) : (
+      <Hotkeys combination={queryHotkey} />
+    );
   }
-})
+});
 
-export default KeyMapping
+export default KeyMapping;

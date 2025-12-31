@@ -1,12 +1,7 @@
 import * as React from 'react';
 import { LinkOutlined } from '@ant-design/icons';
 import { Table as AntTable, TablePaginationConfig } from 'antd';
-import {
-  isSalesforceId,
-  isDate,
-  isDatetime,
-  getRecordId
-} from '../../../../helpers/utils';
+import { isSalesforceId, isDate, isDatetime, getRecordId } from '../../../../helpers/utils';
 import { shell } from 'electron';
 import { useShallow } from 'zustand/react/shallow';
 import { getDateFnsLocale, formatDate, formatDateTime } from '../../../utils/dateFormatting';
@@ -21,7 +16,12 @@ import { flattenData } from '../../../utils/queryResultsHandler';
 import { useTabStore } from '../../../stores/useTabStore';
 import { useConnectionStore } from '../../../stores/useConnectionStore';
 import { useResultSObjectDescribe } from '../../../queries/useSObjectQuery';
-import { useQueryResultStore, selectTabData, selectTabFilteredIds, selectTabSelectedIds } from '../../../stores/useQueryResultStore';
+import {
+  useQueryResultStore,
+  selectTabData,
+  selectTabFilteredIds,
+  selectTabSelectedIds,
+} from '../../../stores/useQueryResultStore';
 
 interface IQueryResultsTableProps {
   tabId: string;
@@ -53,7 +53,10 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const setSelectedIds = useQueryResultStore((state) => state.setSelectedIds);
 
     // Zustand store for query state
-    const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? { current: 1, pageSize: 25 };
+    const paginationConfig = useTabStore((state) => state.queries[tabId]?.paginationConfig) ?? {
+      current: 1,
+      pageSize: 25,
+    };
     const parsedQuery = useTabStore((state) => state.queries[tabId]?.parsedQuery);
     const resultSObjectName = useTabStore((state) => state.queries[tabId]?.resultSObjectName);
     const dateFormat = useTabStore((state) => state.queries[tabId]?.dateFormat) ?? 'human';
@@ -63,13 +66,13 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const fieldSchema = sobjectData?.fieldSchema;
 
     const dataSource = filteredIds
-      .filter(id => data.hasOwnProperty(id))
-      .map(id => flattenData(data[id]));
+      .filter((id) => data.hasOwnProperty(id))
+      .map((id) => flattenData(data[id]));
 
     //Hooks
     const [sortedInfo, setSortedInfo] = React.useState({
       columnKey: null,
-      order: null
+      order: null,
     });
     const [selectedRowKeys, setSelectedRowKeys] = React.useState<any[]>([]);
 
@@ -78,11 +81,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
       setSelectedRowKeys([]);
     }, [data]);
 
-    const handleChange = (
-      pagination: TablePaginationConfig,
-      filters: any,
-      sorter: any
-    ) => {
+    const handleChange = (pagination: TablePaginationConfig, filters: any, sorter: any) => {
       useTabStore.getState().setPaginationConfig(tabId, pagination);
       setSortedInfo(sorter);
     };
@@ -95,27 +94,23 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
           if (typeof record[key] !== 'object') continue;
           const recordObject = record[key];
           if (!recordObject) continue;
-          if (
-            !Array.isArray(recordObject.records) ||
-            !recordObject.records.length
-          )
-            continue;
+          if (!Array.isArray(recordObject.records) || !recordObject.records.length) continue;
 
           const table = {
             key,
             data: getData(recordObject.records),
-            columns: getColumns(recordObject.records, true).map(column => {
+            columns: getColumns(recordObject.records, true).map((column) => {
               //Diable sorting in child tables
               delete column.sorter;
               return column;
-            })
+            }),
           };
 
           tables.push(table);
         }
       }
 
-      return tables.map(table => {
+      return tables.map((table) => {
         return (
           <div key={table.key}>
             <h3>{table.key}</h3>
@@ -132,12 +127,12 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
       });
     };
 
-    const onIdClick = recordId => {
+    const onIdClick = (recordId) => {
       shell.openExternal(`${instanceUrl}/${recordId}`);
     };
 
-    const getRecordKeys = record => {
-      let recordKeys = [];
+    const getRecordKeys = (record) => {
+      const recordKeys = [];
 
       for (const key in record) {
         if (key === 'attributes') continue;
@@ -161,8 +156,8 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const getProperty = (propertyName, property) => {
       if (!property) return property;
 
-      let propertyNames = propertyName.split('.');
-      let firstProperty = propertyNames.splice(0, 1);
+      const propertyNames = propertyName.split('.');
+      const firstProperty = propertyNames.splice(0, 1);
 
       if (propertyNames.length > 0) {
         return getProperty(propertyNames.join('.'), property[firstProperty]);
@@ -174,21 +169,21 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const tableProps = hasChildRecords()
       ? {
           expandedRowRender: expandedRowRender,
-          rowClassName: rowClassName
+          rowClassName: rowClassName,
         }
       : {};
 
     const onSelect = (selectedRow: any, selected: boolean) => {
       const newSelectedIds = selected
         ? [...selectedIds, selectedRow.Id]
-        : selectedIds.filter(id => id !== selectedRow.Id);
+        : selectedIds.filter((id) => id !== selectedRow.Id);
       setSelectedIds(tabId, newSelectedIds);
     };
 
     const onSelectAll = (selected: boolean) => {
       const newSelectedIds = selected
         ? filteredIds
-        : selectedIds.filter(id => !filteredIds.includes(id));
+        : selectedIds.filter((id) => !filteredIds.includes(id));
       setSelectedIds(tabId, newSelectedIds);
     };
 
@@ -200,7 +195,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
         rowSelection={{
           selectedRowKeys: selectedIds,
           onSelect: onSelect,
-          onSelectAll: onSelectAll
+          onSelectAll: onSelectAll,
           // hideDefaultSelections: true
         }}
         onChange={handleChange}
@@ -225,28 +220,24 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     function hasChildRecords() {
       if (!parsedQuery) return false;
       if (!parsedQuery.fields) return false;
-      return parsedQuery.fields.some(field => field.type === 'FieldSubquery');
+      return parsedQuery.fields.some((field) => field.type === 'FieldSubquery');
     }
 
     function getData(data) {
       return data.map((record: any, index: any) => {
-        record.key =
-          record.attributes.type === 'AggregateResult'
-            ? index
-            : getRecordId(record);
+        record.key = record.attributes.type === 'AggregateResult' ? index : getRecordId(record);
 
         return record;
       });
     }
 
     function getColumns(records, isChild) {
-      let columns = [];
+      const columns = [];
       if (!records) return columns;
 
-      let record = records[0];
-      return getRecordKeys(record).map(field => {
-        const fieldDescription =
-          isChild || !fieldSchema ? null : fieldSchema[field];
+      const record = records[0];
+      return getRecordKeys(record).map((field) => {
+        const fieldDescription = isChild || !fieldSchema ? null : fieldSchema[field];
         return {
           title: field,
           dataIndex: field,
@@ -265,25 +256,23 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
             return 0;
           },
           sortOrder: sortedInfo.columnKey === field && sortedInfo.order,
-          onCell: record => {
+          onCell: (record) => {
             return {
               className: 'table-cell',
               style: {
                 backgroundColor:
-                  record.editFields && record.editFields.indexOf(field) >= 0
-                    ? '#fff7e6'
-                    : '#fff'
-              }
+                  record.editFields && record.editFields.indexOf(field) >= 0 ? '#fff7e6' : '#fff',
+              },
             };
           },
           render: (value, record) => {
             const childProps = {
-              ...{ tabId, value, record, fieldSchema: fieldDescription, dateFormat }
+              ...{ tabId, value, record, fieldSchema: fieldDescription, dateFormat },
             };
             return record.attributes.type === 'AggregateResult'
               ? formatValue(value)
               : renderCell(childProps);
-          }
+          },
         };
       });
     }

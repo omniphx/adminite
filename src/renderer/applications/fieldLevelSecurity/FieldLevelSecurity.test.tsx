@@ -57,7 +57,7 @@ describe('<FieldLevelSecurity/>', () => {
     mockPermissionSets.length = 0;
     mockFields.length = 0;
     // Clear field permissions mock
-    Object.keys(mockFieldPermissions).forEach(key => delete mockFieldPermissions[key]);
+    Object.keys(mockFieldPermissions).forEach((key) => delete mockFieldPermissions[key]);
   });
 
   it('should render', () => {
@@ -72,11 +72,11 @@ describe('<FieldLevelSecurity/>', () => {
       Id: '123',
       Profile: {
         Id: '234',
-        Name: 'Standard Profile'
+        Name: 'Standard Profile',
       },
       name: 'Standard Profile',
       key: '123',
-      IsOwnedByProfile: true
+      IsOwnedByProfile: true,
     });
     mockFields.push(
       {
@@ -88,7 +88,7 @@ describe('<FieldLevelSecurity/>', () => {
         IsCompound: false,
         IsCreatable: false,
         IsPermissionable: true,
-        Label: 'Account ID'
+        Label: 'Account ID',
       },
       {
         Name: 'IsDeleted',
@@ -99,7 +99,7 @@ describe('<FieldLevelSecurity/>', () => {
         IsCompound: false,
         IsCreatable: false,
         IsPermissionable: true,
-        Label: 'Deleted'
+        Label: 'Deleted',
       },
       {
         Name: 'MasterRecord',
@@ -110,7 +110,7 @@ describe('<FieldLevelSecurity/>', () => {
         IsCompound: false,
         IsCreatable: false,
         IsPermissionable: true,
-        Label: 'Master Record ID'
+        Label: 'Master Record ID',
       }
     );
 
@@ -131,11 +131,11 @@ describe('<FieldLevelSecurity/>', () => {
       Id: '123',
       Profile: {
         Id: '234',
-        Name: 'Standard Profile'
+        Name: 'Standard Profile',
       },
       name: 'Standard Profile',
       key: '123',
-      IsOwnedByProfile: true
+      IsOwnedByProfile: true,
     });
     mockFields.push(
       {
@@ -147,7 +147,7 @@ describe('<FieldLevelSecurity/>', () => {
         IsCompound: false,
         IsCreatable: false,
         IsPermissionable: true,
-        Label: 'Account ID'
+        Label: 'Account ID',
       },
       {
         Name: 'ReadOnly',
@@ -159,7 +159,7 @@ describe('<FieldLevelSecurity/>', () => {
         IsCreatable: false,
         IsCalculated: false,
         IsPermissionable: true,
-        Label: 'Deleted'
+        Label: 'Deleted',
       }
     );
 
@@ -169,21 +169,19 @@ describe('<FieldLevelSecurity/>', () => {
       Field: 'Account.Id',
       ParentId: '123',
       PermissionsEdit: true,
-      PermissionsRead: true
+      PermissionsRead: true,
     };
     mockFieldPermissions['fp2'] = {
       Id: 'fp2',
       Field: 'Account.ReadOnly',
       ParentId: '123',
       PermissionsEdit: false,
-      PermissionsRead: true
+      PermissionsRead: true,
     };
 
     render(<FieldLevelSecurity />);
 
-    let checkbox: HTMLInputElement | null = document.querySelector(
-      'input#edit_123_all'
-    );
+    let checkbox: HTMLInputElement | null = document.querySelector('input#edit_123_all');
     await userEvent.click(checkbox!);
 
     checkbox = document.querySelector('input#edit_123_all');

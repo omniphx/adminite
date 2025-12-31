@@ -1,9 +1,7 @@
 import React, { ReactElement, Suspense, useEffect, lazy } from 'react';
 
 //Apps
-const Permissions = lazy(() =>
-  import('./applications/fieldLevelSecurity/Permissions')
-);
+const Permissions = lazy(() => import('./applications/fieldLevelSecurity/Permissions'));
 const QueryTabs = lazy(() => import('./applications/soql/QueryTabs'));
 
 import { Layout, Menu, Spin, Button, Modal } from 'antd';
@@ -17,29 +15,24 @@ import UpdateNotification from './applications/UpdateNotification';
 import * as os from 'os';
 import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
 import { useFeatureStore, Feature } from './stores/useFeatureStore';
-import {
-  useConnectionStore,
-  getActiveConnection
-} from './stores/useConnectionStore';
+import { useConnectionStore, getActiveConnection } from './stores/useConnectionStore';
 import { useConnectionQuery } from './queries/useConnectionQuery';
 
 const App = (): ReactElement => {
-  const feature = useFeatureStore(state => state.feature);
-  const setFeature = useFeatureStore(state => state.setFeature);
+  const feature = useFeatureStore((state) => state.feature);
+  const setFeature = useFeatureStore((state) => state.setFeature);
 
   // Zustand connection store
-  const addConnection = useConnectionStore(state => state.addConnection);
-  const updateConnection = useConnectionStore(state => state.updateConnection);
-  const setActiveConnectionId = useConnectionStore(
-    state => state.setActiveConnectionId
-  );
-  const toggleModal = useConnectionStore(state => state.toggleModal);
+  const addConnection = useConnectionStore((state) => state.addConnection);
+  const updateConnection = useConnectionStore((state) => state.updateConnection);
+  const setActiveConnectionId = useConnectionStore((state) => state.setActiveConnectionId);
+  const toggleModal = useConnectionStore((state) => state.toggleModal);
   const initializeFromLegacyStorage = useConnectionStore(
-    state => state.initializeFromLegacyStorage
+    (state) => state.initializeFromLegacyStorage
   );
-  const connectionOrder = useConnectionStore(state => state.connectionOrder);
+  const connectionOrder = useConnectionStore((state) => state.connectionOrder);
   const activeConnection = useConnectionStore(getActiveConnection);
-  const error = useConnectionStore(state => state.activeConnection.error);
+  const error = useConnectionStore((state) => state.activeConnection.error);
 
   // TanStack Query for connection identity/userInfo (Phase 4)
   useConnectionQuery();
@@ -61,10 +54,7 @@ const App = (): ReactElement => {
     // This happens when jsforce automatically refreshes an expired access token
     const handleTokenRefresh = (
       _event: any,
-      {
-        connectionId,
-        accessToken
-      }: { connectionId: string; accessToken: string }
+      { connectionId, accessToken }: { connectionId: string; accessToken: string }
     ) => {
       console.log('Token refreshed for connection:', connectionId);
       updateConnection(connectionId, { accessToken });
@@ -86,29 +76,25 @@ const App = (): ReactElement => {
         content: (
           <div>
             <p>
-              Due to high server costs and recent outages, I've decided to
-              remove cloud storage from Adminite. Your data will now live
-              securely with you on the app.
+              Due to high server costs and recent outages, I've decided to remove cloud storage from
+              Adminite. Your data will now live securely with you on the app.
             </p>
             <p>
-              Unfortunately, you will need to reconfigure a few things. Feel
-              free to reach me at{' '}
-              <a href='mailto:mattjmitchener@gmail.com'>
-                mattjmitchener@gmail.com
-              </a>
+              Unfortunately, you will need to reconfigure a few things. Feel free to reach me at{' '}
+              <a href='mailto:mattjmitchener@gmail.com'>mattjmitchener@gmail.com</a>
               {', '}
               if you'd like to recover your saved queries.
             </p>
             <p>
-              I've also decided to opensource Adminite to provide more
-              transparency and create an environment to improve innovation.
+              I've also decided to opensource Adminite to provide more transparency and create an
+              environment to improve innovation.
             </p>
             <p>Thanks!</p>
           </div>
         ),
         onOk() {
           localStorage.setItem('offline-update', 'done');
-        }
+        },
       });
     }
   }, []);
@@ -169,7 +155,7 @@ const App = (): ReactElement => {
               height: '100vh',
               position: 'fixed',
               paddingTop: '.5em',
-              left: 0
+              left: 0,
             }}
           >
             <OrgSelector />
@@ -188,7 +174,7 @@ const App = (): ReactElement => {
                       <FaDatabase />
                     </IconWrapper>
                   ),
-                  label: 'SOQL Editor'
+                  label: 'SOQL Editor',
                 },
                 {
                   key: 'permissions',
@@ -198,7 +184,7 @@ const App = (): ReactElement => {
                       <FaUnlockAlt />
                     </IconWrapper>
                   ),
-                  label: 'Field Level Security'
+                  label: 'Field Level Security',
                 },
                 {
                   key: 'schema',
@@ -208,8 +194,8 @@ const App = (): ReactElement => {
                       <FaTools />
                     </IconWrapper>
                   ),
-                  label: 'Schema'
-                }
+                  label: 'Schema',
+                },
               ]}
             />
           </Sider>
@@ -224,7 +210,7 @@ const App = (): ReactElement => {
                       justifyContent: 'center',
                       alignItems: 'center',
                       textAlign: 'center',
-                      minHeight: '100vh'
+                      minHeight: '100vh',
                     }}
                   >
                     <Spin size='large' />

@@ -1,40 +1,40 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-export type PermissionType = 'profile' | 'permissionSet'
+export type PermissionType = 'profile' | 'permissionSet';
 
 // Field permission change record
 export interface FieldPermissionChange {
-  Id?: string
-  Field: string
-  ParentId: string
-  PermissionsEdit: boolean
-  PermissionsRead: boolean
-  SobjectType: string
+  Id?: string;
+  Field: string;
+  ParentId: string;
+  PermissionsEdit: boolean;
+  PermissionsRead: boolean;
+  SobjectType: string;
 }
 
 interface PermissionUIState {
   // Selection state
-  permissionType: PermissionType
-  permissionIds: string[]
-  sobjectName: string
-  filter: string
+  permissionType: PermissionType;
+  permissionIds: string[];
+  sobjectName: string;
+  filter: string;
 
   // Field permission changes (unsaved edits) - Phase 8
-  fieldPermissionsToSave: Record<string, FieldPermissionChange>
-  saveErrors: string | null
+  fieldPermissionsToSave: Record<string, FieldPermissionChange>;
+  saveErrors: string | null;
 
   // Actions
-  setPermissionType: (permissionType: PermissionType) => void
-  setPermissionIds: (permissionIds: string[]) => void
-  setSObjectName: (sobjectName: string) => void
-  setFilter: (filter: string) => void
-  reset: () => void
+  setPermissionType: (permissionType: PermissionType) => void;
+  setPermissionIds: (permissionIds: string[]) => void;
+  setSObjectName: (sobjectName: string) => void;
+  setFilter: (filter: string) => void;
+  reset: () => void;
 
   // Field permission actions - Phase 8
-  updateFieldPermission: (key: string, permission: FieldPermissionChange) => void
-  clearFieldPermissionsToSave: () => void
-  setSaveErrors: (errors: string | null) => void
+  updateFieldPermission: (key: string, permission: FieldPermissionChange) => void;
+  clearFieldPermissionsToSave: () => void;
+  setSaveErrors: (errors: string | null) => void;
 }
 
 const initialState = {
@@ -44,7 +44,7 @@ const initialState = {
   filter: '',
   fieldPermissionsToSave: {} as Record<string, FieldPermissionChange>,
   saveErrors: null as string | null,
-}
+};
 
 export const usePermissionUIStore = create<PermissionUIState>()(
   persist(
@@ -100,4 +100,4 @@ export const usePermissionUIStore = create<PermissionUIState>()(
       }),
     }
   )
-)
+);

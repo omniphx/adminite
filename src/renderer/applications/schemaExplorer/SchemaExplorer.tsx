@@ -1,8 +1,8 @@
-import * as React from 'react'
-import { ReactElement } from 'react'
+import * as React from 'react';
+import { ReactElement } from 'react';
 
 const SchemaExplorer = (): ReactElement => {
-  return <></>
-}
+  return <></>;
+};
 
-export default SchemaExplorer
+export default SchemaExplorer;

@@ -1,80 +1,97 @@
-import * as React from 'react'
-import { InputNumber } from 'antd'
-import { Field as DescribeField } from 'jsforce'
-import BaseCell from './BaseCell'
-import { useConnectionStore } from '../../../stores/useConnectionStore'
-import { useFieldUpdate } from '../../../queries/useQueryExecution'
+import * as React from 'react';
+import { InputNumber } from 'antd';
+import { Field as DescribeField } from 'jsforce';
+import BaseCell from './BaseCell';
+import { useConnectionStore } from '../../../stores/useConnectionStore';
+import { useFieldUpdate } from '../../../queries/useQueryExecution';
 
 interface INumberCellProps {
-  tabId: string
-  value: any
-  record: any
-  fieldSchema: DescribeField
+  tabId: string;
+  value: any;
+  record: any;
+  fieldSchema: DescribeField;
 }
 
 const NumberCell: React.FC<INumberCellProps> = (props: INumberCellProps) => {
-  const { updateField } = useFieldUpdate()
-  const { tabId, fieldSchema, value, record } = props
+  const { updateField } = useFieldUpdate();
+  const { tabId, fieldSchema, value, record } = props;
   // Get userInfo primitives from active connection (using primitive selectors to avoid reference instability)
-  const locale = useConnectionStore((state) => (state.activeConnection.userInfo as any)?.userLocale ?? 'us_EN')
-  const currencyLocale = useConnectionStore((state) => (state.activeConnection.userInfo as any)?.orgDefaultCurrencyLocale ?? 'us_EN')
-  const currency = useConnectionStore((state) => (state.activeConnection.userInfo as any)?.orgDefaultCurrencyIsoCode ?? 'USD')
+  const locale = useConnectionStore(
+    (state) => (state.activeConnection.userInfo as any)?.userLocale ?? 'us_EN'
+  );
+  const currencyLocale = useConnectionStore(
+    (state) => (state.activeConnection.userInfo as any)?.orgDefaultCurrencyLocale ?? 'us_EN'
+  );
+  const currency = useConnectionStore(
+    (state) => (state.activeConnection.userInfo as any)?.orgDefaultCurrencyIsoCode ?? 'USD'
+  );
 
-  const [editMode, setEditMode] = React.useState(false)
-  const [editValue, setEditValue] = React.useState(value)
+  const [editMode, setEditMode] = React.useState(false);
+  const [editValue, setEditValue] = React.useState(value);
 
   React.useEffect(() => {
-    setEditValue(value)
-  }, [value])
+    setEditValue(value);
+  }, [value]);
 
   const handleChange = (value: any) => {
-    setEditValue(value)
-  }
+    setEditValue(value);
+  };
 
   const handleCancelEditMode = () => {
-    setEditMode(false)
-    setEditValue(value)
-  }
+    setEditMode(false);
+    setEditValue(value);
+  };
 
   const handleConfirmChange = () => {
-    const valueParsed = value
-    const editValueParsed = editValue
-    setEditMode(false)
-    if(editValueParsed === valueParsed) return
-    record[fieldSchema.name] = editValueParsed
-    record.editFields = [...record.editFields, fieldSchema.name]
-    updateField(tabId, record)
-  }
+    const valueParsed = value;
+    const editValueParsed = editValue;
+    setEditMode(false);
+    if (editValueParsed === valueParsed) return;
+    record[fieldSchema.name] = editValueParsed;
+    record.editFields = [...record.editFields, fieldSchema.name];
+    updateField(tabId, record);
+  };
 
-  const combineProps = { ...props, handleCancelEditMode, handleConfirmChange, editMode, setEditMode, setEditValue, value: formatter(value)}
+  const combineProps = {
+    ...props,
+    handleCancelEditMode,
+    handleConfirmChange,
+    editMode,
+    setEditMode,
+    setEditValue,
+    value: formatter(value),
+  };
 
   return (
-    <BaseCell {...combineProps }>
+    <BaseCell {...combineProps}>
       <InputNumber
-        {...{value: editValue}}
+        {...{ value: editValue }}
         onBlur={handleConfirmChange}
-        step={1/(10**fieldSchema.scale)}
+        step={1 / 10 ** fieldSchema.scale}
         onChange={handleChange}
         size='small'
         autoFocus
       />
     </BaseCell>
-  )
+  );
 
   //International number format: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NumberFormat
   function formatter(number: any): string {
-    const scaledValue: any = Number(number).toFixed(fieldSchema.scale)
-    switch(fieldSchema.type) {
+    const scaledValue: any = Number(number).toFixed(fieldSchema.scale);
+    switch (fieldSchema.type) {
       case 'currency':
-        return new Intl.NumberFormat(currencyLocale.replace('_','-'), { style: 'currency', currency }).format(scaledValue)
+        return new Intl.NumberFormat(currencyLocale.replace('_', '-'), {
+          style: 'currency',
+          currency,
+        }).format(scaledValue);
       case 'percent':
-        return `${scaledValue}%`
+        return `${scaledValue}%`;
       case 'int':
-        return scaledValue
+        return scaledValue;
       default:
-        return new Intl.NumberFormat(locale.replace('_','-')).format(scaledValue)
+        return new Intl.NumberFormat(locale.replace('_', '-')).format(scaledValue);
     }
   }
-}
+};
 
-export default NumberCell
+export default NumberCell;

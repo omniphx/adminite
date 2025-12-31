@@ -1,87 +1,82 @@
-import * as React from 'react'
-import { DeleteTwoTone } from '@ant-design/icons'
-import { Button, Modal, Table, Input } from 'antd'
-import { formatQuery, isQueryValid } from 'soql-parser-js'
-import { sort } from '../../../../helpers/utils'
-import {
-  getSoqlQueries,
-  deleteSoqlQuery
-} from '../../../../helpers/local-store'
-import { useTabStore, SoqlQuery } from '../../../stores/useTabStore'
-const { confirm } = Modal
+import * as React from 'react';
+import { DeleteTwoTone } from '@ant-design/icons';
+import { Button, Modal, Table, Input } from 'antd';
+import { formatQuery, isQueryValid } from 'soql-parser-js';
+import { sort } from '../../../../helpers/utils';
+import { getSoqlQueries, deleteSoqlQuery } from '../../../../helpers/local-store';
+import { useTabStore, SoqlQuery } from '../../../stores/useTabStore';
+const { confirm } = Modal;
 
 interface ILoadQueryProps {
-  tabId: string
+  tabId: string;
 }
 
 const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
-  const { tabId } = props
+  const { tabId } = props;
 
   // Zustand store
-  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' }
-  const setQuery = useTabStore((state) => state.setQuery)
+  const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' };
+  const setQuery = useTabStore((state) => state.setQuery);
 
-  const [showModal, setShowModal] = React.useState(false)
-  const [searchFilter, setSearchFilter] = React.useState('')
+  const [showModal, setShowModal] = React.useState(false);
+  const [searchFilter, setSearchFilter] = React.useState('');
 
-  const [queries, setQueries] = React.useState([])
-  const [queryPreview, setQueryPreview] = React.useState<SoqlQuery>(null)
+  const [queries, setQueries] = React.useState([]);
+  const [queryPreview, setQueryPreview] = React.useState<SoqlQuery>(null);
 
   React.useEffect(() => {
-    setSearchFilter('')
-  }, [showModal])
+    setSearchFilter('');
+  }, [showModal]);
 
   async function getQueries() {
-    const queries = await getSoqlQueries()
-    setQueries(queries)
+    const queries = await getSoqlQueries();
+    setQueries(queries);
   }
 
   const onLoadQuery = () => {
-    getQueries()
-    setShowModal(true)
-  }
+    getQueries();
+    setShowModal(true);
+  };
 
   const handleSelect = () => {
-    setQuery(tabId, { query: queryPreview })
-    setShowModal(false)
-  }
+    setQuery(tabId, { query: queryPreview });
+    setShowModal(false);
+  };
 
   const handleCancel = () => {
-    setShowModal(false)
-  }
+    setShowModal(false);
+  };
 
   const onChange = (index: any, selectedRows: any) => {
-    if (selectedRows.length < 0) return
-    setQueryPreview(selectedRows[0])
-  }
+    if (selectedRows.length < 0) return;
+    setQueryPreview(selectedRows[0]);
+  };
 
-  const handleDelete = async queryRecordId => {
+  const handleDelete = async (queryRecordId) => {
     try {
-      await deleteSoqlQuery(queryRecordId)
+      await deleteSoqlQuery(queryRecordId);
       if (query.id === queryRecordId) {
         //Unset query Id
-        setQuery(tabId, { query: { ...query, id: undefined, name: undefined } })
+        setQuery(tabId, { query: { ...query, id: undefined, name: undefined } });
       }
-      const filterOutQueries = queries.filter(
-        query => query.id !== queryRecordId
-      )
-      setQueries(filterOutQueries)
+      const filterOutQueries = queries.filter((query) => query.id !== queryRecordId);
+      setQueries(filterOutQueries);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-  }
+  };
 
-  const showDeleteConfirm = queryRecord => {
+  const showDeleteConfirm = (queryRecord) => {
     confirm({
       title: `Are you sure you want to delete ${queryRecord.name}?`,
       okText: 'Yes',
       okButtonProps: { danger: true },
       cancelText: 'No',
       onOk() {
-        handleDelete(queryRecord.id)
-      }
-    })
-  }
+        handleDelete(queryRecord.id);
+      },
+    });
+  };
 
   const columns = [
     {
@@ -89,32 +84,32 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => {
-        var nameA = a.name.toUpperCase()
-        var nameB = b.name.toUpperCase()
+        const nameA = a.name.toUpperCase();
+        const nameB = b.name.toUpperCase();
         if (nameA < nameB) {
-          return -1
+          return -1;
         } else if (nameA > nameB) {
-          return 1
+          return 1;
         } else {
-          return 0
+          return 0;
         }
-      }
+      },
     },
     {
       title: 'SObject',
       dataIndex: 'sobject',
       key: 'sobject',
       sorter: (a, b) => {
-        var nameA = a.name.toUpperCase()
-        var nameB = b.name.toUpperCase()
+        const nameA = a.name.toUpperCase();
+        const nameB = b.name.toUpperCase();
         if (nameA < nameB) {
-          return -1
+          return -1;
         } else if (nameA > nameB) {
-          return 1
+          return 1;
         } else {
-          return 0
+          return 0;
         }
-      }
+      },
     },
     {
       title: '',
@@ -129,10 +124,10 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
               onClick={() => showDeleteConfirm(record)}
             />
           </span>
-        )
-      }
-    }
-  ]
+        );
+      },
+    },
+  ];
 
   return (
     <div style={{ display: 'inline-block' }}>
@@ -150,7 +145,7 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
           </Button>,
           <Button key='submit' type='primary' onClick={handleSelect}>
             Select
-          </Button>
+          </Button>,
         ]}
       >
         <Input.Search
@@ -164,26 +159,23 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
         <Table
           columns={columns}
           dataSource={queries
-            .filter(item => {
-              if (searchFilter.length <= 0) return true
-              const nameMatch =
-                item.name.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0
+            .filter((item) => {
+              if (searchFilter.length <= 0) return true;
+              const nameMatch = item.name.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0;
               const objectMatch =
-                item.sobject
-                  .toLowerCase()
-                  .indexOf(searchFilter.toLowerCase()) >= 0
-              return nameMatch || objectMatch
+                item.sobject.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0;
+              return nameMatch || objectMatch;
             })
             .sort((itemA, itemB) => sort(itemA, itemB, 'name'))
-            .map(item => {
-              return { ...item, key: item.id }
+            .map((item) => {
+              return { ...item, key: item.id };
             })}
           rowSelection={{
             type: 'radio',
-            onChange
+            onChange,
           }}
           pagination={{
-            pageSize: 7
+            pageSize: 7,
           }}
           size='middle'
         />
@@ -191,21 +183,19 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
         {renderPreview()}
       </Modal>
     </div>
-  )
+  );
 
   function renderPreview() {
     return queryPreview ? (
       <code className='code'>
         <pre>
-          {isQueryValid(queryPreview.body)
-            ? formatQuery(queryPreview.body)
-            : queryPreview.body}
+          {isQueryValid(queryPreview.body) ? formatQuery(queryPreview.body) : queryPreview.body}
         </pre>
       </code>
     ) : (
       <div />
-    )
+    );
   }
-}
+};
 
-export default LoadQueries
+export default LoadQueries;

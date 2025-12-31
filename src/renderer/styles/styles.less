@@ -176,7 +176,6 @@ td.rotate {
   background-color: @lightGray;
 }
 
-
 .logo {
   font-size: 3.5em;
   color: #61bfa2;
@@ -194,7 +193,7 @@ td.rotate {
 }
 
 .org-drop-down > .ant-dropdown-menu-item + .ant-dropdown-menu-item {
-  border-top: .2px #e8e8e8 solid;
+  border-top: 0.2px #e8e8e8 solid;
 }
 
 .org-drop-down .ant-card-body {
@@ -207,13 +206,15 @@ td.rotate {
   text-overflow: ellipsis;
 }
 
-.table-cell, .ant-card-body {
+.table-cell,
+.ant-card-body {
   .edit-icon {
     visibility: hidden;
   }
 }
 
-.table-cell:hover, .ant-card-body:hover {
+.table-cell:hover,
+.ant-card-body:hover {
   .edit-icon {
     visibility: visible;
   }
@@ -230,9 +231,11 @@ td.rotate {
   border: 1px solid #333;
   border-radius: 5px;
   text-align: center;
-  box-shadow: inset 0 1px 0 #666, 0 1px 0 #bbb;
+  box-shadow:
+    inset 0 1px 0 #666,
+    0 1px 0 #bbb;
   padding: 5px 9px;
-  font-size: .75em;
+  font-size: 0.75em;
 }
 
 .ant-notification {

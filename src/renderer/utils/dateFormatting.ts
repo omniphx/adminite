@@ -1,6 +1,6 @@
-import { format, parseISO } from 'date-fns'
-import type { Locale } from 'date-fns'
-import { enUS, enGB, fr, de, es, it, ja, ko, zhCN, ptBR } from 'date-fns/locale'
+import { format, parseISO } from 'date-fns';
+import type { Locale } from 'date-fns';
+import { enUS, enGB, fr, de, es, it, ja, ko, zhCN, ptBR } from 'date-fns/locale';
 
 // Map Salesforce locale codes to date-fns locales
 const localeMap: Record<string, Locale> = {
@@ -21,16 +21,16 @@ const localeMap: Record<string, Locale> = {
   ko_KR: ko,
   zh_CN: zhCN,
   pt_BR: ptBR,
-}
+};
 
 /**
  * Get the date-fns locale object for a Salesforce userLocale string.
  * Falls back to enUS if locale is not found.
  */
 export function getDateFnsLocale(salesforceLocale: string | undefined): Locale {
-  if (!salesforceLocale) return enUS
+  if (!salesforceLocale) return enUS;
   // Try exact match first (e.g., 'en_US'), then language code (e.g., 'en')
-  return localeMap[salesforceLocale] || localeMap[salesforceLocale.substring(0, 2)] || enUS
+  return localeMap[salesforceLocale] || localeMap[salesforceLocale.substring(0, 2)] || enUS;
 }
 
 /**
@@ -38,9 +38,9 @@ export function getDateFnsLocale(salesforceLocale: string | undefined): Locale {
  * Example: 01/15/2024 (US) or 15/01/2024 (UK)
  */
 export function formatDate(value: string | Date, locale: Locale = enUS): string {
-  if (!value) return ''
-  const date = typeof value === 'string' ? parseISO(value) : value
-  return format(date, 'P', { locale })
+  if (!value) return '';
+  const date = typeof value === 'string' ? parseISO(value) : value;
+  return format(date, 'P', { locale });
 }
 
 /**
@@ -48,9 +48,9 @@ export function formatDate(value: string | Date, locale: Locale = enUS): string 
  * Example: 01/15/2024, 3:45 PM
  */
 export function formatDateTime(value: string | Date, locale: Locale = enUS): string {
-  if (!value) return ''
-  const date = typeof value === 'string' ? parseISO(value) : value
-  return format(date, 'Pp', { locale })
+  if (!value) return '';
+  const date = typeof value === 'string' ? parseISO(value) : value;
+  return format(date, 'Pp', { locale });
 }
 
 /**
@@ -58,7 +58,7 @@ export function formatDateTime(value: string | Date, locale: Locale = enUS): str
  * This format is locale-independent.
  */
 export function formatDateForStorage(date: Date): string {
-  return format(date, 'yyyy-MM-dd')
+  return format(date, 'yyyy-MM-dd');
 }
 
 /**
@@ -67,5 +67,5 @@ export function formatDateForStorage(date: Date): string {
  * This format is locale-independent.
  */
 export function formatDateTimeForStorage(date: Date): string {
-  return date.toISOString()
+  return date.toISOString();
 }

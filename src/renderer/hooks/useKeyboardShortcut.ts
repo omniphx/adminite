@@ -1,38 +1,38 @@
-import { useEffect, useCallback, RefObject } from 'react'
+import { useEffect, useCallback, RefObject } from 'react';
 
-type KeyHandler = (key: string, event: KeyboardEvent) => void
+type KeyHandler = (key: string, event: KeyboardEvent) => void;
 
 interface UseKeyboardShortcutOptions {
-  keys: string[]
-  onKeyEvent: KeyHandler
-  target?: RefObject<HTMLElement>
-  enabled?: boolean
+  keys: string[];
+  onKeyEvent: KeyHandler;
+  target?: RefObject<HTMLElement>;
+  enabled?: boolean;
 }
 
 const normalizeKey = (event: KeyboardEvent): string => {
-  const keys: string[] = []
+  const keys: string[] = [];
 
-  if (event.shiftKey && event.key !== 'Shift') keys.push('shift')
-  if (event.ctrlKey && event.key !== 'Control') keys.push('ctrl')
-  if (event.altKey && event.key !== 'Alt') keys.push('alt')
-  if (event.metaKey && event.key !== 'Meta') keys.push('meta')
+  if (event.shiftKey && event.key !== 'Shift') keys.push('shift');
+  if (event.ctrlKey && event.key !== 'Control') keys.push('ctrl');
+  if (event.altKey && event.key !== 'Alt') keys.push('alt');
+  if (event.metaKey && event.key !== 'Meta') keys.push('meta');
 
-  const key = event.key.toLowerCase()
+  const key = event.key.toLowerCase();
 
   // Map special keys
   const keyMap: { [key: string]: string } = {
-    'escape': 'esc',
-    'arrowup': 'up',
-    'arrowdown': 'down',
-    'arrowleft': 'left',
-    'arrowright': 'right'
-  }
+    escape: 'esc',
+    arrowup: 'up',
+    arrowdown: 'down',
+    arrowleft: 'left',
+    arrowright: 'right',
+  };
 
-  const normalizedKey = keyMap[key] || key
-  keys.push(normalizedKey)
+  const normalizedKey = keyMap[key] || key;
+  keys.push(normalizedKey);
 
-  return keys.join('+')
-}
+  return keys.join('+');
+};
 
 /**
  * Custom hook to handle keyboard shortcuts
@@ -47,28 +47,28 @@ export const useKeyboardShortcut = ({
   keys,
   onKeyEvent,
   target,
-  enabled = true
+  enabled = true,
 }: UseKeyboardShortcutOptions) => {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (!enabled) return
+      if (!enabled) return;
 
-      const pressedKey = normalizeKey(event)
+      const pressedKey = normalizeKey(event);
 
       if (keys.includes(pressedKey)) {
-        onKeyEvent(pressedKey, event)
+        onKeyEvent(pressedKey, event);
       }
     },
     [keys, onKeyEvent, enabled]
-  )
+  );
 
   useEffect(() => {
-    const element = target?.current || document
+    const element = target?.current || document;
 
-    element.addEventListener('keydown', handleKeyDown as EventListener)
+    element.addEventListener('keydown', handleKeyDown as EventListener);
 
     return () => {
-      element.removeEventListener('keydown', handleKeyDown as EventListener)
-    }
-  }, [handleKeyDown, target])
-}
+      element.removeEventListener('keydown', handleKeyDown as EventListener);
+    };
+  }, [handleKeyDown, target]);
+};

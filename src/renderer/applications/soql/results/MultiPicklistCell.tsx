@@ -1,50 +1,63 @@
-import * as React from 'react'
-import { Select, Tooltip, Tag } from 'antd'
-import { Field as DescribeField } from 'jsforce'
-import BaseCell from './BaseCell'
-import { useFieldUpdate } from '../../../queries/useQueryExecution'
+import * as React from 'react';
+import { Select, Tooltip, Tag } from 'antd';
+import { Field as DescribeField } from 'jsforce';
+import BaseCell from './BaseCell';
+import { useFieldUpdate } from '../../../queries/useQueryExecution';
 
 interface IMultiPicklistCellProps {
-  tabId: string
-  value: string
-  record: any
-  fieldSchema: DescribeField
+  tabId: string;
+  value: string;
+  record: any;
+  fieldSchema: DescribeField;
 }
 
 const MultiPicklistCell: React.FC<IMultiPicklistCellProps> = (props: IMultiPicklistCellProps) => {
-  const { updateField } = useFieldUpdate()
-  const { tabId, fieldSchema, value, record } = props
+  const { updateField } = useFieldUpdate();
+  const { tabId, fieldSchema, value, record } = props;
 
-  const [editMode, setEditMode] = React.useState(false)
-  const [editValue, setEditValue] = React.useState<string[]>([])
+  const [editMode, setEditMode] = React.useState(false);
+  const [editValue, setEditValue] = React.useState<string[]>([]);
 
   React.useEffect(() => {
-    setEditValue(value ? value.split(';') : [])
-  }, [value])
+    setEditValue(value ? value.split(';') : []);
+  }, [value]);
 
-  const tags = value ? value.split(';').map(picklist => <Tag color='#108ee9' key={picklist}>{picklist}</Tag>) : []
-  const renderedValue = <span>{tags}</span>
+  const tags = value
+    ? value.split(';').map((picklist) => (
+        <Tag color='#108ee9' key={picklist}>
+          {picklist}
+        </Tag>
+      ))
+    : [];
+  const renderedValue = <span>{tags}</span>;
 
   const handleChange = (value) => {
-    setEditValue(value)
-  }
+    setEditValue(value);
+  };
 
   const handleConfirmChange = () => {
-    record[fieldSchema.name] = editValue.join(';')
-    record.editFields = [...record.editFields, fieldSchema.name]
-    updateField(tabId, record)
-    setEditMode(false)
-  }
+    record[fieldSchema.name] = editValue.join(';');
+    record.editFields = [...record.editFields, fieldSchema.name];
+    updateField(tabId, record);
+    setEditMode(false);
+  };
 
   const handleCancelEditMode = () => {
-    setEditValue(value ? value.split(';') : [])
-    setEditMode(false)
-  }
+    setEditValue(value ? value.split(';') : []);
+    setEditMode(false);
+  };
 
-  const combineProps = { ...props, handleCancelEditMode, handleConfirmChange, editMode, setEditMode, value:renderedValue}
+  const combineProps = {
+    ...props,
+    handleCancelEditMode,
+    handleConfirmChange,
+    editMode,
+    setEditMode,
+    value: renderedValue,
+  };
 
   return (
-    <BaseCell {...combineProps }>
+    <BaseCell {...combineProps}>
       <Select
         defaultValue={editValue}
         mode='multiple'
@@ -58,19 +71,19 @@ const MultiPicklistCell: React.FC<IMultiPicklistCellProps> = (props: IMultiPickl
         {renderOptions()}
       </Select>
     </BaseCell>
-  )
+  );
 
   function renderOptions() {
     return fieldSchema.picklistValues
-      .filter(picklistValue => picklistValue.active)
-      .map(picklistValue =>
+      .filter((picklistValue) => picklistValue.active)
+      .map((picklistValue) => (
         <Select.Option key={picklistValue.value} value={picklistValue.value}>
           <Tooltip placement='topLeft' title={picklistValue.label}>
             <span>{picklistValue.value}</span>
           </Tooltip>
         </Select.Option>
-      )
+      ));
   }
-}
+};
 
-export default MultiPicklistCell
+export default MultiPicklistCell;

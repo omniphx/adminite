@@ -408,14 +408,14 @@ function getFieldWrappers(fields: any, permissionSets: any, fieldPermissions: an
   });
 
   for (const fieldKey in fieldPermissions) {
-    if (!fieldPermissions.hasOwnProperty(fieldKey)) continue;
+    if (!Object.hasOwn(fieldPermissions, fieldKey)) continue;
     const fieldPermission = fieldPermissions[fieldKey];
     if (!fieldPermission.ParentId) continue;
     if (!fieldPermission.Field) continue;
 
     const profileKeyName = fieldPermission.ParentId;
     const field = fieldPermission.Field.split('.')[1];
-    if (!fieldWrappers.hasOwnProperty(field)) continue;
+    if (!Object.hasOwn(fieldWrappers, field)) continue;
 
     fieldWrappers[field] = {
       ...fieldWrappers[field],

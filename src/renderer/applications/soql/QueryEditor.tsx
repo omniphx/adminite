@@ -87,11 +87,11 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     { name: 'WITH', tokenType: 'keyword' },
   ];
 
-  const wordBoundary = /\b([\w\.]+)$/i;
+  const wordBoundary = /\b([\w.]+)$/i;
   const sObjectPattern = /(?:from\s)(\w*)$/i;
   const fieldPattern = /(['\w]+)$/i;
-  const parentLookupPattern = /\.([\w\.]*)$/i;
-  const parentWordBoundary = /([\w\.]*)$/i;
+  const parentLookupPattern = /\.([\w.]*)$/i;
+  const parentWordBoundary = /([\w.]*)$/i;
 
   const [dataSource, setDataSource] = useState([]);
   const [leftPosition, setLeftPosition] = useState(0);
@@ -120,7 +120,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
 
       let fields = sobject.fields;
       for (let i = 0; i < relationships.length; i++) {
-        if ((mounted = false)) return;
+        if (!mounted) return;
         const relationship = relationships[i];
         const relationshipField = fields.find((field) => field.relationshipName === relationship);
         if (!relationshipField) return;
@@ -147,7 +147,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
 
           parentSobject = result.data;
 
-          if ((mounted = false)) return;
+          if (!mounted) return;
           setObjectDescriptions({
             ...objectDescriptions,
             [parentRelationship]: parentSobject,

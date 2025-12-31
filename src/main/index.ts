@@ -2,7 +2,6 @@
  * Entry point of the Election app.
  */
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import * as path from 'path';
 import * as jsforce from 'jsforce';
 import * as log from 'electron-log';
 import * as dotenv from 'dotenv';

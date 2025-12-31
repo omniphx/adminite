@@ -20,7 +20,6 @@ interface IBulkUpdateProps {
 const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdateProps) => {
   const { tabId, showModal, setShowModal } = props;
 
-  // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
   const dataSelector = selectTabData(tabId);
   const selectedIdsSelector = selectTabSelectedIds(tabId);
   const data = useQueryResultStore(useShallow(dataSelector));
@@ -34,7 +33,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
   const fieldSchema = sobjectData?.fieldSchema;
 
   const [field, setField] = React.useState('');
-  const [editValue, setEditValue] = React.useState<boolean>();
+  const [editValue, setEditValue] = React.useState<string | number | boolean | null>(null);
 
   const fields = sobject ? sobject.fields : [];
   const type = fieldSchema && fieldSchema[field] ? fieldSchema[field].type : '';
@@ -69,7 +68,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
 
   const handleApply = () => {
     const updatedData = { ...data };
-    Object.values(updatedData).forEach((record: any) => {
+    Object.values(updatedData).forEach((record) => {
       if (selectedIds.includes(record.Id)) {
         record[field] = editValue;
         record.editFields = [...new Set([...(record.editFields || []), field])];
@@ -113,7 +112,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
   function renderTextInput() {
     return (
       <Input
-        value={editValue}
+        value={typeof editValue === 'string' ? editValue : undefined}
         style={{ width: '100%' }}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditValue(event.target.value)}
         disabled={field.length <= 0}
@@ -138,7 +137,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
       <DatePicker
         showTime={showTime}
         onChange={(value) => {
-          const formattedValue = value ? value.format('YYYY-MM-DD') : value;
+          const formattedValue = value ? value.format('YYYY-MM-DD') : null;
           setEditValue(formattedValue);
         }}
         style={{ width: '100%' }}

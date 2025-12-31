@@ -1,5 +1,4 @@
 import type { Configuration } from 'webpack';
-import path from 'path';
 
 export const mainConfig: Configuration = {
   entry: './src/main/index.ts',

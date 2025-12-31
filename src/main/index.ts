@@ -231,7 +231,7 @@ async function createServer(): Promise<void> {
       };
 
       createAuthenticationWindow(
-        oauth2.getAuthorizationUrl({})
+        oauth2.getAuthorizationUrl({ scope: 'api id web refresh_token' })
       );
     });
 
@@ -281,6 +281,7 @@ async function createServer(): Promise<void> {
 
     ipcMain.handle('salesforce:identity', async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
       try {
+        log.debug("refresh token", refreshToken)
         const connection = createSalesforceConnection({ accessToken, instanceUrl, refreshToken, loginUrl, connectionId });
         const identity = await connection.identity();
         return { success: true, data: identity };

@@ -92,12 +92,7 @@ const NewOrgModal: React.FC<any> = React.memo((props: any) => {
         {...formProps}
         onFinish={handleSubmit}
         name='new_connection'
-        fields={[
-          {
-            name: 'environment',
-            value: 'production'
-          }
-        ]}
+        initialValues={{ environment: 'production' }}
       >
         <Form.Item
           label='Name'

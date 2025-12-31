@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { render, screen } from '@testing-library/react';
 
 import NumberCell from './NumberCell';
@@ -18,12 +16,12 @@ jest.mock('../../../stores/useConnectionStore', () => ({
         userInfo: {
           userLocale: 'us_EN',
           orgDefaultCurrencyLocale: 'us_EN',
-          orgDefaultCurrencyIsoCode: 'USD',
-        },
-      },
+          orgDefaultCurrencyIsoCode: 'USD'
+        }
+      }
     };
     return selector(state);
-  },
+  }
 }));
 
 describe('<NumberCell/>', () => {

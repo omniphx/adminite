@@ -21,8 +21,8 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
   const { tabId, showModal, setShowModal } = props;
 
   // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
-  const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
-  const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId]);
+  const dataSelector = selectTabData(tabId);
+  const selectedIdsSelector = selectTabSelectedIds(tabId);
   const data = useQueryResultStore(useShallow(dataSelector));
   const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector));
   const setData = useQueryResultStore((state) => state.setData);
@@ -34,7 +34,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
   const fieldSchema = sobjectData?.fieldSchema;
 
   const [field, setField] = React.useState('');
-  const [editValue, setEditValue] = React.useState<any>();
+  const [editValue, setEditValue] = React.useState<boolean>();
 
   const fields = sobject ? sobject.fields : [];
   const type = fieldSchema && fieldSchema[field] ? fieldSchema[field].type : '';
@@ -75,7 +75,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
         record.editFields = [...new Set([...(record.editFields || []), field])];
       } else {
         //Sets property if it doesn't exist
-        record[field] = record[field];
+        // record[field] = record[field];
       }
     });
     setData(tabId, updatedData);

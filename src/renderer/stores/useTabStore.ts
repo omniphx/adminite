@@ -136,9 +136,9 @@ export const useTabStore = create<TabState & TabActions>()(
 
       closeTab: (tabId) =>
         set((state) => {
-          const { [tabId]: deletedTab, ...restTabs } = state.tabs;
-          const { [tabId]: deletedQuery, ...restQueries } = state.queries;
-          const { [tabId]: deletedResult, ...restResults } = state.resultUIState;
+          const { [tabId]: _1, ...restTabs } = state.tabs;
+          const { [tabId]: _2, ...restQueries } = state.queries;
+          const { [tabId]: _3, ...restResults } = state.resultUIState;
           const newOrder = state.tabOrder.filter((id) => id !== tabId);
 
           // Determine new active tab

@@ -25,18 +25,11 @@ interface QueryExecutionParams {
   includeDeleted: boolean;
 }
 
-interface QueryMoreParams {
-  tabId: string;
-  nextRecordsUrl: string;
-}
-
 /**
  * Hook for executing SOQL/SOSL queries
  * Replaces the Redux saga query flow
  */
 export function useQueryExecution() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (params: QueryExecutionParams) => {
       const { tabId, queryString, includeDeleted } = params;
@@ -99,7 +92,11 @@ export function useQueryExecution() {
       });
 
       // Handle pagination if more records exist
-      if (result.hasOwnProperty('done') && !result.done && result.nextRecordsUrl) {
+      if (
+        Object.prototype.hasOwnProperty.call(result, 'done') &&
+        !result.done &&
+        result.nextRecordsUrl
+      ) {
         await fetchRemainingRecords(
           tabId,
           result.nextRecordsUrl,

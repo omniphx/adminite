@@ -44,9 +44,9 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     });
 
     // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
-    const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
-    const filteredIdsSelector = React.useCallback(selectTabFilteredIds(tabId), [tabId]);
-    const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId]);
+    const dataSelector = selectTabData(tabId);
+    const filteredIdsSelector = selectTabFilteredIds(tabId);
+    const selectedIdsSelector = selectTabSelectedIds(tabId);
     const data = useQueryResultStore(useShallow(dataSelector));
     const filteredIds = useQueryResultStore(useShallow(filteredIdsSelector));
     const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector));
@@ -66,7 +66,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
     const fieldSchema = sobjectData?.fieldSchema;
 
     const dataSource = filteredIds
-      .filter((id) => data.hasOwnProperty(id))
+      .filter((id) => Object.prototype.hasOwnProperty.call(data, id))
       .map((id) => flattenData(data[id]));
 
     //Hooks
@@ -74,12 +74,6 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
       columnKey: null,
       order: null,
     });
-    const [selectedRowKeys, setSelectedRowKeys] = React.useState<any[]>([]);
-
-    //Reset selection after a query
-    React.useEffect(() => {
-      setSelectedRowKeys([]);
-    }, [data]);
 
     const handleChange = (pagination: TablePaginationConfig, filters: any, sorter: any) => {
       useTabStore.getState().setPaginationConfig(tabId, pagination);
@@ -90,7 +84,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
       const tables: any[] = [];
 
       for (const key in record) {
-        if (record.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(record, key)) {
           if (typeof record[key] !== 'object') continue;
           const recordObject = record[key];
           if (!recordObject) continue;
@@ -100,7 +94,7 @@ const QueryResultsTable: React.FC<IQueryResultsTableProps> = React.memo(
             key,
             data: getData(recordObject.records),
             columns: getColumns(recordObject.records, true).map((column) => {
-              //Diable sorting in child tables
+              //Disable sorting in child tables
               delete column.sorter;
               return column;
             }),

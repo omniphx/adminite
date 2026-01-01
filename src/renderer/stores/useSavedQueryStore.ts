@@ -99,7 +99,7 @@ export const useSavedQueryStore = create<SavedQueryState & SavedQueryActions>()(
 
         deleteQuery: (id) => {
           set((state) => {
-            const { [id]: deleted, ...remaining } = state.queries;
+            const { [id]: _deleted, ...remaining } = state.queries;
             return {
               queries: remaining,
               queryOrder: state.queryOrder.filter((queryId) => queryId !== id),

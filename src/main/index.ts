@@ -5,6 +5,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as jsforce from 'jsforce';
 import * as log from 'electron-log';
 import * as dotenv from 'dotenv';
+import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -634,8 +635,20 @@ if (!gotTheLock) {
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
-  app.on('ready', createWindow);
-  app.on('ready', createServer);
+  app.on('ready', async () => {
+    // Install Redux DevTools in development mode
+    if (isDevelopment) {
+      try {
+        const name = await installExtension(REDUX_DEVTOOLS);
+        log.info(`Added Extension: ${name}`);
+      } catch (err) {
+        log.error('Failed to install Redux DevTools:', err);
+      }
+    }
+
+    createWindow();
+    createServer();
+  });
 
   // Quit when all windows are closed.
   app.on('window-all-closed', function () {
@@ -721,9 +734,3 @@ function sendStatusToWindow(text) {
   log.info(text);
   mainWindow.webContents.send('message', text);
 }
-
-// app.whenReady().then(() => {
-//   installExtension(REDUX_DEVTOOLS)
-//     .then(name => console.log(`Added Extension:  ${name}`))
-//     .catch(err => console.log('An error occurred: ', err))
-// })

@@ -1,13 +1,30 @@
 import * as React from 'react';
-import { DeleteTwoTone, EditOutlined } from '@ant-design/icons';
-import { Card, Row, Col, Modal, Input, Tooltip } from 'antd';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Card, Modal, Input, Tooltip } from 'antd';
 import { useConnectionStore } from '../../stores/useConnectionStore';
 
 const { Meta } = Card;
 import { useDrag, useDrop } from 'react-dnd';
-import { GoKebabVertical } from 'react-icons/go';
 
 const { confirm } = Modal;
+
+// Subtle grip dots icon for drag handle (2x3 dot pattern)
+const GripDotsIcon: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <svg
+    width='8'
+    height='14'
+    viewBox='0 0 8 14'
+    fill='currentColor'
+    style={{ color: '#bfbfbf', ...style }}
+  >
+    <circle cx='2' cy='2' r='1.5' />
+    <circle cx='6' cy='2' r='1.5' />
+    <circle cx='2' cy='7' r='1.5' />
+    <circle cx='6' cy='7' r='1.5' />
+    <circle cx='2' cy='12' r='1.5' />
+    <circle cx='6' cy='12' r='1.5' />
+  </svg>
+);
 
 interface IConnectionCardProps {
   connection: any;
@@ -28,6 +45,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo((props: IConne
 
   const [editMode, setEditMode] = React.useState(false);
   const [connectionName, setConnectionName] = React.useState(connection.name);
+  const [deleteHovered, setDeleteHovered] = React.useState(false);
 
   const [{ opacity, isDragging }, dragRef] = useDrag(() => ({
     type: 'connection',
@@ -59,7 +77,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo((props: IConne
     deleteConnection(connectionId);
   };
 
-  const handleEdit = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleEdit = (event: React.MouseEvent<HTMLSpanElement>) => {
     event.stopPropagation();
     setEditMode(true);
   };
@@ -88,49 +106,46 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo((props: IConne
 
   return (
     <div
-      key={connection.id}
-      className='ant-dropdown-menu-item'
       ref={cardRef}
       style={{
-        paddingLeft: 0,
         opacity,
-        borderTop: showTopBorder ? '2px dotted #1890ff' : '',
-        borderBottom: showBottomBorder ? '2px dotted #1890ff' : '',
+        borderTop: showTopBorder ? '2px dotted #1890ff' : undefined,
+        borderBottom: showBottomBorder ? '2px dotted #1890ff' : undefined,
+        cursor: isDragging ? 'grabbing' : 'pointer',
       }}
       onClick={() => handleConnectionSelection(connection.id)}
     >
-      <Card variant='borderless' style={{ background: 'transparent' }}>
-        <Row justify='space-between'>
-          <Col span={3}>
-            <div
-              style={{
-                cursor: isDragging ? 'grabbing' : 'grab',
-                height: '100%',
-                padding: '5px',
-                textAlign: 'center',
-              }}
-            >
-              <GoKebabVertical style={{ fontSize: '1.5em', color: '#bfbfbf' }} />
+      <Card
+        hoverable
+        size='small'
+        variant='borderless'
+        styles={{
+          body: { padding: '12px 16px' },
+        }}
+        actions={[
+          <EditOutlined key='edit' onClick={handleEdit} />,
+          <DeleteOutlined
+            key='delete'
+            style={{ color: deleteHovered ? '#ff4d4f' : undefined }}
+            onMouseEnter={() => setDeleteHovered(true)}
+            onMouseLeave={() => setDeleteHovered(false)}
+            onClick={(event) => showDeleteConfirm(event, connection)}
+          />,
+        ]}
+      >
+        <Meta
+          avatar={
+            <div style={{ cursor: isDragging ? 'grabbing' : 'grab', padding: '4px 0' }}>
+              <GripDotsIcon />
             </div>
-          </Col>
-          <Col span={19}>
-            <Meta
-              title={renderTitle()}
-              description={
-                <Tooltip title={connection.username} placement='rightTop'>
-                  <div className='truncate'>{connection.username}</div>
-                </Tooltip>
-              }
-            />
-          </Col>
-          <Col span={2} style={{ textAlign: 'center' }}>
-            <DeleteTwoTone
-              twoToneColor='#595959'
-              style={{ fontSize: '1em', padding: '1em' }}
-              onClick={(event) => showDeleteConfirm(event, connection)}
-            />
-          </Col>
-        </Row>
+          }
+          title={renderTitle()}
+          description={
+            <Tooltip title={connection.username} placement='rightTop'>
+              <div className='truncate'>{connection.username}</div>
+            </Tooltip>
+          }
+        />
       </Card>
     </div>
   );
@@ -144,17 +159,11 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo((props: IConne
         onFocus={handleFocus}
         onClick={handleFocus}
         onPressEnter={handleConfirmChange}
-        style={{ marginRight: 10 }}
         size='small'
         autoFocus
       />
     ) : (
-      <span>
-        {connection.name}&nbsp;
-        <a onClick={handleEdit}>
-          <EditOutlined className='edit-icon' style={{ fontSize: '.8em' }} />
-        </a>
-      </span>
+      <span>{connection.name}</span>
     );
   }
 

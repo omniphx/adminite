@@ -126,7 +126,7 @@ const ConnectionCard: React.FC<IConnectionCardProps> = React.memo((props: IConne
           <Col span={2} style={{ textAlign: 'center' }}>
             <DeleteTwoTone
               twoToneColor='#595959'
-              style={{ fontSize: '1em' }}
+              style={{ fontSize: '1em', padding: '1em' }}
               onClick={(event) => showDeleteConfirm(event, connection)}
             />
           </Col>

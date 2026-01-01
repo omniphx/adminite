@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { DeleteTwoTone, EditOutlined } from '@ant-design/icons';
 import { Card, Row, Col, Modal, Input, Tooltip } from 'antd';
 import { useConnectionStore } from '../../stores/useConnectionStore';

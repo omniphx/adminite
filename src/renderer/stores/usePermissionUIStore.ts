@@ -101,6 +101,6 @@ export const usePermissionUIStore = create<PermissionUIState>()(
         }),
       }
     ),
-    { name: 'PermissionUIStore' }
+    { name: 'Adminite', store: 'PermissionUIStore' }
   )
 );

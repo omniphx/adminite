@@ -23,6 +23,6 @@ export const useFeatureStore = create<FeatureState & FeatureActions>()(
 
       setError: (error) => set({ error }),
     }),
-    { name: 'FeatureStore' }
+    { name: 'Adminite', store: 'FeatureStore' }
   )
 );

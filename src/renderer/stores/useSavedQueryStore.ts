@@ -168,7 +168,7 @@ export const useSavedQueryStore = create<SavedQueryState & SavedQueryActions>()(
         }),
       }
     ),
-    { name: 'SavedQueryStore' }
+    { name: 'Adminite', store: 'SavedQueryStore' }
   )
 );
 

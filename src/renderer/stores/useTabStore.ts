@@ -320,7 +320,7 @@ export const useTabStore = create<TabState & TabActions>()(
         }),
       }
     ),
-    { name: 'TabStore' }
+    { name: 'Adminite', store: 'TabStore' }
   )
 );
 

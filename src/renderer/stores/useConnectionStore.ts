@@ -288,7 +288,7 @@ export const useConnectionStore = create<ConnectionState & ConnectionActions>()(
         }),
       }
     ),
-    { name: 'ConnectionStore' }
+    { name: 'Adminite', store: 'ConnectionStore' }
   )
 );
 

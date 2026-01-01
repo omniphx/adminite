@@ -38,6 +38,6 @@ export const useQueryHistoryStore = create<QueryHistoryState & QueryHistoryActio
         storage: createJSONStorage(() => localStorage),
       }
     ),
-    { name: 'QueryHistoryStore' }
+    { name: 'Adminite', store: 'QueryHistoryStore' }
   )
 );

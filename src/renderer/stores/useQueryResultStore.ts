@@ -260,7 +260,7 @@ export const useQueryResultStore = create<QueryResultStoreState & QueryResultSto
       // Getters
       getTabState: (tabId) => get().byTabId[tabId],
     }),
-    { name: 'QueryResultStore' }
+    { name: 'Adminite', store: 'QueryResultStore' }
   )
 );
 

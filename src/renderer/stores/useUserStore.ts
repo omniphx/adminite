@@ -56,6 +56,6 @@ export const useUserStore = create<UserState & UserActions>()(
         }),
       }
     ),
-    { name: 'UserStore' }
+    { name: 'Adminite', store: 'UserStore' }
   )
 );

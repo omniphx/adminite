@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Adminite is an open-source Electron desktop application for Salesforce developers and administrators. It provides a SOQL/SOSL query editor with context-aware autocompletion and advanced query capabilities.
 
-**Tech Stack:** TypeScript, React 17, Electron 18, Redux + Redux-Saga, Ant Design
+**Tech Stack:** TypeScript, React 17, Electron 18, TanStack Query, Zustand, Ant Design
 
 ## Common Commands
 
@@ -43,11 +43,14 @@ ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET=your_client_secret
 ### Process Structure (Electron)
 
 - **Main Process** (`src/main/`): Handles OAuth authentication flow via jsforce, spawns local Express server for OAuth callback, manages auto-updates via electron-updater, IPC communication with renderer
-- **Renderer Process** (`src/renderer/`): React application with Redux state management
+- **Renderer Process** (`src/renderer/`): React application with Zustand for state management and TanStack Query for server state
 
-### Redux Store Organization (`src/renderer/store/`)
+### State Management (`src/renderer/store/`)
 
-State is normalized using `byId`/`allIds` pattern. Key slices:
+- **Zustand** - Client-side state management with simple stores
+- **TanStack Query** - Server state, caching, and async data fetching for Salesforce API calls
+
+Key stores:
 
 - `connection` - Active Salesforce org connection
 - `connections` - All stored org connections
@@ -68,10 +71,11 @@ Each feature is a self-contained module:
 
 ### Key Patterns
 
-1. **Redux-Saga** for side effects - async operations are handled in saga files alongside actions
-2. **Feature-based code organization** - each feature has its own actions/, components in its folder
-3. **Lazy loading** - features loaded via React.lazy() for code splitting
-4. **SOQL parsing** - uses `soql-parser-js` library for query parsing and autocompletion context
+1. **TanStack Query** for server state - async operations, caching, and data fetching
+2. **Zustand** for client state - simple, lightweight stores for UI state
+3. **Feature-based code organization** - each feature has its own components in its folder
+4. **Lazy loading** - features loaded via React.lazy() for code splitting
+5. **SOQL parsing** - uses `soql-parser-js` library for query parsing and autocompletion context
 
 ### Important Utilities
 
@@ -82,6 +86,12 @@ Each feature is a self-contained module:
 ## Testing
 
 Tests use Jest with jsdom environment. The `jest.setup.js` configures matchMedia mock required for Ant Design components. Test files are colocated with source files using `.test.ts`/`.test.tsx` extensions.
+
+### ESLint/Prettier
+
+Ensure that changes do not introduce ESLint warnings or errors.
+
+Formatting should also follow prettier styles.
 
 ### Library/API documentation
 

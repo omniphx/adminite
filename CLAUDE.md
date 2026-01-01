@@ -81,7 +81,6 @@ Each feature is a self-contained module:
 
 - `src/renderer/utils/queryBuilder.ts` - SOQL query construction helpers
 - `src/renderer/utils/queryResultsHandler.ts` - Processing and transforming query results
-- `src/helpers/local-store.ts` - LocalStorage management for persisting connections
 
 ## Testing
 

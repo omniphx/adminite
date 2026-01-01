@@ -2,9 +2,8 @@ import * as React from 'react';
 import { DeleteTwoTone } from '@ant-design/icons';
 import { Button, Modal, Table, Input } from 'antd';
 import { formatQuery, isQueryValid } from 'soql-parser-js';
-import { sort } from '../../../../helpers/utils';
-import { getSoqlQueries, deleteSoqlQuery } from '../../../../helpers/local-store';
 import { useTabStore, SoqlQuery } from '../../../stores/useTabStore';
+import { useSavedQueryStore, useSavedQueriesArray, SavedQuery } from '../../../stores/useSavedQueryStore';
 const { confirm } = Modal;
 
 interface ILoadQueryProps {
@@ -14,32 +13,28 @@ interface ILoadQueryProps {
 const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
   const { tabId } = props;
 
-  // Zustand store
+  // Zustand stores
   const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' };
   const setQuery = useTabStore((state) => state.setQuery);
+  const queries = useSavedQueriesArray();
+  const deleteQuery = useSavedQueryStore((state) => state.deleteQuery);
 
   const [showModal, setShowModal] = React.useState(false);
   const [searchFilter, setSearchFilter] = React.useState('');
-
-  const [queries, setQueries] = React.useState([]);
-  const [queryPreview, setQueryPreview] = React.useState<SoqlQuery>(null);
+  const [queryPreview, setQueryPreview] = React.useState<SavedQuery | null>(null);
 
   React.useEffect(() => {
     setSearchFilter('');
   }, [showModal]);
 
-  async function getQueries() {
-    const queries = await getSoqlQueries();
-    setQueries(queries);
-  }
-
   const onLoadQuery = () => {
-    getQueries();
     setShowModal(true);
   };
 
   const handleSelect = () => {
-    setQuery(tabId, { query: queryPreview });
+    if (queryPreview) {
+      setQuery(tabId, { query: queryPreview });
+    }
     setShowModal(false);
   };
 
@@ -47,26 +42,24 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
     setShowModal(false);
   };
 
-  const onChange = (index: any, selectedRows: any) => {
-    if (selectedRows.length < 0) return;
+  const onChange = (_index: React.Key[], selectedRows: SavedQuery[]) => {
+    if (selectedRows.length <= 0) return;
     setQueryPreview(selectedRows[0]);
   };
 
-  const handleDelete = async (queryRecordId) => {
+  const handleDelete = (queryRecordId: string) => {
     try {
-      await deleteSoqlQuery(queryRecordId);
+      deleteQuery(queryRecordId);
       if (query.id === queryRecordId) {
-        //Unset query Id
+        // Unset query Id
         setQuery(tabId, { query: { ...query, id: undefined, name: undefined } });
       }
-      const filterOutQueries = queries.filter((query) => query.id !== queryRecordId);
-      setQueries(filterOutQueries);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const showDeleteConfirm = (queryRecord) => {
+  const showDeleteConfirm = (queryRecord: SavedQuery) => {
     confirm({
       title: `Are you sure you want to delete ${queryRecord.name}?`,
       okText: 'Yes',
@@ -166,7 +159,6 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
                 item.sobject.toLowerCase().indexOf(searchFilter.toLowerCase()) >= 0;
               return nameMatch || objectMatch;
             })
-            .sort((itemA, itemB) => sort(itemA, itemB, 'name'))
             .map((item) => {
               return { ...item, key: item.id };
             })}

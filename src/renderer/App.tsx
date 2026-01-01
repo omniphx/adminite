@@ -16,6 +16,7 @@ import * as os from 'os';
 import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
 import { useFeatureStore, Feature } from './stores/useFeatureStore';
 import { useConnectionStore, getActiveConnection } from './stores/useConnectionStore';
+import { useSavedQueryStore } from './stores/useSavedQueryStore';
 import { useConnectionQuery } from './queries/useConnectionQuery';
 
 const App = (): ReactElement => {
@@ -27,7 +28,10 @@ const App = (): ReactElement => {
   const updateConnection = useConnectionStore((state) => state.updateConnection);
   const setActiveConnectionId = useConnectionStore((state) => state.setActiveConnectionId);
   const toggleModal = useConnectionStore((state) => state.toggleModal);
-  const initializeFromLegacyStorage = useConnectionStore(
+  const initializeConnectionsFromLegacyStorage = useConnectionStore(
+    (state) => state.initializeFromLegacyStorage
+  );
+  const initializeSavedQueriesFromLegacyStorage = useSavedQueryStore(
     (state) => state.initializeFromLegacyStorage
   );
   const connectionOrder = useConnectionStore((state) => state.connectionOrder);
@@ -39,7 +43,8 @@ const App = (): ReactElement => {
 
   useEffect(() => {
     // Migrate from legacy localStorage format if needed
-    initializeFromLegacyStorage();
+    initializeConnectionsFromLegacyStorage();
+    initializeSavedQueriesFromLegacyStorage();
 
     // If we have connections but no active one selected, select the first
     if (connectionOrder.length > 0) {
@@ -65,38 +70,6 @@ const App = (): ReactElement => {
       ipcRenderer.removeListener('new-connection', handleNewConnection);
       ipcRenderer.removeListener('token-refreshed', handleTokenRefresh);
     };
-  }, []);
-
-  useEffect(() => {
-    const confirmedOffline = localStorage.getItem('offline-update');
-    if (confirmedOffline === null) {
-      Modal.info({
-        title: 'Hi folks!',
-        width: 600,
-        content: (
-          <div>
-            <p>
-              Due to high server costs and recent outages, I've decided to remove cloud storage from
-              Adminite. Your data will now live securely with you on the app.
-            </p>
-            <p>
-              Unfortunately, you will need to reconfigure a few things. Feel free to reach me at{' '}
-              <a href='mailto:mattjmitchener@gmail.com'>mattjmitchener@gmail.com</a>
-              {', '}
-              if you'd like to recover your saved queries.
-            </p>
-            <p>
-              I've also decided to opensource Adminite to provide more transparency and create an
-              environment to improve innovation.
-            </p>
-            <p>Thanks!</p>
-          </div>
-        ),
-        onOk() {
-          localStorage.setItem('offline-update', 'done');
-        },
-      });
-    }
   }, []);
 
   async function handleNewConnection(event, connectionData: any) {

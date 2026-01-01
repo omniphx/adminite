@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Button, Modal, Input, Form } from 'antd';
-import { createSoqlQuery, updateSoqlQuery } from '../../../../helpers/local-store';
+import { Button, Modal, Input } from 'antd';
 import { isQueryValid, parseQuery } from 'soql-parser-js';
 import { useTabStore, SoqlQuery } from '../../../stores/useTabStore';
+import { useSavedQueryStore } from '../../../stores/useSavedQueryStore';
 
 interface ISaveQueryProps {
   tabId: string;
@@ -11,9 +11,11 @@ interface ISaveQueryProps {
 const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
   const { tabId } = props;
 
-  // Zustand store
+  // Zustand stores
   const query: SoqlQuery = useTabStore((state) => state.queries[tabId]?.query) ?? { body: '' };
   const setQuery = useTabStore((state) => state.setQuery);
+  const createQuery = useSavedQueryStore((state) => state.createQuery);
+  const updateQuery = useSavedQueryStore((state) => state.updateQuery);
 
   const [visible, setVisible] = React.useState(false);
   const [saveError, setSaveError] = React.useState('');
@@ -22,37 +24,40 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
     setVisible(true);
   };
 
-  const handleSave = async (event: any) => {
+  const handleSave = () => {
     try {
       const { name, body } = query;
       const sobject = isQueryValid(body) ? parseQuery(body).sObject : 'Invalid';
-      const result: any = await createSoqlQuery({ name, body, sobject });
+      const result = createQuery({ name: name || '', body, sobject });
       setVisible(false);
       setQuery(tabId, { query: result });
+      setSaveError('');
     } catch (error) {
       console.error(error);
-      setSaveError(error);
+      setSaveError(String(error));
     }
   };
 
-  const handleUpdate = async (event: any) => {
+  const handleUpdate = () => {
     try {
       const { id, name, body } = query;
+      if (!id) return;
       const sobject = isQueryValid(body) ? parseQuery(body).sObject : 'Invalid';
-      const result: any = await updateSoqlQuery({ id, name, body, sobject });
+      const result = updateQuery(id, { name: name || '', body, sobject });
       setVisible(false);
       setQuery(tabId, { query: result });
+      setSaveError('');
     } catch (error) {
       console.error(error);
-      setSaveError(error);
+      setSaveError(String(error));
     }
   };
 
-  const handleCancel = (event: any) => {
+  const handleCancel = () => {
     setVisible(false);
   };
 
-  const handleNameChange = (event: any) => {
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(tabId, { query: { ...query, name: event.target.value } });
   };
 

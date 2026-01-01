@@ -1,7 +1,7 @@
 import * as React from 'react';
 import FieldLevelSecurity from './FieldLevelSecurity';
 
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // Mock Zustand permission UI store (Phase 7 & 8)

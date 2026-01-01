@@ -8,7 +8,7 @@ describe('<IconWrapper/>', () => {
   });
 
   test('it should wrap an icon', () => {
-    render(<IconWrapper>Icon</IconWrapper>);
+    const wrapper = render(<IconWrapper>Icon</IconWrapper>);
     screen.getByText('Icon');
   });
 });

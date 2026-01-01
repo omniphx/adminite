@@ -15,9 +15,9 @@ interface ISaveEditsProps {
 const SaveEdits: React.FC<ISaveEditsProps> = (props: ISaveEditsProps) => {
   const { tabId } = props;
 
-  // Zustand for query results data (Phase 9) - memoize selectors
-  const dataSelector = React.useMemo(() => selectTabData(tabId), [tabId]);
-  const pendingSelector = React.useMemo(() => selectTabDmlPending(tabId), [tabId]);
+  // Zustand for query results data (Phase 9) - memoize selectors to avoid infinite loop
+  const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
+  const pendingSelector = React.useCallback(selectTabDmlPending(tabId), [tabId]);
   const data = useQueryResultStore(useShallow(dataSelector));
   const pending = useQueryResultStore(pendingSelector);
 

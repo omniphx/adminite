@@ -3,7 +3,7 @@ import { Modal, Input, Select, Button, Form } from 'antd';
 import { ipcRenderer } from 'electron';
 import { useConnectionStore } from '../../stores/useConnectionStore';
 
-const NewOrgModal: React.FC = React.memo(() => {
+const NewOrgModal: React.FC<any> = React.memo((props: any) => {
   const [form] = Form.useForm();
   const [customUrl, setCustomUrl] = React.useState('');
   const [showCustomUrl, setShowCustomUrl] = React.useState(false);
@@ -18,7 +18,7 @@ const NewOrgModal: React.FC = React.memo(() => {
       setShowCustomUrl(false);
       setCustomUrl('');
     }
-  }, [modalVisible, form]);
+  }, [modalVisible]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();

@@ -30,7 +30,7 @@ const BaseCell: React.FC<IBaseCellProps> = (props: IBaseCellProps) => {
     setEditMode(true);
   };
 
-  const onKeyPress = (key: string, _event: KeyboardEvent) => {
+  const onKeyPress = (key, event) => {
     switch (key) {
       case 'enter':
         handleConfirmChange();

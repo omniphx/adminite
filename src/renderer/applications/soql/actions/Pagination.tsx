@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Pagination as AntdPagination } from 'antd';
+import { Pagination as AntdPagination, TablePaginationConfig } from 'antd';
 import { useShallow } from 'zustand/react/shallow';
 import { useTabStore } from '../../../stores/useTabStore';
 import {
@@ -22,9 +22,9 @@ const Pagination: React.FC<IPaginationProps> = (props: IPaginationProps) => {
   };
   const setPaginationConfig = useTabStore((state) => state.setPaginationConfig);
 
-  // Zustand for query results (Phase 9) - memoize selectors
-  const filteredIdsSelector = React.useMemo(() => selectTabFilteredIds(tabId), [tabId]);
-  const totalSizeSelector = React.useMemo(() => selectTabTotalSize(tabId), [tabId]);
+  // Zustand for query results (Phase 9) - memoize selectors to avoid infinite loop
+  const filteredIdsSelector = React.useCallback(selectTabFilteredIds(tabId), [tabId]);
+  const totalSizeSelector = React.useCallback(selectTabTotalSize(tabId), [tabId]);
   const filteredIds = useQueryResultStore(useShallow(filteredIdsSelector));
   const totalSize = useQueryResultStore(totalSizeSelector);
 

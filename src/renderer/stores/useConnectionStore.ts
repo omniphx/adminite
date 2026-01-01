@@ -123,7 +123,7 @@ export const useConnectionStore = create<ConnectionState & ConnectionActions>()(
 
       deleteConnection: (id) => {
         set((state) => {
-          const { [id]: _deleted, ...remaining } = state.connections;
+          const { [id]: deleted, ...remaining } = state.connections;
           const newOrder = state.connectionOrder.filter((connId) => connId !== id);
 
           // Update sort orders
@@ -207,7 +207,7 @@ export const useConnectionStore = create<ConnectionState & ConnectionActions>()(
       },
 
       setActiveConnectionData: (connection, userInfo) => {
-        set(() => ({
+        set((state) => ({
           activeConnection: {
             connection,
             userInfo,

@@ -169,7 +169,6 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     return () => {
       mounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parentRelationshipToken, toolingMode, connectionInfo]);
 
   const textAreaReference = useRef<TextAreaRef>(null);
@@ -185,7 +184,7 @@ const QueryEditor: React.FC<IQueryEditorProps> = (props: IQueryEditorProps) => {
     if (tabId === activeTabId && textAreaReference) {
       textAreaReference.current.focus();
     }
-  }, [activeTabId, tabId]);
+  }, [activeTabId]);
 
   useEffect(() => {
     if (sobject) {

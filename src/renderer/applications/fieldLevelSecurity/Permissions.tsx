@@ -15,7 +15,7 @@ import {
 } from '../../queries/usePermissionQuery';
 import { useFieldPermissionMutation } from '../../queries/useFieldPermissionQuery';
 
-const Permissions: React.FC = () => {
+const Permissions: React.FC = (props: any) => {
   // Zustand store for UI state
   const permissionType = usePermissionUIStore((state) => state.permissionType);
   const permissionIds = usePermissionUIStore((state) => state.permissionIds);

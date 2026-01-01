@@ -17,8 +17,6 @@ export default tseslint.config(
       'out/**',
       '*.config.js',
       '*.config.ts',
-      'jest.setup.js',
-      'notarize.js',
     ],
   },
 

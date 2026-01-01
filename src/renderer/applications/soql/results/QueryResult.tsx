@@ -10,8 +10,8 @@ interface IQueryResultProps {
 
 const QueryResult = React.memo((props: IQueryResultProps) => {
   const { tabId } = props;
-  // Zustand for query results errors (Phase 9) - memoize selector
-  const errorsSelector = React.useMemo(() => selectTabErrors(tabId), [tabId]);
+  // Zustand for query results errors (Phase 9) - memoize selector to avoid infinite loop
+  const errorsSelector = React.useCallback(selectTabErrors(tabId), [tabId]);
   const errors = useQueryResultStore(errorsSelector);
 
   return errors ? renderErrors() : renderResults();

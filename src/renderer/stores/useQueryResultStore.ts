@@ -67,7 +67,7 @@ interface QueryResultStoreActions {
   getTabState: (tabId: string) => QueryResultState | undefined;
 }
 
-const createDefaultQueryResultState = (_tabId: string): QueryResultState => ({
+const createDefaultQueryResultState = (tabId: string): QueryResultState => ({
   data: {},
   filteredIds: [],
   selectedIds: [],
@@ -95,7 +95,7 @@ export const useQueryResultStore = create<QueryResultStoreState & QueryResultSto
 
     deleteTab: (tabId) =>
       set((state) => {
-        const { [tabId]: _deleted, ...rest } = state.byTabId;
+        const { [tabId]: deleted, ...rest } = state.byTabId;
         return { byTabId: rest };
       }),
 

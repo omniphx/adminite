@@ -44,7 +44,7 @@ const BulkUpdate: React.FC<IBulkUpdateProps> = React.memo((props: IBulkUpdatePro
     } else {
       setEditValue(null);
     }
-  }, [field, type]);
+  }, [field]);
 
   React.useEffect(() => {
     setEditValue(null);

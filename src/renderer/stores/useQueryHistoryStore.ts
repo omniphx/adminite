@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 
 interface QueryHistoryState {
   queries: string[];
@@ -13,28 +13,31 @@ interface QueryHistoryActions {
 const MAX_HISTORY_SIZE = 100;
 
 export const useQueryHistoryStore = create<QueryHistoryState & QueryHistoryActions>()(
-  persist(
-    (set, get) => ({
-      queries: [],
+  devtools(
+    persist(
+      (set, get) => ({
+        queries: [],
 
-      addQuery: (query) => {
-        const trimmedQuery = query.trim();
-        if (!trimmedQuery) return;
+        addQuery: (query) => {
+          const trimmedQuery = query.trim();
+          if (!trimmedQuery) return;
 
-        const queries = get().queries;
-        // Don't add duplicates of the last query
-        if (queries[queries.length - 1] === trimmedQuery) return;
+          const queries = get().queries;
+          // Don't add duplicates of the last query
+          if (queries[queries.length - 1] === trimmedQuery) return;
 
-        set({
-          queries: [...queries, trimmedQuery].slice(-MAX_HISTORY_SIZE),
-        });
-      },
+          set({
+            queries: [...queries, trimmedQuery].slice(-MAX_HISTORY_SIZE),
+          });
+        },
 
-      clearHistory: () => set({ queries: [] }),
-    }),
-    {
-      name: 'adminite-query-history',
-      storage: createJSONStorage(() => localStorage),
-    }
+        clearHistory: () => set({ queries: [] }),
+      }),
+      {
+        name: 'adminite-query-history',
+        storage: createJSONStorage(() => localStorage),
+      }
+    ),
+    { name: 'QueryHistoryStore' }
   )
 );

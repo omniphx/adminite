@@ -46,7 +46,7 @@ const QueryTabDragDrop: React.FC<IQueryTabDragDropProps> = React.memo(
     const showLeftBorder = isActive && !indexMatch && !indexBelow;
     const showRightBorder = isActive && indexBelow;
 
-    const childrenWithNewProps = React.Children.map(children, (el, i) => {
+    const childrenWithNewProps = React.Children.map(children, (el, _i) => {
       return React.cloneElement(el, {
         style: {
           minWidth: '6em',

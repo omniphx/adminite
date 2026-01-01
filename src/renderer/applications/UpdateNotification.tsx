@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button } from 'antd';
 import { ipcRenderer } from 'electron';
 
-const UpdateNotification = React.memo((props: any) => {
+const UpdateNotification = React.memo(() => {
   const [updateAvailable, setUpdateAvailable] = React.useState(false);
 
   React.useEffect(() => {

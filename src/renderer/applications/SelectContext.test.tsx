@@ -5,6 +5,6 @@ import { render } from '@testing-library/react';
 
 describe('<SelectContext/>', () => {
   test('it should render', () => {
-    render(<SelectContext {...{ sobject: {}, sobjects: [], handleChange(event) {} }} />);
+    render(<SelectContext {...{ sobject: {}, sobjects: [], handleChange(_event) {} }} />);
   });
 });

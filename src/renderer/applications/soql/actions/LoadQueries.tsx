@@ -115,7 +115,7 @@ const LoadQueries: React.FC<ILoadQueryProps> = (props: ILoadQueryProps) => {
       title: '',
       dataIndex: '',
       key: 'action',
-      render: (text, record, index) => {
+      render: (_text, record, _index) => {
         return (
           <span>
             <DeleteTwoTone

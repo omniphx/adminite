@@ -56,7 +56,8 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
     } else {
       setParsedQuery({ sObject: sobjectName });
     }
-  }, [showModal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showModal, query.body, sobjectName, fields]);
 
   React.useEffect(() => {
     setFilteredFields(
@@ -67,7 +68,7 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
         return nameMatch || labelMatch;
       })
     );
-  }, [searchFilter]);
+  }, [searchFilter, fields]);
 
   const handleApply = () => {
     return isQueryValid(query.body) || query.body.length === 0
@@ -91,7 +92,7 @@ const FillFields = React.memo((props: IFillFieldsProps) => {
     setParsedQuery(parsedQuery);
   };
 
-  const onSelectAll = (selected: boolean, selectedRows: any[], changeRows: any[]) => {
+  const onSelectAll = (selected: boolean, _selectedRows: unknown[], _changeRows: unknown[]) => {
     if (selected) {
       const allFields = [
         ...selectedFields,

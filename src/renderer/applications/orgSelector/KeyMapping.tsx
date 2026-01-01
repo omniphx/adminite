@@ -10,7 +10,7 @@ interface IKeyMappingProps {
   showModal: boolean;
 }
 
-const KeyMapping: React.FC<any> = React.memo((props: IKeyMappingProps) => {
+const KeyMapping: React.FC<IKeyMappingProps> = React.memo((props: IKeyMappingProps) => {
   const { showModal } = props;
   const queryHotkey = useUserStore((state) => state.queryHotkey);
   const setQueryHotkey = useUserStore((state) => state.setQueryHotkey);
@@ -33,7 +33,7 @@ const KeyMapping: React.FC<any> = React.memo((props: IKeyMappingProps) => {
     if (editMode) {
       let keyCodeCombo = '';
       hotkeys.setScope('setting');
-      hotkeys('*', 'setting', function (event, handler) {
+      hotkeys('*', 'setting', function (event, _handler) {
         event.preventDefault();
 
         const isMac = os.type() === 'Darwin';
@@ -87,7 +87,7 @@ const KeyMapping: React.FC<any> = React.memo((props: IKeyMappingProps) => {
     return () => {
       hotkeys.unbind('*', 'setting');
     };
-  }, [editMode]);
+  }, [editMode, setQueryHotkey]);
 
   return (
     <Row justify='space-between' align='middle'>

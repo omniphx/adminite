@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Modal, Input, Form } from 'antd';
+import { Button, Modal, Input } from 'antd';
 import { createSoqlQuery, updateSoqlQuery } from '../../../../helpers/local-store';
 import { isQueryValid, parseQuery } from 'soql-parser-js';
 import { useTabStore, SoqlQuery } from '../../../stores/useTabStore';
@@ -22,7 +22,7 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
     setVisible(true);
   };
 
-  const handleSave = async (event: any) => {
+  const handleSave = async () => {
     try {
       const { name, body } = query;
       const sobject = isQueryValid(body) ? parseQuery(body).sObject : 'Invalid';
@@ -35,7 +35,7 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
     }
   };
 
-  const handleUpdate = async (event: any) => {
+  const handleUpdate = async () => {
     try {
       const { id, name, body } = query;
       const sobject = isQueryValid(body) ? parseQuery(body).sObject : 'Invalid';
@@ -48,7 +48,7 @@ const SaveQuery: React.FC<ISaveQueryProps> = (props: ISaveQueryProps) => {
     }
   };
 
-  const handleCancel = (event: any) => {
+  const handleCancel = () => {
     setVisible(false);
   };
 

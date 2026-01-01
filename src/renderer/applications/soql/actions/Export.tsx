@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Input, Button, Modal, Select, Row, Col, Table } from 'antd';
+import { Input, Button, Modal, Select, Row, Col } from 'antd';
 import * as XLSX from 'xlsx';
 import FileSaver from 'file-saver';
 import { ipcRenderer, shell } from 'electron';
@@ -19,9 +19,9 @@ interface IExportProps {
 const Export = React.memo((props: IExportProps) => {
   const { tabId } = props;
 
-  // Zustand for query results (Phase 9) - memoize selector to avoid infinite loop
-  const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
-  const pendingSelector = React.useCallback(selectTabPending(tabId), [tabId]);
+  // Zustand for query results (Phase 9) - memoize selector
+  const dataSelector = React.useMemo(() => selectTabData(tabId), [tabId]);
+  const pendingSelector = React.useMemo(() => selectTabPending(tabId), [tabId]);
   const data = useQueryResultStore(useShallow(dataSelector));
   const pending = useQueryResultStore(pendingSelector);
 
@@ -45,6 +45,7 @@ const Export = React.memo((props: IExportProps) => {
 
   React.useEffect(() => {
     setFormattedData(formatData(Object.values(data)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   function handleDownloadComplete(event, downloadPath: any) {

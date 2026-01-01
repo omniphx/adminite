@@ -46,7 +46,7 @@ function createSalesforceConnection(params: ConnectionParams): jsforce.Connectio
   });
 
   // Listen for token refresh events and notify the renderer
-  connection.on('refresh', (newAccessToken: string, res: any) => {
+  connection.on('refresh', (newAccessToken: string, _res: unknown) => {
     log.info('Token refreshed automatically for connection:', connectionId);
     if (mainWindow && connectionId) {
       mainWindow.webContents.send('token-refreshed', {
@@ -115,7 +115,7 @@ async function createWindow(): Promise<void> {
       mainWindow = null;
     });
 
-    mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
+    mainWindow.webContents.session.on('will-download', (_event, item, _webContents) => {
       item.once('done', (event, state) => {
         if (state === 'completed') {
           mainWindow.webContents.send('download-complete', item.getSavePath());
@@ -234,7 +234,7 @@ async function createServer(): Promise<void> {
     // Explicit token refresh handler - manually refresh the access token using refresh token
     ipcMain.handle(
       'salesforce:refreshToken',
-      async (event, { instanceUrl, refreshToken, loginUrl, connectionId }) => {
+      async (_event, { refreshToken, loginUrl, connectionId }) => {
         try {
           log.info('Manual token refresh requested for connection:', connectionId);
 
@@ -614,7 +614,7 @@ if (!gotTheLock) {
   log.info(`Custom protocol '${PROTOCOL_NAME}' registered`);
 
   // Handle protocol on Windows/Linux when app is already running
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
+  app.on('second-instance', (_event, commandLine, _workingDirectory) => {
     log.info('second-instance event received');
     log.info('Command line:', commandLine);
 
@@ -678,11 +678,11 @@ if (!gotTheLock) {
       sendStatusToWindow('Checking for update...');
     });
 
-    autoUpdater.on('update-available', function (info) {
+    autoUpdater.on('update-available', function (_info) {
       sendStatusToWindow('Update available.');
     });
 
-    autoUpdater.on('update-not-available', function (info) {
+    autoUpdater.on('update-not-available', function (_info) {
       sendStatusToWindow('Update not available.');
     });
 
@@ -695,18 +695,18 @@ if (!gotTheLock) {
       sendStatusToWindow(log_message);
     });
 
-    autoUpdater.on('update-downloaded', function (info) {
+    autoUpdater.on('update-downloaded', function (_info) {
       sendStatusToWindow('Update downloaded');
       mainWindow.webContents.send('update-downloaded');
     });
 
-    ipcMain.on('start-update', function (event, arg) {
+    ipcMain.on('start-update', function (_event, _arg) {
       sendStatusToWindow('Quit and install');
       autoUpdater.quitAndInstall();
     });
   }
 
-  ipcMain.on('refresh', function (event, arg) {
+  ipcMain.on('refresh', function (_event, _arg) {
     mainWindow.reload();
   });
 

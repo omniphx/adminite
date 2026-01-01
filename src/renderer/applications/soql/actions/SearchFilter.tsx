@@ -16,8 +16,8 @@ const SearchFilter: React.FC<ISearchFilterProps> = (props: ISearchFilterProps) =
   const searchFilter = useTabStore((state) => state.queries[tabId]?.searchFilter ?? '');
   const setSearchFilter = useTabStore((state) => state.setSearchFilter);
 
-  // Zustand for query result data (Phase 9) - memoize selector to avoid infinite loop
-  const dataSelector = React.useCallback(selectTabData(tabId), [tabId]);
+  // Zustand for query result data (Phase 9) - memoize selector
+  const dataSelector = React.useMemo(() => selectTabData(tabId), [tabId]);
   const data = useQueryResultStore(useShallow(dataSelector));
   const setFilteredIds = useQueryResultStore((state) => state.setFilteredIds);
 

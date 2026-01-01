@@ -65,6 +65,7 @@ const App = (): ReactElement => {
       ipcRenderer.removeListener('new-connection', handleNewConnection);
       ipcRenderer.removeListener('token-refreshed', handleTokenRefresh);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -76,17 +77,17 @@ const App = (): ReactElement => {
         content: (
           <div>
             <p>
-              Due to high server costs and recent outages, I've decided to remove cloud storage from
+              Due to high server costs and recent outages, I&apos;ve decided to remove cloud storage from
               Adminite. Your data will now live securely with you on the app.
             </p>
             <p>
               Unfortunately, you will need to reconfigure a few things. Feel free to reach me at{' '}
               <a href='mailto:mattjmitchener@gmail.com'>mattjmitchener@gmail.com</a>
               {', '}
-              if you'd like to recover your saved queries.
+              if you&apos;d like to recover your saved queries.
             </p>
             <p>
-              I've also decided to opensource Adminite to provide more transparency and create an
+              I&apos;ve also decided to opensource Adminite to provide more transparency and create an
               environment to improve innovation.
             </p>
             <p>Thanks!</p>

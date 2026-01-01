@@ -13,8 +13,8 @@ interface IBulkActionsProps {
 const BulkActions: React.FC<IBulkActionsProps> = (props: IBulkActionsProps) => {
   const { tabId } = props;
 
-  // Zustand for selected IDs (Phase 9) - memoize selector to avoid infinite loop
-  const selectedIdsSelector = React.useCallback(selectTabSelectedIds(tabId), [tabId]);
+  // Zustand for selected IDs (Phase 9) - memoize selector
+  const selectedIdsSelector = React.useMemo(() => selectTabSelectedIds(tabId), [tabId]);
   const selectedIds = useQueryResultStore(useShallow(selectedIdsSelector));
 
   // TanStack Query mutation for DML delete (Phase 9)

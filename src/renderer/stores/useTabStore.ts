@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools, persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { TablePaginationConfig } from 'antd';
 
@@ -111,216 +111,213 @@ const createDefaultResultUIState = (): QueryResultUIState => ({
 
 // Create the store
 export const useTabStore = create<TabState & TabActions>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        // Initial state
-        tabs: {},
-        tabOrder: [],
-        activeTabId: undefined,
-        queries: {},
-        resultUIState: {},
-        defaultPageSize: 25,
+  persist(
+    (set, get) => ({
+      // Initial state
+      tabs: {},
+      tabOrder: [],
+      activeTabId: undefined,
+      queries: {},
+      resultUIState: {},
+      defaultPageSize: 25,
 
-        // Tab CRUD
-        createTab: () => {
-          const tabId = uuidv4();
-          set((state) => ({
-            tabs: { ...state.tabs, [tabId]: { id: tabId, title: 'New Query' } },
-            tabOrder: [...state.tabOrder, tabId],
-            activeTabId: tabId,
-            queries: { ...state.queries, [tabId]: createDefaultQueryState(tabId) },
-            resultUIState: { ...state.resultUIState, [tabId]: createDefaultResultUIState() },
-          }));
-          return tabId;
-        },
+      // Tab CRUD
+      createTab: () => {
+        const tabId = uuidv4();
+        set((state) => ({
+          tabs: { ...state.tabs, [tabId]: { id: tabId, title: 'New Query' } },
+          tabOrder: [...state.tabOrder, tabId],
+          activeTabId: tabId,
+          queries: { ...state.queries, [tabId]: createDefaultQueryState(tabId) },
+          resultUIState: { ...state.resultUIState, [tabId]: createDefaultResultUIState() },
+        }));
+        return tabId;
+      },
 
-        closeTab: (tabId) =>
-          set((state) => {
-            const { [tabId]: _1, ...restTabs } = state.tabs;
-            const { [tabId]: _2, ...restQueries } = state.queries;
-            const { [tabId]: _3, ...restResults } = state.resultUIState;
-            const newOrder = state.tabOrder.filter((id) => id !== tabId);
+      closeTab: (tabId) =>
+        set((state) => {
+          const { [tabId]: _1, ...restTabs } = state.tabs;
+          const { [tabId]: _2, ...restQueries } = state.queries;
+          const { [tabId]: _3, ...restResults } = state.resultUIState;
+          const newOrder = state.tabOrder.filter((id) => id !== tabId);
 
-            // Determine new active tab
-            let newActiveId = state.activeTabId;
-            if (state.activeTabId === tabId) {
-              const currentIndex = state.tabOrder.indexOf(tabId);
-              newActiveId = newOrder[Math.max(0, currentIndex - 1)] || newOrder[0] || undefined;
-            }
+          // Determine new active tab
+          let newActiveId = state.activeTabId;
+          if (state.activeTabId === tabId) {
+            const currentIndex = state.tabOrder.indexOf(tabId);
+            newActiveId = newOrder[Math.max(0, currentIndex - 1)] || newOrder[0] || undefined;
+          }
 
-            return {
-              tabs: restTabs,
-              tabOrder: newOrder,
-              activeTabId: newActiveId,
-              queries: restQueries,
-              resultUIState: restResults,
-            };
-          }),
-
-        setActiveTab: (tabId) => set({ activeTabId: tabId }),
-
-        renameTab: (tabId, title) =>
-          set((state) => ({
-            tabs: { ...state.tabs, [tabId]: { ...state.tabs[tabId], title } },
-          })),
-
-        moveTab: (fromId, toId) =>
-          set((state) => {
-            const fromIndex = state.tabOrder.indexOf(fromId);
-            const toIndex = state.tabOrder.indexOf(toId);
-            if (fromIndex === -1 || toIndex === -1) return state;
-
-            const newOrder = [...state.tabOrder];
-            newOrder.splice(fromIndex, 1);
-            newOrder.splice(toIndex, 0, fromId);
-            return { tabOrder: newOrder };
-          }),
-
-        // Query state updates
-        setQuery: (tabId, updates) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], ...updates },
-            },
-          })),
-
-        setQueryBody: (tabId, body) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: {
-                ...state.queries[tabId],
-                query: { ...state.queries[tabId]?.query, body },
-              },
-            },
-          })),
-
-        setSearchFilter: (tabId, searchFilter) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], searchFilter },
-            },
-          })),
-
-        setToolingMode: (tabId, toolingMode) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], toolingMode },
-            },
-          })),
-
-        setIncludeDeleted: (tabId, includeDeleted) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], includeDeleted },
-            },
-          })),
-
-        setBatchSize: (tabId, batchSize) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], batchSize },
-            },
-          })),
-
-        setPaginationConfig: (tabId, paginationConfig) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], paginationConfig },
-            },
-          })),
-
-        setParsedQuery: (tabId, parsedQuery) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], parsedQuery },
-            },
-          })),
-
-        setQuerySObjectName: (tabId, querySObjectName) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], querySObjectName },
-            },
-          })),
-
-        setResultSObjectName: (tabId, resultSObjectName) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], resultSObjectName },
-            },
-          })),
-
-        setDateFormat: (tabId, dateFormat) =>
-          set((state) => ({
-            queries: {
-              ...state.queries,
-              [tabId]: { ...state.queries[tabId], dateFormat },
-            },
-          })),
-
-        // Result UI state
-        setSelectedIds: (tabId, selectedIds) =>
-          set((state) => ({
-            resultUIState: {
-              ...state.resultUIState,
-              [tabId]: { ...state.resultUIState[tabId], selectedIds },
-            },
-          })),
-
-        setFilteredIds: (tabId, filteredIds) =>
-          set((state) => ({
-            resultUIState: {
-              ...state.resultUIState,
-              [tabId]: { ...state.resultUIState[tabId], filteredIds },
-            },
-          })),
-
-        clearSelection: (tabId) =>
-          set((state) => ({
-            resultUIState: {
-              ...state.resultUIState,
-              [tabId]: { ...state.resultUIState[tabId], selectedIds: [] },
-            },
-          })),
-
-        // Global settings
-        setDefaultPageSize: (defaultPageSize) => set({ defaultPageSize }),
-
-        // Selectors
-        getActiveTab: () => {
-          const state = get();
-          return state.activeTabId ? state.tabs[state.activeTabId] : undefined;
-        },
-
-        getQueryState: (tabId) => get().queries[tabId],
-
-        getResultUIState: (tabId) => get().resultUIState[tabId],
-      }),
-      {
-        name: 'adminite-tabs',
-        storage: createJSONStorage(() => localStorage),
-        partialize: (state) => ({
-          tabs: state.tabs,
-          tabOrder: state.tabOrder,
-          activeTabId: state.activeTabId,
-          queries: state.queries,
-          // Don't persist resultUIState (selectedIds, filteredIds) - they're transient
-          defaultPageSize: state.defaultPageSize,
+          return {
+            tabs: restTabs,
+            tabOrder: newOrder,
+            activeTabId: newActiveId,
+            queries: restQueries,
+            resultUIState: restResults,
+          };
         }),
-      }
-    ),
-    { name: 'Adminite', store: 'TabStore' }
+
+      setActiveTab: (tabId) => set({ activeTabId: tabId }),
+
+      renameTab: (tabId, title) =>
+        set((state) => ({
+          tabs: { ...state.tabs, [tabId]: { ...state.tabs[tabId], title } },
+        })),
+
+      moveTab: (fromId, toId) =>
+        set((state) => {
+          const fromIndex = state.tabOrder.indexOf(fromId);
+          const toIndex = state.tabOrder.indexOf(toId);
+          if (fromIndex === -1 || toIndex === -1) return state;
+
+          const newOrder = [...state.tabOrder];
+          newOrder.splice(fromIndex, 1);
+          newOrder.splice(toIndex, 0, fromId);
+          return { tabOrder: newOrder };
+        }),
+
+      // Query state updates
+      setQuery: (tabId, updates) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], ...updates },
+          },
+        })),
+
+      setQueryBody: (tabId, body) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: {
+              ...state.queries[tabId],
+              query: { ...state.queries[tabId]?.query, body },
+            },
+          },
+        })),
+
+      setSearchFilter: (tabId, searchFilter) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], searchFilter },
+          },
+        })),
+
+      setToolingMode: (tabId, toolingMode) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], toolingMode },
+          },
+        })),
+
+      setIncludeDeleted: (tabId, includeDeleted) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], includeDeleted },
+          },
+        })),
+
+      setBatchSize: (tabId, batchSize) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], batchSize },
+          },
+        })),
+
+      setPaginationConfig: (tabId, paginationConfig) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], paginationConfig },
+          },
+        })),
+
+      setParsedQuery: (tabId, parsedQuery) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], parsedQuery },
+          },
+        })),
+
+      setQuerySObjectName: (tabId, querySObjectName) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], querySObjectName },
+          },
+        })),
+
+      setResultSObjectName: (tabId, resultSObjectName) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], resultSObjectName },
+          },
+        })),
+
+      setDateFormat: (tabId, dateFormat) =>
+        set((state) => ({
+          queries: {
+            ...state.queries,
+            [tabId]: { ...state.queries[tabId], dateFormat },
+          },
+        })),
+
+      // Result UI state
+      setSelectedIds: (tabId, selectedIds) =>
+        set((state) => ({
+          resultUIState: {
+            ...state.resultUIState,
+            [tabId]: { ...state.resultUIState[tabId], selectedIds },
+          },
+        })),
+
+      setFilteredIds: (tabId, filteredIds) =>
+        set((state) => ({
+          resultUIState: {
+            ...state.resultUIState,
+            [tabId]: { ...state.resultUIState[tabId], filteredIds },
+          },
+        })),
+
+      clearSelection: (tabId) =>
+        set((state) => ({
+          resultUIState: {
+            ...state.resultUIState,
+            [tabId]: { ...state.resultUIState[tabId], selectedIds: [] },
+          },
+        })),
+
+      // Global settings
+      setDefaultPageSize: (defaultPageSize) => set({ defaultPageSize }),
+
+      // Selectors
+      getActiveTab: () => {
+        const state = get();
+        return state.activeTabId ? state.tabs[state.activeTabId] : undefined;
+      },
+
+      getQueryState: (tabId) => get().queries[tabId],
+
+      getResultUIState: (tabId) => get().resultUIState[tabId],
+    }),
+    {
+      name: 'adminite-tabs',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        tabs: state.tabs,
+        tabOrder: state.tabOrder,
+        activeTabId: state.activeTabId,
+        queries: state.queries,
+        // Don't persist resultUIState (selectedIds, filteredIds) - they're transient
+        defaultPageSize: state.defaultPageSize,
+      }),
+    }
   )
 );
 

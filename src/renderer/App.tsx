@@ -3,6 +3,9 @@ import React, { ReactElement, Suspense, useEffect, lazy } from 'react';
 //Apps
 const Permissions = lazy(() => import('./applications/fieldLevelSecurity/Permissions'));
 const QueryTabs = lazy(() => import('./applications/soql/QueryTabs'));
+const DebugPanel = lazy(() => import('./applications/debug/DebugPanel'));
+
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 import { Layout, Menu, Spin, Button, Modal } from 'antd';
 import OrgSelector from './applications/orgSelector/OrgSelector';
@@ -10,7 +13,7 @@ import NewOrgModal from './applications/orgSelector/NewOrgModal';
 const { Sider, Content } = Layout;
 import { ipcRenderer, shell } from 'electron';
 import IconWrapper from './applications/ui/IconWrapper';
-import { FaDatabase, FaTools, FaUnlockAlt } from 'react-icons/fa';
+import { FaDatabase, FaTools, FaUnlockAlt, FaBug } from 'react-icons/fa';
 import UpdateNotification from './applications/UpdateNotification';
 import * as os from 'os';
 import SchemaExplorer from './applications/schemaExplorer/SchemaExplorer';
@@ -95,6 +98,8 @@ const App = (): ReactElement => {
         return <Permissions />;
       case 'schema':
         return <SchemaExplorer />;
+      case 'debug':
+        return <DebugPanel />;
       default:
         return <QueryTabs />;
     }
@@ -169,6 +174,21 @@ const App = (): ReactElement => {
                   ),
                   label: 'Schema',
                 },
+                // Debug panel - only in development
+                ...(isDevelopment
+                  ? [
+                      {
+                        key: 'debug',
+                        className: 'hover',
+                        icon: (
+                          <IconWrapper>
+                            <FaBug />
+                          </IconWrapper>
+                        ),
+                        label: 'Debug Stores',
+                      },
+                    ]
+                  : []),
               ]}
             />
           </Sider>

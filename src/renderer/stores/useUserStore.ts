@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools, persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface UserState {
   id?: string;
@@ -28,34 +28,31 @@ const initialState: UserState = {
 };
 
 export const useUserStore = create<UserState & UserActions>()(
-  devtools(
-    persist(
-      (set) => ({
-        ...initialState,
+  persist(
+    (set) => ({
+      ...initialState,
 
-        setUser: (user) => set((state) => ({ ...state, ...user })),
+      setUser: (user) => set((state) => ({ ...state, ...user })),
 
-        setAuthenticated: (authenticated) => set({ authenticated }),
+      setAuthenticated: (authenticated) => set({ authenticated }),
 
-        setDisableAutoComplete: (disableAutoComplete) => set({ disableAutoComplete }),
+      setDisableAutoComplete: (disableAutoComplete) => set({ disableAutoComplete }),
 
-        setDisableInlineTabs: (disableInlineTabs) => set({ disableInlineTabs }),
+      setDisableInlineTabs: (disableInlineTabs) => set({ disableInlineTabs }),
 
-        setQueryHotkey: (queryHotkey) => set({ queryHotkey }),
+      setQueryHotkey: (queryHotkey) => set({ queryHotkey }),
 
-        reset: () => set(initialState),
+      reset: () => set(initialState),
+    }),
+    {
+      name: 'adminite-user-settings',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        disableAutoComplete: state.disableAutoComplete,
+        disableInlineTabs: state.disableInlineTabs,
+        queryHotkey: state.queryHotkey,
+        tabDisplayType: state.tabDisplayType,
       }),
-      {
-        name: 'adminite-user-settings',
-        storage: createJSONStorage(() => localStorage),
-        partialize: (state) => ({
-          disableAutoComplete: state.disableAutoComplete,
-          disableInlineTabs: state.disableInlineTabs,
-          queryHotkey: state.queryHotkey,
-          tabDisplayType: state.tabDisplayType,
-        }),
-      }
-    ),
-    { name: 'Adminite', store: 'UserStore' }
+    }
   )
 );

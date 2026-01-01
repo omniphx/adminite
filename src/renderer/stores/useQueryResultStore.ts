@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
 
 /**
  * Query result state for a single tab
@@ -79,189 +78,186 @@ const createDefaultQueryResultState = (tabId: string): QueryResultState => ({
 });
 
 export const useQueryResultStore = create<QueryResultStoreState & QueryResultStoreActions>()(
-  devtools(
-    (set, get) => ({
-      // Initial state
-      byTabId: {
-        initial: createDefaultQueryResultState('initial'),
-      },
+  (set, get) => ({
+    // Initial state
+    byTabId: {
+      initial: createDefaultQueryResultState('initial'),
+    },
 
-      // Tab management
-      createTab: (tabId) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: createDefaultQueryResultState(tabId),
+    // Tab management
+    createTab: (tabId) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: createDefaultQueryResultState(tabId),
+        },
+      })),
+
+    deleteTab: (tabId) =>
+      set((state) => {
+        const { [tabId]: deleted, ...rest } = state.byTabId;
+        return { byTabId: rest };
+      }),
+
+    // Query state updates
+    setPending: (tabId, pending) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            pending,
+            // Clear errors when starting a new query
+            errors: pending ? null : (state.byTabId[tabId]?.errors ?? null),
           },
-        })),
+        },
+      })),
 
-      deleteTab: (tabId) =>
-        set((state) => {
-          const { [tabId]: deleted, ...rest } = state.byTabId;
-          return { byTabId: rest };
-        }),
+    setDmlPending: (tabId, dmlPending) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            dmlPending,
+          },
+        },
+      })),
 
-      // Query state updates
-      setPending: (tabId, pending) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              pending,
-              // Clear errors when starting a new query
-              errors: pending ? null : (state.byTabId[tabId]?.errors ?? null),
+    setError: (tabId, error) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            errors: error,
+            pending: false,
+            data: error ? {} : (state.byTabId[tabId]?.data ?? {}),
+          },
+        },
+      })),
+
+    // Data updates
+    setQueryResult: (tabId, result) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            data: result.data,
+            filteredIds: result.filteredIds,
+            totalSize: result.totalSize,
+            selectedIds: [],
+            errors: null,
+          },
+        },
+      })),
+
+    appendQueryResult: (tabId, result) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            data: {
+              ...state.byTabId[tabId]?.data,
+              ...result.data,
+            },
+            filteredIds: [...(state.byTabId[tabId]?.filteredIds ?? []), ...result.filteredIds],
+            errors: null,
+          },
+        },
+      })),
+
+    setData: (tabId, data) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            data: {
+              ...state.byTabId[tabId]?.data,
+              ...data,
             },
           },
-        })),
+        },
+      })),
 
-      setDmlPending: (tabId, dmlPending) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              dmlPending,
-            },
-          },
-        })),
-
-      setError: (tabId, error) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              errors: error,
-              pending: false,
-              data: error ? {} : (state.byTabId[tabId]?.data ?? {}),
-            },
-          },
-        })),
-
-      // Data updates
-      setQueryResult: (tabId, result) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              data: result.data,
-              filteredIds: result.filteredIds,
-              totalSize: result.totalSize,
-              selectedIds: [],
-              errors: null,
-            },
-          },
-        })),
-
-      appendQueryResult: (tabId, result) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              data: {
-                ...state.byTabId[tabId]?.data,
-                ...result.data,
-              },
-              filteredIds: [...(state.byTabId[tabId]?.filteredIds ?? []), ...result.filteredIds],
-              errors: null,
-            },
-          },
-        })),
-
-      setData: (tabId, data) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              data: {
-                ...state.byTabId[tabId]?.data,
-                ...data,
-              },
-            },
-          },
-        })),
-
-      updateRecord: (tabId, recordId, record) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              data: {
-                ...state.byTabId[tabId]?.data,
-                [recordId]: {
-                  ...state.byTabId[tabId]?.data[recordId],
-                  ...record,
-                },
+    updateRecord: (tabId, recordId, record) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            data: {
+              ...state.byTabId[tabId]?.data,
+              [recordId]: {
+                ...state.byTabId[tabId]?.data[recordId],
+                ...record,
               },
             },
           },
-        })),
+        },
+      })),
 
-      // Selection & filtering
-      setSelectedIds: (tabId, selectedIds) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              selectedIds,
-            },
+    // Selection & filtering
+    setSelectedIds: (tabId, selectedIds) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            selectedIds,
           },
-        })),
+        },
+      })),
 
-      setFilteredIds: (tabId, filteredIds) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              filteredIds,
-            },
+    setFilteredIds: (tabId, filteredIds) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            filteredIds,
           },
-        })),
+        },
+      })),
 
-      clearSelection: (tabId) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              selectedIds: [],
-            },
+    clearSelection: (tabId) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            selectedIds: [],
           },
-        })),
+        },
+      })),
 
-      // Bulk updates
-      setTabState: (tabId, updates) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: {
-              ...state.byTabId[tabId],
-              ...updates,
-            },
+    // Bulk updates
+    setTabState: (tabId, updates) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: {
+            ...state.byTabId[tabId],
+            ...updates,
           },
-        })),
+        },
+      })),
 
-      // Reset
-      reset: (tabId) =>
-        set((state) => ({
-          byTabId: {
-            ...state.byTabId,
-            [tabId]: createDefaultQueryResultState(tabId),
-          },
-        })),
+    // Reset
+    reset: (tabId) =>
+      set((state) => ({
+        byTabId: {
+          ...state.byTabId,
+          [tabId]: createDefaultQueryResultState(tabId),
+        },
+      })),
 
-      // Getters
-      getTabState: (tabId) => get().byTabId[tabId],
-    }),
-    { name: 'Adminite', store: 'QueryResultStore' }
-  )
+    // Getters
+    getTabState: (tabId) => get().byTabId[tabId],
+  })
 );
 
 // Selector helpers for use with hooks

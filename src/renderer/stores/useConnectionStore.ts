@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { v4 as uuidv4 } from 'uuid';
 import { Connection, UserInfo } from 'jsforce';
@@ -77,218 +77,215 @@ const initialActiveConnectionState: ActiveConnectionState = {
 };
 
 export const useConnectionStore = create<ConnectionState & ConnectionActions>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        // Initial state
-        connections: {},
-        connectionOrder: [],
-        activeConnectionId: null,
-        activeConnection: initialActiveConnectionState,
-        modalVisible: false,
+  persist(
+    (set, get) => ({
+      // Initial state
+      connections: {},
+      connectionOrder: [],
+      activeConnectionId: null,
+      activeConnection: initialActiveConnectionState,
+      modalVisible: false,
 
-        // Connection CRUD
-        addConnection: (connectionData) => {
-          const id = uuidv4();
-          const sortOrder = get().connectionOrder.length;
-          const connection: StoredConnection = {
-            ...connectionData,
-            id,
-            sortOrder,
-          };
+      // Connection CRUD
+      addConnection: (connectionData) => {
+        const id = uuidv4();
+        const sortOrder = get().connectionOrder.length;
+        const connection: StoredConnection = {
+          ...connectionData,
+          id,
+          sortOrder,
+        };
 
-          set((state) => ({
+        set((state) => ({
+          connections: {
+            ...state.connections,
+            [id]: connection,
+          },
+          connectionOrder: [...state.connectionOrder, id],
+        }));
+
+        return connection;
+      },
+
+      updateConnection: (id, updates) => {
+        set((state) => {
+          const existing = state.connections[id];
+          if (!existing) return state;
+
+          return {
             connections: {
               ...state.connections,
-              [id]: connection,
+              [id]: { ...existing, ...updates },
             },
-            connectionOrder: [...state.connectionOrder, id],
-          }));
+          };
+        });
+      },
 
-          return connection;
-        },
+      deleteConnection: (id) => {
+        set((state) => {
+          const { [id]: deleted, ...remaining } = state.connections;
+          const newOrder = state.connectionOrder.filter((connId) => connId !== id);
 
-        updateConnection: (id, updates) => {
-          set((state) => {
-            const existing = state.connections[id];
-            if (!existing) return state;
-
-            return {
-              connections: {
-                ...state.connections,
-                [id]: { ...existing, ...updates },
-              },
+          // Update sort orders
+          const updatedConnections: Record<string, StoredConnection> = {};
+          newOrder.forEach((connId, index) => {
+            updatedConnections[connId] = {
+              ...remaining[connId],
+              sortOrder: index,
             };
           });
-        },
 
-        deleteConnection: (id) => {
-          set((state) => {
-            const { [id]: deleted, ...remaining } = state.connections;
-            const newOrder = state.connectionOrder.filter((connId) => connId !== id);
+          // If we deleted the active connection, select the first remaining one
+          const newActiveId =
+            state.activeConnectionId === id
+              ? newOrder.length > 0
+                ? newOrder[0]
+                : null
+              : state.activeConnectionId;
 
-            // Update sort orders
-            const updatedConnections: Record<string, StoredConnection> = {};
-            newOrder.forEach((connId, index) => {
-              updatedConnections[connId] = {
-                ...remaining[connId],
-                sortOrder: index,
-              };
-            });
-
-            // If we deleted the active connection, select the first remaining one
-            const newActiveId =
+          return {
+            connections: updatedConnections,
+            connectionOrder: newOrder,
+            activeConnectionId: newActiveId,
+            // Clear active connection state if we deleted the active one
+            activeConnection:
               state.activeConnectionId === id
-                ? newOrder.length > 0
-                  ? newOrder[0]
-                  : null
-                : state.activeConnectionId;
+                ? initialActiveConnectionState
+                : state.activeConnection,
+          };
+        });
+      },
 
-            return {
-              connections: updatedConnections,
-              connectionOrder: newOrder,
-              activeConnectionId: newActiveId,
-              // Clear active connection state if we deleted the active one
-              activeConnection:
-                state.activeConnectionId === id
-                  ? initialActiveConnectionState
-                  : state.activeConnection,
+      moveConnection: (fromIndex, toIndex) => {
+        set((state) => {
+          const newOrder = [...state.connectionOrder];
+          const [moved] = newOrder.splice(fromIndex, 1);
+          newOrder.splice(toIndex, 0, moved);
+
+          // Update sort orders in connections
+          const updatedConnections: Record<string, StoredConnection> = {};
+          newOrder.forEach((id, index) => {
+            updatedConnections[id] = {
+              ...state.connections[id],
+              sortOrder: index,
             };
           });
-        },
 
-        moveConnection: (fromIndex, toIndex) => {
-          set((state) => {
-            const newOrder = [...state.connectionOrder];
-            const [moved] = newOrder.splice(fromIndex, 1);
-            newOrder.splice(toIndex, 0, moved);
+          return {
+            connectionOrder: newOrder,
+            connections: updatedConnections,
+          };
+        });
+      },
 
-            // Update sort orders in connections
-            const updatedConnections: Record<string, StoredConnection> = {};
-            newOrder.forEach((id, index) => {
-              updatedConnections[id] = {
-                ...state.connections[id],
-                sortOrder: index,
-              };
-            });
+      // Active connection management
+      setActiveConnectionId: (id) => {
+        set({
+          activeConnectionId: id,
+          activeConnection: initialActiveConnectionState,
+        });
+      },
 
-            return {
-              connectionOrder: newOrder,
-              connections: updatedConnections,
-            };
+      setActiveConnectionPending: (pending) => {
+        set((state) => ({
+          activeConnection: {
+            ...state.activeConnection,
+            pending,
+            error: pending ? undefined : state.activeConnection.error,
+          },
+        }));
+      },
+
+      setActiveConnectionError: (error) => {
+        set((state) => ({
+          activeConnection: {
+            ...state.activeConnection,
+            error: error ?? undefined,
+            pending: false,
+          },
+        }));
+      },
+
+      setActiveConnectionData: (connection, userInfo) => {
+        set((state) => ({
+          activeConnection: {
+            connection,
+            userInfo,
+            pending: false,
+            error: undefined,
+          },
+        }));
+      },
+
+      clearActiveConnection: () => {
+        set({
+          activeConnection: initialActiveConnectionState,
+        });
+      },
+
+      // Modal
+      toggleModal: () => {
+        set((state) => ({
+          modalVisible: !state.modalVisible,
+        }));
+      },
+
+      setModalVisible: (visible) => {
+        set({ modalVisible: visible });
+      },
+
+      // Initialize from legacy localStorage format
+      initializeFromLegacyStorage: () => {
+        // Only migrate if we haven't already (new store is empty)
+        const currentConnections = get().connectionOrder;
+        if (currentConnections.length > 0) {
+          // Already have data in new store, skip migration but clean up legacy
+          localStorage.removeItem('connections');
+          return;
+        }
+
+        const legacyData = localStorage.getItem('connections');
+        if (!legacyData) return;
+
+        try {
+          const legacyConnections = JSON.parse(legacyData) as Record<string, StoredConnection>;
+          const connectionsArray = Object.values(legacyConnections);
+
+          // Sort by sortOrder
+          connectionsArray.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+          const connections: Record<string, StoredConnection> = {};
+          const connectionOrder: string[] = [];
+
+          connectionsArray.forEach((conn, index) => {
+            connections[conn.id] = { ...conn, sortOrder: index };
+            connectionOrder.push(conn.id);
           });
-        },
 
-        // Active connection management
-        setActiveConnectionId: (id) => {
           set({
-            activeConnectionId: id,
-            activeConnection: initialActiveConnectionState,
+            connections,
+            connectionOrder,
+            // Select first connection if available
+            activeConnectionId: connectionOrder.length > 0 ? connectionOrder[0] : null,
           });
-        },
 
-        setActiveConnectionPending: (pending) => {
-          set((state) => ({
-            activeConnection: {
-              ...state.activeConnection,
-              pending,
-              error: pending ? undefined : state.activeConnection.error,
-            },
-          }));
-        },
-
-        setActiveConnectionError: (error) => {
-          set((state) => ({
-            activeConnection: {
-              ...state.activeConnection,
-              error: error ?? undefined,
-              pending: false,
-            },
-          }));
-        },
-
-        setActiveConnectionData: (connection, userInfo) => {
-          set((state) => ({
-            activeConnection: {
-              connection,
-              userInfo,
-              pending: false,
-              error: undefined,
-            },
-          }));
-        },
-
-        clearActiveConnection: () => {
-          set({
-            activeConnection: initialActiveConnectionState,
-          });
-        },
-
-        // Modal
-        toggleModal: () => {
-          set((state) => ({
-            modalVisible: !state.modalVisible,
-          }));
-        },
-
-        setModalVisible: (visible) => {
-          set({ modalVisible: visible });
-        },
-
-        // Initialize from legacy localStorage format
-        initializeFromLegacyStorage: () => {
-          // Only migrate if we haven't already (new store is empty)
-          const currentConnections = get().connectionOrder;
-          if (currentConnections.length > 0) {
-            // Already have data in new store, skip migration but clean up legacy
-            localStorage.removeItem('connections');
-            return;
-          }
-
-          const legacyData = localStorage.getItem('connections');
-          if (!legacyData) return;
-
-          try {
-            const legacyConnections = JSON.parse(legacyData) as Record<string, StoredConnection>;
-            const connectionsArray = Object.values(legacyConnections);
-
-            // Sort by sortOrder
-            connectionsArray.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-
-            const connections: Record<string, StoredConnection> = {};
-            const connectionOrder: string[] = [];
-
-            connectionsArray.forEach((conn, index) => {
-              connections[conn.id] = { ...conn, sortOrder: index };
-              connectionOrder.push(conn.id);
-            });
-
-            set({
-              connections,
-              connectionOrder,
-              // Select first connection if available
-              activeConnectionId: connectionOrder.length > 0 ? connectionOrder[0] : null,
-            });
-
-            // Remove legacy storage after successful migration
-            localStorage.removeItem('connections');
-          } catch (error) {
-            console.error('Failed to migrate legacy connections:', error);
-          }
-        },
+          // Remove legacy storage after successful migration
+          localStorage.removeItem('connections');
+        } catch (error) {
+          console.error('Failed to migrate legacy connections:', error);
+        }
+      },
+    }),
+    {
+      name: 'adminite-connections',
+      partialize: (state) => ({
+        connections: state.connections,
+        connectionOrder: state.connectionOrder,
+        // Don't persist activeConnectionId - will be set on init
+        // Don't persist activeConnection - runtime state
+        // Don't persist modalVisible - UI state
       }),
-      {
-        name: 'adminite-connections',
-        partialize: (state) => ({
-          connections: state.connections,
-          connectionOrder: state.connectionOrder,
-          // Don't persist activeConnectionId - will be set on init
-          // Don't persist activeConnection - runtime state
-          // Don't persist modalVisible - UI state
-        }),
-      }
-    ),
-    { name: 'Adminite', store: 'ConnectionStore' }
+    }
   )
 );
 

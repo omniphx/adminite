@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
 
-export type Feature = 'soql' | 'permissions' | 'schema';
+export type Feature = 'soql' | 'permissions' | 'schema' | 'debug';
 
 interface FeatureState {
   feature: Feature;
@@ -13,16 +12,11 @@ interface FeatureActions {
   setError: (error: string | undefined) => void;
 }
 
-export const useFeatureStore = create<FeatureState & FeatureActions>()(
-  devtools(
-    (set) => ({
-      feature: 'soql',
-      error: undefined,
+export const useFeatureStore = create<FeatureState & FeatureActions>()((set) => ({
+  feature: 'soql',
+  error: undefined,
 
-      setFeature: (feature) => set({ feature, error: undefined }),
+  setFeature: (feature) => set({ feature, error: undefined }),
 
-      setError: (error) => set({ error }),
-    }),
-    { name: 'Adminite', store: 'FeatureStore' }
-  )
-);
+  setError: (error) => set({ error }),
+}));

@@ -5,7 +5,6 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as jsforce from 'jsforce';
 import * as log from 'electron-log';
 import * as dotenv from 'dotenv';
-import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -282,7 +281,6 @@ async function createServer(): Promise<void> {
       'salesforce:identity',
       async (event, { accessToken, instanceUrl, refreshToken, loginUrl, connectionId }) => {
         try {
-          log.debug('refresh token', refreshToken);
           const connection = createSalesforceConnection({
             accessToken,
             instanceUrl,
@@ -636,16 +634,6 @@ if (!gotTheLock) {
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
   app.on('ready', async () => {
-    // Install Redux DevTools in development mode
-    if (isDevelopment) {
-      try {
-        const name = await installExtension(REDUX_DEVTOOLS);
-        log.info(`Added Extension: ${name}`);
-      } catch (err) {
-        log.error('Failed to install Redux DevTools:', err);
-      }
-    }
-
     createWindow();
     createServer();
   });

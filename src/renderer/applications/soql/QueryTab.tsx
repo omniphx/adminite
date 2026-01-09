@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Row, Col } from 'antd';
+import { Button, Row, Col, Flex } from 'antd';
 import QueryEditor from './QueryEditor';
 import SearchFilter from './actions/SearchFilter';
 import SaveQuery from './actions/SaveQuery';
@@ -46,7 +46,6 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
   const childProps = { tabId };
 
   const handleChange = (sObjectName: string) => {
-    // Update Zustand store (Phase 6)
     setQuerySObjectName(tabId, sObjectName);
   };
 
@@ -64,56 +63,44 @@ const QueryTab = React.memo((props: IQueryTabProps) => {
   };
 
   return (
-    <div className='query-editor'>
-      <Row align='middle'>
-        <Col span={12}>
-          <SelectContext
-            {...{ sobjects, handleChange }}
-            sobject={querySObjectName}
-            loading={false}
-          />
-        </Col>
-        <Col span={12} style={{ textAlign: 'right' }}>
-          <Button type='link' onClick={handleFormat} disabled={query.body.length <= 0}>
-            Format
-          </Button>
-          <FillFields {...childProps} />
-          <SaveQuery {...childProps} />
-          <LoadQueries {...childProps} />
-          <History {...childProps} />
-        </Col>
-      </Row>
+    <Flex vertical={true} gap={5}>
+      <Flex align='middle'>
+        <SelectContext {...{ sobjects, handleChange }} sobject={querySObjectName} loading={false} />
+        <Button type='link' onClick={handleFormat} disabled={query.body.length <= 0}>
+          Format
+        </Button>
+        <FillFields {...childProps} />
+        <SaveQuery {...childProps} />
+        <LoadQueries {...childProps} />
+        <History {...childProps} />
+      </Flex>
       <Row>
         <Col span={24}>
           <QueryValidator {...childProps} />
           <QueryEditor {...childProps} />
         </Col>
       </Row>
-      <Row gutter={32} justify='space-between' align='middle'>
-        <Col xs={24} sm={24} lg={12}>
+      <Flex justify='space-between' align='center'>
+        <Flex align='center'>
           <Query {...childProps} />
           <QueryOptions {...childProps} />
           <SaveEdits {...childProps} />
           <Export {...childProps} />
-        </Col>
-        <Col className='bump-left' xs={24} sm={24} lg={12} style={{ textAlign: 'right' }}>
-          <Row justify='end' align='middle'>
-            <DateFormatToggle {...childProps} />
-            <PageSizeSelect {...childProps} />
-          </Row>
-        </Col>
-      </Row>
-      <Row gutter={16} justify='space-between' align='middle'>
-        <Col xs={24} sm={24} md={24} lg={12}>
+        </Flex>
+        <Flex justify='end' align='center'>
+          <DateFormatToggle {...childProps} />
+          <PageSizeSelect {...childProps} />
+        </Flex>
+      </Flex>
+      <Flex justify='space-between' align='center'>
+        <Flex align='center'>
           <BulkActions {...childProps} />
           <SearchFilter {...childProps} />
-        </Col>
-        <Col className='bump-left' xs={24} sm={24} md={24} lg={12} style={{ textAlign: 'right' }}>
-          <Pagination {...childProps} />
-        </Col>
-      </Row>
+        </Flex>
+        <Pagination {...childProps} />
+      </Flex>
       <QueryResult {...childProps} />
-    </div>
+    </Flex>
   );
 
   function getQueryableSObjects(sobjects: DescribeGlobalSObjectResult[]) {

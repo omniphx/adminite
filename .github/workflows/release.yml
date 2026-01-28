@@ -1,0 +1,141 @@
+name: Release
+
+on:
+  # Trigger on version bumps (when package.json version changes on main)
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      skip_notarization:
+        description: 'Skip macOS notarization (faster builds for testing)'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Ensure only one release workflow runs at a time
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Check if version changed (for push triggers)
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.check.outputs.changed }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: check
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+          # For manual triggers, always proceed
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger - proceeding with version $CURRENT_VERSION"
+            exit 0
+          fi
+
+          # For push triggers, check if version changed
+          git show HEAD~1:package.json > /tmp/old-package.json 2>/dev/null || {
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "No previous package.json found - proceeding"
+            exit 0
+          }
+
+          OLD_VERSION=$(node -p "require('/tmp/old-package.json').version")
+
+          if [ "$CURRENT_VERSION" != "$OLD_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed from $OLD_VERSION to $CURRENT_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged at $CURRENT_VERSION"
+          fi
+
+  # Build and publish for macOS
+  publish-macos:
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Publish (with notarization)
+        if: ${{ github.event.inputs.skip_notarization != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID: ${{ vars.SALESFORCE_CLIENT_ID }}
+          ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET: ${{ secrets.SALESFORCE_CLIENT_SECRET }}
+          APPLEID: ${{ secrets.APPLEID }}
+          APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: yarn publish
+
+      - name: Publish (without notarization)
+        if: ${{ github.event.inputs.skip_notarization == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID: ${{ vars.SALESFORCE_CLIENT_ID }}
+          ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET: ${{ secrets.SALESFORCE_CLIENT_SECRET }}
+        run: yarn publish
+
+  # Build and publish for Windows
+  publish-windows:
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_ID: ${{ vars.SALESFORCE_CLIENT_ID }}
+          ELECTRON_WEBPACK_APP_SALESFORCE_CLIENT_SECRET: ${{ secrets.SALESFORCE_CLIENT_SECRET }}
+        run: yarn publish
